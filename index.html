@@ -565,7 +565,7 @@ function ovLink(o){if(!o||!o.ok)return'';const v=(document.body.getAttribute('da
   if(pm&&o.key==='extra')u.searchParams.set(pm,(o.cents/100).toFixed(2));return u.href}catch(e){return''}}
 /* If the provider's script did not take over the click, never let the browser navigate away: stay on the page and say so. */
 document.addEventListener('DOMContentLoaded',()=>{try{ovInit()}catch(e){}});
-window.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[data-gumroad-overlay-checkout]');if(a&&!e.defaultPrevented){e.preventDefault();$('cosum').textContent='Checkout couldn’t open on this page. You haven’t been charged. [script:'+(OVS===2?'loaded':OVS===-1?'blocked':'pending')+', buttons:'+Object.keys(OVA).length+', gumroad:'+(typeof window.GumroadOverlay)+']';$('pay-btn').disabled=false}});
+window.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[data-gumroad-overlay-checkout]');if(a&&!e.defaultPrevented){e.preventDefault();$('cosum').textContent='Checkout couldn’t open on this page. You haven’t been charged. [v3 target:'+(e.target.id||e.target.tagName)+', script:'+(OVS===2?'loaded':OVS===-1?'blocked':'pending')+', buttons:'+Object.keys(OVA).length+', gumroad:'+(typeof window.GumroadOverlay)+']';$('pay-btn').disabled=false}});
 const OVA={};let OVS=0;
 function ovInit(){{const ov=$('pay-ov'),f=['standard','more','extra'].map(k=>(document.body.getAttribute('data-link-'+k)||'').trim()).find(Boolean);if(ov&&f&&ov.getAttribute('href')==='#pay')ov.setAttribute('href',f)}['standard','more','extra'].forEach(k=>{const v=(document.body.getAttribute('data-link-'+k)||'').trim();if(!v||OVA[k])return;
   let u;try{u=new URL(v)}catch(e){return}if(u.protocol!=='https:'||!OVH.test(u.hostname))return;
