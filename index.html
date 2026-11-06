@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NOTHING · Pay. In return, absolutely nothing.</title>
+<meta name="description" content="NOTHING is a satirical digital business experiment. Three ways to pay for nothing.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{--f:'Instrument Serif',Georgia,serif;--m:'IBM Plex Mono',ui-monospace,monospace;--z:1;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-behavior:smooth;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 70px)}
+[data-p=paper]{--bg:#E8E3D5;--ink:#141414;--mut:#5E5A52;--line:#14141440;--acc:#C8321F;--rim:transparent}
+[data-p=char]{--bg:#1C1B19;--ink:#F1ECE0;--mut:#A39D90;--line:#F1ECE040;--acc:#E0664B;--rim:rgba(255,255,255,.55)}
+[data-p=esp]{--bg:#1B0F09;--ink:#F3E9DD;--mut:#A08C7C;--line:#F3E9DD40;--acc:#E8B35B;--rim:rgba(243,233,221,.55)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.65 var(--m);transition:background .4s,color .4s;overflow-x:hidden}
+body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:20}
+a{color:inherit}[hidden]{display:none!important}
+.w{max-width:1240px;margin:0 auto;padding:0 clamp(20px,4vw,48px)}
+.k{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+h1,h2{font:400 clamp(54px,7.4vw,112px)/.92 var(--f);letter-spacing:-.02em;margin:.15em 0 .25em}
+h2{font-size:clamp(42px,6vw,88px)}h1 em,h2 em{color:var(--acc)}
+p{max-width:54ch;margin:0 0 1em}.fine{font-size:12.5px;color:var(--mut);letter-spacing:.03em}
+.proto{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:8px clamp(20px,4vw,48px);font-size:11.5px;letter-spacing:.14em;border-bottom:1px solid var(--line);color:var(--mut)}
+.proto button{font:inherit;letter-spacing:.12em;color:var(--ink);background:none;border:1px solid var(--line);padding:5px 10px;cursor:pointer;margin-left:4px}
+.proto button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+header .w{display:flex;align-items:center;justify-content:space-between;height:60px}
+.wm{font:400 30px/1 var(--f);letter-spacing:.02em;text-decoration:none}
+nav{display:flex;gap:24px;align-items:center;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+nav a{text-decoration:none}nav a:hover{color:var(--acc)}
+.btn{display:inline-block;font:500 13px/1 var(--m);letter-spacing:.14em;text-transform:uppercase;text-decoration:none;background:var(--ink);color:var(--bg);padding:16px 22px;border:1px solid var(--ink);cursor:pointer;transition:transform .2s,background .2s,color .2s}
+nav .btn{padding:12px 16px;color:var(--bg)}nav .btn:hover{color:#fff}
+.btn:hover{transform:translateY(-2px);background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.o{background:none;color:var(--ink);border-color:var(--ink)}.btn.o:hover{color:var(--bg);background:var(--ink);border-color:var(--ink)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none;background:var(--ink);color:var(--bg);border-color:var(--ink)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:3px}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin:26px 0 12px}
+label{display:block;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--mut);margin:18px 0 6px}
+input[type=text],input[type=email],select,textarea{width:100%;font:400 18px var(--m);color:var(--ink);background:none;border:0;border-bottom:2px solid var(--ink);padding:8px 0;outline:none;border-radius:0}
+input[type=text]:focus,input[type=email]:focus,select:focus,textarea:focus{border-color:var(--acc)}
+textarea{resize:vertical;min-height:110px;font-size:16px;line-height:1.5}select{appearance:none;cursor:pointer}select option{background:#fff;color:#141414}
+.err{min-height:1.4em;margin:6px 0 0;font-size:13px;color:var(--acc)}.hint{font-size:12px;color:var(--mut);margin:6px 0 0}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--mut);margin-top:18px}.chk input{margin-top:5px}
+.chk label{margin:0;text-transform:none;letter-spacing:0;font-size:13px}
+.tear{display:block;width:100%;height:12px;color:var(--ink)}.tear polygon{fill:currentColor}
+.stat{min-height:1.6em;font-size:13px;margin:6px 0 0}.dirty{font-size:13px;color:var(--acc);margin:10px 0 0;max-width:52ch}
+.chips{display:flex;gap:8px;flex-wrap:wrap}.chips button{font:500 13px var(--m);color:var(--ink);background:none;border:1px solid var(--line);padding:11px 14px;cursor:pointer}
+.chips button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+footer{margin-top:clamp(72px,10vw,140px);background:var(--ink);color:var(--bg);padding:40px 0 28px;overflow:hidden}
+footer .big{font:400 clamp(70px,24vw,360px)/.8 var(--f);letter-spacing:-.03em;margin:0 0 28px}
+footer .w>div:last-child{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-size:12px;letter-spacing:.1em;opacity:.85}
+/* receipt: one layout spec drives both this DOM view and the PNG export */
+.rc{position:relative;width:320px;height:512px;flex:none;zoom:var(--z);filter:drop-shadow(0 18px 26px rgba(10,10,10,.3)) drop-shadow(0 0 1px var(--rim));animation:pr .9s cubic-bezier(.2,.7,.2,1) both}
+.rc.still{animation:none}.rc>svg{position:absolute;left:0;top:0;display:block}
+.rc .ti{position:absolute;white-space:pre;pointer-events:none;margin:0}
+.rc .stp{position:absolute;box-sizing:border-box;mix-blend-mode:multiply;animation:th .45s .7s cubic-bezier(.3,1.6,.5,1) both}
+.rc.t2 .stp{mix-blend-mode:normal}.rc.still .stp{animation:none}
+.rc .stp i{position:absolute;left:0;right:0;text-align:center;white-space:pre;font-style:normal}
+[data-p=char] .t2,[data-p=esp] .t2{filter:drop-shadow(0 0 1.5px #3DF5FF) drop-shadow(0 0 18px rgba(61,245,255,.28))}
+@keyframes pr{from{opacity:0;translate:0 26px}to{opacity:1;translate:0 0}}
+@keyframes th{from{scale:1.8;opacity:0}to{scale:1;opacity:1}}
+.rv{opacity:0;translate:0 26px;transition:opacity .8s,translate .8s}.rv.in{opacity:1;translate:0 0}
+@media(max-width:860px){nav a:not(.btn){display:none}.proto span:first-child{width:100%}.proto{font-size:10px;padding:6px 20px}}
+@media(max-width:380px){:root{--z:.88}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.rv{opacity:1;translate:none}}
+[data-p=paper]{--cv:#F6F2E8}[data-p=char]{--cv:#262522}[data-p=esp]{--cv:#2A1A12}
+.hero{min-height:calc(100svh - 112px);display:flex;flex-direction:column;justify-content:space-between;gap:40px;padding-top:clamp(24px,4vw,56px);padding-bottom:clamp(36px,5vw,64px)}
+.nothing{font:400 min(26vw,330px)/.8 var(--f);letter-spacing:.01em;margin:0;color:transparent;-webkit-text-stroke:2px var(--ink);animation:rise 1.1s cubic-bezier(.2,.7,.2,1) both}
+@supports not (-webkit-text-stroke:1px #000){.nothing{color:var(--ink)}}
+.claim{font:400 clamp(34px,4.6vw,68px)/1 var(--f);letter-spacing:-.01em;margin:0 0 16px}.claim em{color:var(--acc)}
+.hero .lede{font-size:16px;max-width:52ch}
+@keyframes rise{from{opacity:0;translate:0 24px}to{opacity:1;translate:0 0}}
+section{padding-top:clamp(64px,9vw,120px)}
+.eds{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(24px,3.4vw,52px);margin-top:44px}
+.ec{position:relative}.ec .sr{position:absolute;opacity:0;pointer-events:none}
+.cb{display:block;cursor:pointer}.sr:focus-visible+.cb{outline:3px solid var(--acc);outline-offset:8px}
+.fr{display:flex;align-items:flex-end;justify-content:flex-end;aspect-ratio:4/5;background:var(--cv);padding:12px 14px;font-size:11px;letter-spacing:.16em;color:var(--acc);text-transform:uppercase;box-shadow:0 22px 30px -22px rgba(0,0,0,.45);transition:transform .35s cubic-bezier(.2,.7,.2,1)}
+.cb:hover .fr{transform:translateY(-6px)}
+.f1{border:2px solid var(--ink)}
+.f2{border:3px double var(--ink);outline:1px solid var(--ink);outline-offset:5px}
+.f3{border:14px solid var(--ink);box-shadow:inset 0 0 0 10px var(--cv),inset 0 0 0 11px var(--ink),0 22px 30px -22px rgba(0,0,0,.45)}
+.fr .sel{opacity:0;transition:opacity .2s}.sr:checked+.cb .sel{opacity:1}
+.plate{display:block;margin-top:18px;border-top:2px solid var(--ink);padding-top:12px}.sr:checked+.cb .plate{border-top-color:var(--acc)}
+.plate h3{font:400 clamp(28px,2.6vw,38px)/1 var(--f);margin:0;transition:color .2s}.sr:checked+.cb h3{color:var(--acc)}
+.plate .pr{font:500 22px var(--m);margin:6px 0 4px}.plate .ds{font-size:13.5px;color:var(--mut);margin:0}
+.am{margin-top:10px}.am label{margin-top:6px}
+.co{margin-top:48px;border-top:2px solid var(--ink);padding-top:22px;display:flex;gap:16px 40px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.co .sum{font:400 clamp(28px,3.4vw,48px)/1.05 var(--f);margin:0}.co .cta{margin:0}.co .meta{flex-basis:100%;margin:0}
+.sp details.top{border-top:2px dashed var(--line);padding:20px 0}.sp details.top:last-of-type{border-bottom:2px dashed var(--line)}
+.sp summary{cursor:pointer;font:400 clamp(26px,3.2vw,40px)/1.1 var(--f);list-style:none;display:flex;justify-content:space-between;gap:16px}
+.sp summary::after{content:"+";font:400 26px var(--m)}.sp details[open]>summary::after{content:"–"}
+.sp .in{padding:14px 0 10px}.sp .in details{border-top:1px dashed var(--line);padding:12px 0}.sp .in details summary{font-size:21px}.sp .in details p{margin:10px 0 0;color:var(--mut)}
+.wall{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-top:24px}
+.wc{border:2px solid var(--ink);padding:18px 20px;display:flex;flex-direction:column;gap:8px;min-height:150px}
+.wc .nm{font:italic 400 36px/1.05 var(--f);overflow-wrap:anywhere}.wc .ed{font-size:11.5px;letter-spacing:.18em;color:var(--mut)}
+.wc .ms{font:italic 400 19px/1.25 var(--f);overflow-wrap:anywhere}.wc a.ig{margin-top:auto;font-size:13px;overflow-wrap:anywhere}
+.wempty{border:2px dashed var(--line);padding:clamp(24px,4vw,48px);margin-top:16px}.wempty b{display:block;font:italic 400 clamp(28px,3.4vw,44px)/1.05 var(--f);margin-bottom:8px}.wempty p{margin:0;color:var(--mut)}
+.wmore{margin-top:20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.note{border:2px dashed var(--line);padding:16px 20px;margin-top:20px;font-size:14px;max-width:64ch;color:var(--mut)}.note b{color:var(--ink)}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}.cform{max-width:900px;margin-top:8px}.cmsg{min-height:1.6em;margin:12px 0 0;font-size:14px}
+footer .links{display:flex;gap:6px 22px;flex-wrap:wrap}
+@media(max-width:860px){.hero{min-height:0;gap:40px}.eds,.fg{grid-template-columns:1fr}.fr{aspect-ratio:5/4}.co{align-items:flex-start}}
+
+
+.hero{min-height:calc(100svh - 112px)}
+.eds{display:block;margin-top:40px;border-top:2px solid var(--ink)}
+.ec{border-bottom:1px solid var(--line);padding:6px 0}
+.row{display:grid;grid-template-columns:1fr auto auto;gap:8px 28px;align-items:center;padding:18px 0;cursor:pointer}
+.row h3{font:400 clamp(30px,3.4vw,46px)/1 var(--f);margin:0}.row .ds{display:block;color:var(--mut);font-size:13.5px;margin-top:6px}
+.row .pr{font:500 clamp(20px,2vw,26px) var(--m);white-space:nowrap}
+.row .pick{font-size:12px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--ink);padding:10px 16px;min-width:116px;text-align:center}
+.sr:checked+.row .pick{background:var(--ink);color:var(--bg)}.sr:checked+.row h3{color:var(--acc)}
+.row:hover .pick{background:var(--ink);color:var(--bg)}
+.sr:focus-visible+.row{outline:3px solid var(--acc);outline-offset:4px}
+.ec .am{padding:0 0 18px}
+.steps{list-style:none;padding:0;margin:40px 0 0;display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,3vw,48px)}
+.steps li{border-top:2px solid var(--ink);padding-top:14px}.steps .no{font-size:12px;letter-spacing:.2em;color:var(--mut)}
+.steps h3{font:400 clamp(26px,2.6vw,36px)/1.05 var(--f);margin:10px 0 8px}.steps p{margin:0;color:var(--mut);font-size:14px}
+.sub{max-width:56ch;color:var(--mut);margin:0}
+.two{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,4vw,64px);align-items:start}
+.two h2{font-size:clamp(38px,4.6vw,68px)}
+.side>*:first-child{margin-top:0}
+.faq details.q{border-top:1px dashed var(--line);padding:14px 0}.faq details.q:last-child{border-bottom:1px dashed var(--line)}
+.faq summary{cursor:pointer;font:400 clamp(22px,2.2vw,28px)/1.15 var(--f);list-style:none;display:flex;justify-content:space-between;gap:16px}
+.faq summary::after{content:"+";font:400 22px var(--m)}.faq details[open]>summary::after{content:"–"}
+.faq details p{margin:10px 0 0;color:var(--mut)}
+section+section{padding-top:clamp(56px,8vw,104px)}
+@media(max-width:860px){.hero{min-height:0}.row{grid-template-columns:1fr auto}.row .pick{grid-column:1/-1}.steps,.two{grid-template-columns:1fr}}
+
+/* ===== reference skin: warm cream, Inter, cards, pill buttons ===== */
+:root{--f:'Inter',system-ui,sans-serif;--m:'Inter',system-ui,sans-serif}
+[data-p]{--bg:#FAF6EF;--ink:#2B241F;--mut:#6B6157;--line:rgba(43,36,31,.12);--acc:#A82D24;--cv:#FFFDF9;--sf:#F1E9DC}
+[data-p=char]{--bg:#1C1A17;--ink:#F3ECE0;--mut:#B3AA9C;--line:rgba(243,236,224,.16);--acc:#E0664B;--cv:#25221E;--sf:#2E2A25}
+[data-p=esp]{--bg:#1B0F09;--ink:#F3E9DD;--mut:#B09C8C;--line:rgba(243,233,221,.16);--acc:#E8B35B;--cv:#2A1A12;--sf:#33211A}
+html{scroll-behavior:smooth}
+body{font:400 16px/1.6 var(--f);-webkit-font-smoothing:antialiased}
+.w{max-width:1040px}
+.proto{font:500 11px var(--f);letter-spacing:.08em}.proto button{border-radius:999px;font:600 10.5px var(--f);letter-spacing:.06em}
+header{border-bottom:0;background:var(--bg)}header .w{height:72px}
+.wm{font:800 16px var(--f);letter-spacing:-.01em}.wm span{color:var(--mut);font-weight:600}
+nav{font:600 13px var(--f);letter-spacing:0;text-transform:none;gap:22px}
+.btn{font:600 14px/1 var(--f);letter-spacing:0;text-transform:none;border-radius:999px;padding:16px 26px;background:var(--acc);border-color:var(--acc);color:#fff}
+nav .btn{padding:11px 18px;color:#fff}nav .btn:hover{color:#fff}
+.btn:hover{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.btn.ghost{background:none;color:var(--ink);border-color:var(--line)}.btn.ghost:hover{background:var(--sf);color:var(--ink);border-color:var(--mut)}
+.btn[disabled]{background:var(--acc);border-color:var(--acc);color:#fff;opacity:.4}
+.cta{display:flex;gap:10px;flex-wrap:wrap}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--sf);border-radius:999px;padding:7px 14px;font:600 11px var(--f);letter-spacing:.05em;color:var(--mut)}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--ink)}
+h1,h2{font:800 clamp(34px,5.2vw,56px)/1.06 var(--f);letter-spacing:-.025em;margin:.5em 0 .4em}
+h1{max-width:11ch}h2{font-size:clamp(28px,3.6vw,40px);max-width:20ch}h1 em,h2 em{font-style:normal;color:var(--acc)}
+.hero{min-height:0;display:grid;grid-template-columns:1.25fr 1fr;gap:clamp(24px,5vw,72px);align-items:center;padding:clamp(28px,5vw,72px) clamp(20px,4vw,48px) clamp(28px,4vw,48px)}
+.hero .lede{font-size:17px;color:var(--mut);max-width:44ch;margin:0 0 28px}
+.void{margin:0;aspect-ratio:1/1;max-width:340px;width:100%;justify-self:end;border:2px dashed var(--ink);background:var(--cv);position:relative;display:grid;place-items:center;box-shadow:12px 12px 0 var(--ink)}
+.void .vl{position:absolute;left:14px;top:12px;font:600 11px var(--f);letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.void .vc{font:500 14px var(--f);color:var(--mut)}
+.ticker{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:13.5px;color:var(--mut)}.ticker b{color:var(--ink);font-weight:700}
+section{padding-top:clamp(48px,7vw,88px)}
+section+section{padding-top:clamp(48px,7vw,88px)}
+.k{font:600 11px var(--f)}
+.eds{margin-top:24px;background:var(--cv);border:1px solid var(--line);border-radius:22px;box-shadow:0 10px 26px rgba(10,10,10,.05);padding:8px 28px}
+.ec{border-bottom:1px solid var(--line)}.ec:last-child{border-bottom:0}
+.row{padding:20px 0}.row h3{font:700 clamp(18px,2vw,21px)/1.2 var(--f);margin:0}.row .ds{font-size:14px}
+.row .pr{font:800 clamp(20px,2.2vw,26px) var(--f)}
+.row .pick{border-radius:999px;border:1px solid var(--line);background:var(--sf);color:var(--ink);font:600 13px var(--f);letter-spacing:0;text-transform:none;padding:10px 20px;min-width:104px}
+.row:hover .pick{border-color:var(--mut);background:var(--sf);color:var(--ink)}
+.sr:checked+.row .pick{background:var(--acc);border-color:var(--acc);color:#fff}.sr:checked+.row h3{color:var(--ink)}
+.row .tx{display:block}
+.ec .am{padding:0 0 20px}label{font:600 12px var(--f);letter-spacing:.02em;text-transform:none;color:var(--ink)}
+input[type=text],input[type=email],select,textarea{font:400 16px var(--f);background:var(--sf);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+input[type=text]:focus,input[type=email]:focus,select:focus,textarea:focus{border-color:var(--acc)}
+.co{border-top:0;margin-top:20px;padding:20px 0 0}.co .sum{font:700 clamp(20px,2.4vw,26px)/1.2 var(--f)}
+.fine{font:400 12.5px/1.5 var(--f);letter-spacing:0}.co .meta{max-width:70ch}
+.steps{margin-top:24px;background:var(--cv);border:1px solid var(--line);border-radius:22px;box-shadow:0 10px 26px rgba(10,10,10,.05);padding:28px;gap:28px}
+.steps li{border-top:0;padding-top:0}.steps .no{font:800 13px var(--f);letter-spacing:0;color:var(--mut)}
+.steps h3{font:700 16px/1.3 var(--f);margin:6px 0}.steps p{font-size:14px}
+.sub{font-size:15px}
+.two{grid-template-columns:minmax(0,5fr) minmax(0,7fr)}.two h2{font-size:clamp(28px,3.4vw,38px)}
+.note{border:1px solid var(--line);border-radius:16px;background:var(--cv);padding:16px 20px;font-size:14px}
+.faq details.q{border-top:1px solid var(--line);padding:16px 0}.faq details.q:last-child{border-bottom:1px solid var(--line)}
+.faq summary{font:700 16px/1.35 var(--f)}.faq summary::after{font:400 20px var(--f)}
+.faq details p{font-size:14.5px}
+#wallbox>*{border-radius:22px}
+footer{margin-top:clamp(56px,8vw,100px);background:none;color:var(--ink);padding:32px 0 48px;border-top:1px solid var(--line)}
+footer .big{font:800 15px var(--f);letter-spacing:-.01em;margin:0 0 14px}
+footer .w>div:last-child{font:400 12px var(--f);letter-spacing:0;color:var(--mut);opacity:1}
+@media(max-width:860px){.hero{grid-template-columns:1fr}.void{justify-self:start;max-width:180px;box-shadow:8px 8px 0 var(--ink)}.row{grid-template-columns:1fr auto}.steps,.two{grid-template-columns:1fr}.eds{padding:4px 18px}.steps{padding:22px 20px}}
+
+.faq-item{margin-top:0;padding:0;border-top:1px solid var(--line)}.faq-item:last-of-type{border-bottom:1px solid var(--line)}
+.faq-item summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:16px;align-items:center;padding:16px 0;font:700 13.5px/1.4 var(--f)}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary::after{content:"+";font:400 20px var(--f);color:var(--mut)}.faq-item[open] summary::after{content:"–"}
+.faq-item summary:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.faq-item p{font-size:12.5px;color:var(--mut);margin:0 0 16px;max-width:46ch}
+#faq h2{margin-bottom:18px}
+/* ===== exact reference skin (F) ===== */
+:root{--bg:#FAF6EF;--sf:#F1E9DC;--cv:#FFFDF9;--ink:#2B241F;--mut:#756B60;--line:rgba(43,36,31,.10);--acc:#A82D24}
+[data-p]{--bg:#FAF6EF;--sf:#F1E9DC;--cv:#FFFDF9;--ink:#2B241F;--mut:#756B60;--line:rgba(43,36,31,.10);--acc:#A82D24}
+body{font:400 16px/1.5 'Inter',sans-serif;background:var(--bg)}
+.proto{justify-content:center;text-align:center;padding:7px 16px;font:600 10.5px var(--f);letter-spacing:.04em;background:var(--sf);border-bottom:0}
+.w{max-width:560px;padding:0 22px;margin:0 auto}
+header{background:var(--bg);position:static}header .w{height:auto;padding-top:22px;padding-bottom:0}
+.wm{font:800 15px var(--f);letter-spacing:-.01em}
+.hero{display:block;min-height:0;padding:36px 0 36px;position:relative}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.void{width:56px;height:56px;border:2px dashed var(--ink);background:var(--cv);box-shadow:5px 5px 0 var(--ink);flex-shrink:0;margin:0;max-width:none;aspect-ratio:auto}
+h1{font:800 30px/1.08 var(--f);letter-spacing:-.02em;max-width:11ch;margin:22px 0 0;color:var(--ink)}
+.hero .lede{margin:16px 0 0;font-size:14.5px;color:var(--mut);max-width:42ch;line-height:1.6}
+.cta{margin-top:26px}
+.btn{font:600 13.5px var(--f);padding:13px 22px}
+.btn-primary{background:var(--acc);border-color:var(--acc);color:#fff}.btn-ghost{background:none;border:1px solid var(--line);color:var(--ink)}
+.btn-primary:hover{background:var(--ink);border-color:var(--ink)}
+.ticker{margin-top:8px;padding:16px 0;font-size:12.5px}
+section{padding:44px 0 0;margin:0}section+section{padding-top:44px}
+section:last-of-type{padding-bottom:0}
+h2{font:700 22px/1.25 var(--f);letter-spacing:-.01em;max-width:22ch;margin:12px 0 0}
+.section-sub{font-size:13px;color:var(--mut);margin:8px 0 0;max-width:40ch}
+.card{background:var(--cv);border-radius:22px;border:1px solid var(--line);box-shadow:0 10px 26px rgba(10,10,10,.05);padding:24px;margin-top:24px}
+.eds{display:block;padding:8px 24px}
+.ec{padding:0;border-bottom:1px solid var(--line)}.ec:last-child{border-bottom:0}
+.row{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:16px 0;cursor:pointer}
+.row h3{font:700 15.5px/1.3 var(--f);margin:0}
+.row .ds{font-size:12px;color:var(--mut);margin-top:4px;max-width:26ch}
+.row .pr{font:800 18px var(--f);margin-top:14px}
+.row .pick{margin-top:8px;font:600 11px var(--f);padding:7px 14px;min-width:0;border-radius:999px;background:var(--sf);border:1px solid var(--line);color:var(--ink)}
+.sr:checked+.row .pick{background:var(--acc);border-color:var(--acc);color:#fff}
+.ec .am{padding:0 0 18px}.ec .am label{font:700 11.5px var(--f)}
+.co{display:block;margin-top:16px;border-top:1px solid var(--line);padding:24px}.co .cp-headline{font:700 17px/1.3 var(--f)}
+.cp-foot{margin-top:16px;font-size:10.5px;color:var(--mut);display:flex;justify-content:space-between;padding-top:14px;border-top:1px dashed var(--line)}
+.co .cta{margin-top:18px}.co .meta{margin:14px 0 0;max-width:none}
+.steps{display:flex;flex-direction:column;gap:20px;margin-top:22px;background:none;border:0;box-shadow:none;padding:0;border-radius:0}
+.step{display:flex;gap:14px}.step-no{font:800 13px var(--f);color:#786C5A;flex-shrink:0;width:22px}
+.step-body h3{font:700 13.5px/1.4 var(--f);margin:0}.step-body p{font-size:12.5px;color:var(--mut);margin:4px 0 0;max-width:38ch}
+.note{margin-top:18px;border-radius:16px}
+.cardform{padding:22px}
+footer{margin:0;padding:32px 0 48px;border-top:0;background:none}
+.footer-tagline{font:600 13.5px var(--f);margin:0 0 14px;max-width:none}
+.footer-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:11px;color:#786C5A}
+.footer-row a{color:inherit}
+.fg{grid-template-columns:1fr}
+@media(min-width:900px){
+ .w{max-width:980px;padding:0 40px}
+ header .w{padding-top:36px}
+ .hero{padding:64px 0}.hero-top{max-width:56%}
+ .void{position:absolute;top:20px;right:0;width:220px;height:220px;box-shadow:12px 12px 0 var(--ink)}
+ h1{font-size:52px;max-width:9ch;margin-top:26px}.hero .lede{font-size:16px;max-width:38ch}.cta{margin-top:34px}
+ .btn{font-size:14.5px;padding:15px 26px}.ticker{font-size:13.5px}
+ section,section+section{padding-top:64px}h2{font-size:28px;max-width:26ch}.section-sub{font-size:14px;max-width:48ch}
+ .eds{padding:12px 30px}
+ .row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:24px;padding:20px 0}
+ .row .pr,.row .pick{margin-top:0}.row .ds{max-width:none}
+ .steps{flex-direction:row;gap:24px}.step{flex:1;flex-direction:column;gap:10px}.step-no{width:auto}
+ .fg{grid-template-columns:1fr 1fr}
+}
+/* receipt: one layout spec drives both this DOM view and the PNG export */
+.rc{position:relative;width:320px;height:512px;flex:none;zoom:var(--z);filter:drop-shadow(0 18px 26px rgba(10,10,10,.3)) drop-shadow(0 0 1px var(--rim));animation:pr .9s cubic-bezier(.2,.7,.2,1) both}
+.rc.still{animation:none}.rc>svg{position:absolute;left:0;top:0;display:block}
+.rc .ti{position:absolute;white-space:pre;pointer-events:none;margin:0}
+.rc .stp{position:absolute;box-sizing:border-box;mix-blend-mode:multiply;animation:th .45s .7s cubic-bezier(.3,1.6,.5,1) both}
+.rc.t2 .stp{mix-blend-mode:normal}.rc.still .stp{animation:none}
+.rc .stp i{position:absolute;left:0;right:0;text-align:center;white-space:pre;font-style:normal}
+[data-p=char] .t2,[data-p=esp] .t2{filter:drop-shadow(0 0 1.5px #3DF5FF) drop-shadow(0 0 18px rgba(61,245,255,.28))}
+@keyframes pr{from{opacity:0;translate:0 26px}to{opacity:1;translate:0 0}}
+@keyframes th{from{scale:1.8;opacity:0}to{scale:1;opacity:1}}
+
+.fmt{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}.fmt button{font:600 13px var(--f);color:var(--ink);background:none;border:1px solid var(--line);border-radius:999px;padding:10px 16px;cursor:pointer}
+.fmt button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:#fff}
+#rfp{display:block;max-width:100%;height:auto;border-radius:12px;box-shadow:0 18px 40px rgba(43,36,31,.22)}
+.stage{display:flex;justify-content:center;min-height:200px;padding:20px 0}
+.acts{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+#receipt{padding-top:36px}#receipt .rwrap{display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+#receipt h2{max-width:none;margin:12px 0 0}#receipt .rsub{max-width:46ch;color:var(--mut);font-size:14px;margin:0}
+.vmsg{border:1px solid var(--line);border-radius:16px;background:var(--cv);padding:14px 18px;font-size:14px;margin:18px auto 0;max-width:60ch}
+.btn.o{background:none;color:var(--ink);border:1px solid var(--line)}.btn.o:hover{background:var(--sf);color:var(--ink);border-color:var(--mut)}
+.rc{filter:drop-shadow(0 18px 26px rgba(43,36,31,.28))}
+</style>
+</head>
+<body data-p="paper" data-checkout-endpoint="" data-link-standard="https://bakhriev.gumroad.com/l/jycyns" data-link-more="https://bakhriev.gumroad.com/l/gghbcg" data-link-extra="https://bakhriev.gumroad.com/l/qukzzt" data-amount-param="price" data-receipt-endpoint="" data-wall-endpoint="">
+<div class="proto"><span>PRE-LAUNCH · CHECKOUT NOT OPEN YET · NOTHING IS FOR SALE YET</span><span class="pal" hidden><button data-pal="paper" aria-pressed="true">PAPER</button><button data-pal="char" aria-pressed="false">CHARCOAL</button><button data-pal="esp" aria-pressed="false">ESPRESSO</button></span></div>
+<header><div class="w"><a class="wm" href="#top">NO<span>THING</span></a></div></header>
+<noscript><p style="padding:20px">NOTHING needs JavaScript to show its options. Please turn it on.</p></noscript>
+<main id="top">
+<section id="receipt" hidden aria-labelledby="rh"><div class="w"><div class="rwrap">
+ <div class="eyebrow"><span class="dot"></span>YOUR RECEIPT</div>
+ <h2 id="rh">Thank you. You now own nothing.</h2>
+ <p class="rsub">This receipt was issued after your payment was confirmed. It can’t be edited. Save it, share it, or just keep it.</p>
+ <div class="fmt" id="rfmt" role="group" aria-label="Image format"><button type="button" data-f="receipt" aria-pressed="true">Receipt</button><button type="button" data-f="post" aria-pressed="false">Post 1:1</button><button type="button" data-f="story" aria-pressed="false">Story 9:16</button></div>
+ <div class="stage" id="rlive"></div>
+ <canvas id="rfp" hidden aria-label="Preview of the selected image format"></canvas>
+ <div class="acts"><button class="btn" id="rdl" type="button">Download PNG</button><button class="btn o" id="rsh" type="button">Share</button></div>
+ <p class="fine" id="rstat" role="status" aria-live="polite"></p>
+</div></div></section>
+<div class="w"><div id="rmsg" class="vmsg" role="status" hidden></div></div>
+
+<div class="w">
+<div class="hero">
+ <div class="hero-top"><div class="eyebrow"><span class="dot"></span>001 · NOTHING</div><div class="void" aria-hidden="true"></div></div>
+ <h1>Pay. In return, absolutely nothing.</h1>
+ <p class="lede">Choose how you’d like to pay for it. Three ways, one product, delivered in full. You get a numbered receipt as proof you took part.</p>
+ <div class="cta"><a href="#pay" class="btn btn-primary">Buy nothing</a><a href="#how" class="btn btn-ghost">How it works</a></div>
+</div>
+<div class="ticker"><span>total paid for nothing: <b>$0.00</b></span><span><b>0</b> receipts issued</span></div>
+
+<section id="pay">
+ <div class="eyebrow"><span class="dot"></span>002 · PRICING</div>
+ <h2>Pick the way you pay</h2>
+ <div class="card eds" id="eds" role="radiogroup" aria-label="Choose how to pay for nothing"></div>
+ <div class="card co" id="co" aria-live="polite">
+  <div class="cp-headline" id="cosum">Choose a way to pay.</div>
+  <div class="cp-foot"><span>CHECKOUT</span><span>NOT OPEN YET</span></div>
+  <div class="cta"><button class="btn btn-primary" id="pay-btn" type="button" disabled>Pay for nothing</button></div>
+  <p class="fine meta" id="conote">Checkout isn’t connected yet, so no payment is taken and nothing is issued. When it opens you’ll pay through a payment provider, and your receipt is issued only after that payment is confirmed.</p>
+ </div>
+</section>
+
+<section id="how">
+ <div class="eyebrow"><span class="dot"></span>003 · PROCESS</div>
+ <h2>Three steps to owning nothing</h2>
+ <div class="steps">
+  <div class="step"><div class="step-no">01</div><div class="step-body"><h3>Choose how to pay</h3><p>All three get you the same nothing. The price only changes how you pay for it. Extra lets you go above $10.</p></div></div>
+  <div class="step"><div class="step-no">02</div><div class="step-body"><h3>Pay, and decide who sees (optional)</h3><p>Once checkout opens. Appearing on the Wall is your choice, and your Instagram link only appears if you say so.</p></div></div>
+  <div class="step"><div class="step-no">03</div><div class="step-body"><h3>Receive your receipt</h3><p>Numbered and issued after your payment is confirmed. Download it, share it, or just keep it.</p></div></div>
+ </div>
+</section>
+
+<section id="wall">
+ <div class="eyebrow"><span class="dot"></span>004 · PUBLIC REGISTRY</div>
+ <h2>The Wall of Nothing</h2>
+ <p class="section-sub">For supporters who choose to be on it. Anonymous is the default, and an Instagram link only appears with your separate, explicit yes.</p>
+ <div id="wallbox"></div>
+</section>
+
+<section id="slots">
+ <div class="eyebrow"><span class="dot"></span>005 · SUPPORTER SLOTS</div>
+ <h2>First slots, being prepared</h2>
+ <p class="section-sub">They aren’t open yet, there’s no reservation, and no payment can be made for them. Want to ask what’s coming? Get in touch.</p>
+ <div class="cta" style="margin-top:18px"><a class="btn btn-ghost" href="#contact" data-reason="Slot enquiries">Ask about slots</a></div>
+ <div class="note"><b>Maybe, not a promise.</b> If a separate project ever launches, early supporters may be offered something, such as selected products at cost. Nothing like that exists today.</div>
+</section>
+
+<section id="contact">
+ <div class="eyebrow"><span class="dot"></span>006 · CONTACT</div>
+ <h2>Have something in mind?</h2>
+ <p class="section-sub">Slot questions, partnerships, creative collaborations, ideas, or a request about the Wall. Let’s see what we can make out of nothing.</p>
+ <div class="card cardform"><form class="cform" id="cf" novalidate data-endpoint="">
+   <div class="fg"><div><label for="cn">Name</label><input id="cn" type="text" maxlength="80" autocomplete="name" required></div><div><label for="ce">Email</label><input id="ce" type="email" maxlength="120" autocomplete="email" required></div></div>
+   <label for="cr">Reason for contact</label><select id="cr" required><option value="">Choose one</option><option>Slot enquiries</option><option>Partnerships</option><option>Creative collaborations</option><option>Ideas and proposals</option><option>General enquiries</option><option>Wall listing or removal request</option></select>
+   <label for="cm">Message</label><textarea id="cm" maxlength="1000" required></textarea>
+   <div class="chk"><input type="checkbox" id="cc"><label for="cc">You may use these details to reply to my message. Nothing is sent until I press send.</label></div>
+   <div class="cta"><button class="btn" id="cs" type="submit">Send message</button></div>
+   <p class="cmsg" id="cmsg" role="status" aria-live="polite"></p>
+   <p class="fine" id="cnote">Sending isn’t switched on yet. This form needs a submission endpoint before it can deliver anything.</p>
+  </form></div>
+</section>
+
+<section id="faq">
+ <div class="eyebrow"><span class="dot"></span>007 · QUESTIONS</div>
+ <h2>Before you buy nothing</h2>
+ 
+  <details class="faq-item"><summary>What do I actually receive?</summary><p>After a confirmed purchase: a personalised, numbered digital receipt as proof you took part, which you can download and share. Nothing else. Checkout isn’t open yet, so nobody has bought anything and no real receipts exist.</p></details>
+  <details class="faq-item"><summary>Is it worth anything?</summary><p>No. It has no resale value and it isn’t a financial product. It’s a joke you can keep.</p></details>
+  <details class="faq-item"><summary>Is this an investment?</summary><p>No. Buying NOTHING gives you no equity, ownership, returns or guaranteed future products. If a separate project ever launches, early supporters may be offered something, such as selected products at cost. That isn’t promised, and it doesn’t exist today.</p></details>
+  <details class="faq-item"><summary>Do I have to appear on the Wall?</summary><p>No. Anonymous is the default. Being listed is your explicit choice, and showing an Instagram link is a separate explicit choice. The Wall isn’t open yet.</p></details>
+  <details class="faq-item"><summary>Why would I share my Instagram?</summary><p>Only if you want to be seen with your nothing. We don’t promise followers, clicks or reach.</p></details>
+  <details class="faq-item"><summary>Is checkout active?</summary><p>No. The prices shown are the planned ones, and nothing can be bought yet.</p></details>
+  <details class="faq-item"><summary>What happens to my information?</summary><p>Right now this site stores nothing. The receipt preview lives in your browser tab, and the contact form sends nothing until a submission endpoint is connected. When checkout opens, payment will be handled by a payment provider, and we’ll say exactly what we keep before launch.</p></details>
+  <details class="faq-item"><summary>Can I ask to be removed from the Wall?</summary><p>That’s the intention: once the Wall exists you’ll be able to ask through the contact form, choosing “Wall listing or removal request”. The exact process will be confirmed before launch.</p></details>
+  <details class="faq-item"><summary>What about refunds?</summary><p>To be confirmed before anything is for sale.</p></details>
+ 
+</section>
+</div>
+</main>
+<footer><div class="w"><p class="footer-tagline">We promised to sell you nothing. We’re keeping that promise.</p><div class="footer-row"><span>© 2026 NOTHING</span><span class="links"><a href="#faq">Questions</a> · <a href="#wall">Wall</a> · <a href="#contact">Contact</a></span></div></div></footer>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const FM='"IBM Plex Mono",ui-monospace,monospace',FS='"Instrument Serif",Georgia,serif',FI='"Inter",system-ui,sans-serif';
+/* Three editions. Prices are the confirmed ones; Extra has a $10 minimum and an optional higher amount. */
+const TI=[
+{key:'standard',bnd:'#2B241F',bnt:'#FAF6EF',hs:'#2B241F',ed:'STANDARD',n:'STANDARD NOTHING',l:'$1.49',min:149,pp:'#FFFDF9',pi:'#2B241F',pm:'#756B60',band:null,bd:'#2B241F',bt:'#2B241F',sc:'#A82D24',sw:3,ss:'solid',bg:'#EADFCC',bi:'#2B241F',bm:'#756B60',vs:'#2B241F',vd:'dashed',vf:'#F6F1E6',ac:'#A82D24'},
+{key:'more',bnd:'#A82D24',bnt:'#FFFFFF',hs:'#A82D24',ed:'MORE',n:'MORE NOTHING',l:'$3.57',min:357,pp:'#FFF6E4',pi:'#2B241F',pm:'#756B60',band:'#A82D24',bd:'#A82D24',bt:'#FFFFFF',sc:'#A82D24',sw:5,ss:'double',bg:'#A82D24',bi:'#FAF6EF',bm:'#EBC9C3',vs:'#A82D24',vd:'double',vf:'#FBEBD0',ac:'#A82D24'},
+{key:'extra',bnd:'#1A1630',bnt:'#F2F0FF',hs:'#3DF5FF',ed:'EXTRA',n:'EXTRA NOTHING',l:'FROM $10',min:1000,pp:'#0B0A12',pi:'#F2F0FF',pm:'#A29DBE',band:null,bd:'#3DF5FF',bt:'#3DF5FF',sc:'#FF5A36',sw:3,ss:'solid',neon:1,cy:'#3DF5FF',pk:'#FF4FD8',bg:'#1C1930',bi:'#F2F0FF',bm:'#9A96B8',vs:'#3DF5FF',vd:'dashed',vf:'#12101C',ac:'#FF4FD8'}];
+const SMP=[['Mira','I regret nothing.'],['Jun','Best nothing I never bought.'],['Oz','Mine now.']];
+/* 'preview' never claims payment. 'paid' is used only for data a server has verified . */
+const STATUS={
+ preview:{top:'PREVIEW · SERIES 01',stamp:'NOT PAID',f1:'THIS IS A PREVIEW.',f2:'NOTHING HAS BEEN BOUGHT OR CHARGED.',row2:'PLANNED PRICE · NOT CHARGED',date:'ISSUED '},
+ paid:{top:'SERIES 01',stamp:'PAID',f1:'NOTHING, DELIVERED IN FULL.',f2:'THIS RECEIPT IS PROOF YOU TOOK PART.',row2:'AMOUNT PAID',date:'ISSUED '}};
+const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const mc=document.createElement('canvas').getContext('2d');
+const fnt=(s,ff,wt,it)=>(it?'italic ':'')+wt+' '+s+'px '+(ff==='s'?FS:ff==='i'?FI:FM);
+const rgba=(h,a)=>'rgba('+parseInt(h.slice(1,3),16)+','+parseInt(h.slice(3,5),16)+','+parseInt(h.slice(5,7),16)+','+a+')';
+function tw(tx,f,ls){mc.font=f;if(!ls)return mc.measureText(tx).width;let w=0;for(const ch of tx)w+=mc.measureText(ch).width+ls;return w}
+function wrap(tx,f,w,ml){mc.font=f;const out=[];let cur='';
+ for(const word of tx.split(' ')){const t=cur?cur+' '+word:word;if(mc.measureText(t).width<=w){cur=t;continue}
+  if(cur){out.push(cur);cur=''}
+  for(const ch of word){const t2=cur+ch;if(!cur||mc.measureText(t2).width<=w)cur=t2;else{out.push(cur);cur=ch}}}
+ if(cur||!out.length)out.push(cur);
+ if(out.length>ml){out.length=ml;let l=out[ml-1];while(l&&mc.measureText(l+'…').width>w)l=l.slice(0,-1);out[ml-1]=l+'…'}
+ return out}
+let ZZ='M0 8';for(let x=0;x<320;x+=12)ZZ+='L'+(x+6)+' 0L'+(x+12)+' 8';ZZ+='L320 504';for(let x=320;x>0;x-=12)ZZ+='L'+(x-6)+' 512L'+(x-12)+' 504';ZZ+='Z';
+const clean=(v,max)=>Array.from(String(v).replace(/[\u0000-\u001F\u007F-\u009F]/g,' ').replace(/\s+/g,' ').trim()).slice(0,max).join('');
+function igCheck(v){v=String(v).trim();if(!v)return{ok:true,val:''};
+ if(/\s/.test(v))return{ok:false,msg:'Instagram usernames can’t contain spaces.'};
+ const u=v.charAt(0)==='@'?v.slice(1):v;
+ if(!u)return{ok:false,msg:'Add your username after the @, or leave this blank.'};
+ if(u.indexOf('@')>-1)return{ok:false,msg:'Use just one @, at the very start.'};
+ if(!/^[A-Za-z0-9._]+$/.test(u))return{ok:false,msg:'Usernames can only use letters, numbers, periods and underscores.'};
+ if(u.length>30)return{ok:false,msg:'Instagram usernames are 30 characters at most.'};
+ return{ok:true,val:u}}
+/* Extra: $10 minimum, optional higher amount. req=true means blank is not allowed. Returns cents. */
+function amtCheck(v,req){v=String(v).trim().replace(/^\$/,'');
+ if(!v)return req?{ok:false,msg:'Enter an amount of $10 or more.'}:{ok:true,val:'',cents:1000};
+ if(!/^\d{1,6}(\.\d{1,2})?$/.test(v))return{ok:false,msg:'Please enter an amount like 15 or 12.50.'};
+ const n=parseFloat(v);if(!(n>=10))return{ok:false,msg:'Extra NOTHING starts at $10. Enter $10 or more.'};
+ if(n>100000)return{ok:false,msg:'That’s a lot of nothing. Please enter $100,000 or less.'};
+ return{ok:true,val:n.toFixed(2),cents:Math.round(n*100)}}
+const priceOf=d=>d.mode==='paid'?'$'+d.amt:d.t===2?(d.amt?'$'+Number(d.amt).toFixed(2):'FROM $10'):TI[d.t].l;
+function barsFor(ref,x0,w,y,hh,c){const s=String(ref||'PV-XXXXXX');let seed=2166136261;for(const ch of s){seed^=ch.charCodeAt(0);seed=Math.imul(seed,16777619)>>>0}
+ const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296},out=[];let x=0;
+ while(x<w){const bw=1+Math.floor(rnd()*3),gap=1+Math.floor(rnd()*2);if(x+bw>w)break;out.push({k:'r',x:x0+x,y:y,w:bw,h:hh,fill:c});x+=bw+gap}return out}
+function layout(d){
+ const T=TI[d.t],S=STATUS[d.mode==='paid'?'paid':'preview'],o=8,it=[],pi=T.pi,pm=T.pm,N=T.neon,price=priceOf(d),paid=d.mode==='paid';
+ const tx=(t,x,y,w,lh,s,e)=>it.push(Object.assign({k:'t',tx:t,x:x,y:y+o,w:w,lh:lh,s:s,ff:'i',wt:500,ls:0,c:pm,al:'left',it:0,op:1},e));
+ /* band: edition colour, wordmark, status */
+ tx('NO',24,14,40,18,15,{wt:800,ls:-.2,c:T.bnt,gl:N?T.ac:0,gb:8});
+ tx('THING',24+tw('NO',fnt(15,'i',800),-.2)+1,14,90,18,15,{wt:600,ls:-.2,c:T.bnt,op:.75});
+ tx(S.top,120,15,176,16,9.5,{wt:600,ls:1.4,al:'right',c:T.bnt,op:.85});
+ if(N)it.push({k:'r',x:0,y:44+o,w:320,h:2,fill:T.cy,gl:T.cy,gb:10});
+ /* edition + date */
+ const et='EDITION · '+T.ed,ew=tw(et,fnt(9.5,'i',700),2)+26;
+ it.push({k:'r',x:24,y:58+o,w:ew,h:22,rad:11,bd:N?T.cy:pi,gl:N?T.cy:0,gb:8});
+ tx(et,24,58,ew,22,9.5,{wt:700,ls:2,c:N?T.cy:pi,al:'center',gl:N?T.cy:0,gb:6});
+ tx(d.date?d.date:'NOT YET ISSUED',150,59,146,20,10,{wt:600,ls:.8,al:'right'});
+ /* the person */
+ const nt=d.name||'Your name',nop=d.name?1:.3;let ns=0;
+ for(let s=58;s>=26;s-=2){if(tw(nt,fnt(s,'i',800),-s*.035)<=272){ns=s;break}}
+ let nl=[nt];if(!ns){ns=28;nl=wrap(nt,fnt(28,'i',800),272,2)}
+ const nlh=Math.round(ns*(nl.length>1?1.1:1.04));
+ nl.forEach((l,i)=>tx(l,24,96+i*nlh,272,nlh,ns,{wt:800,ls:-ns*.035,c:pi,op:nop,gl:N&&d.name?T.ac:0,gb:12}));
+ const ly=96+nl.length*nlh+2;
+ tx(paid?'owns':'would own',24,ly,272,24,19,{wt:600,ls:-.2,c:pm});
+ /* the word */
+ let ws=70;while(ws>30&&tw('NOTHING',fnt(ws,'i',800),-ws*.04)>272)ws-=1;
+ const wy=ly+22;
+ it.push({k:'h',tx:'NOTHING',x:24,y:wy+o,w:272,lh:Math.round(ws*.95),s:ws,ls:-ws*.04,c:T.hs,gl:N?T.cy:0,gb:12});
+ it.push({k:'s',cx:238,cy:ly+(ns>=44?11:27)+o,w:106,h:38,one:1,T:T,top:S.stamp,bot:''});
+ /* message (and Extra's thank-you) */
+ let my=wy+Math.round(ws*.95)+20;
+ if(d.msg){const q='“'+d.msg+'”',ml=N?2:3;let best=null;
+  for(const p of [[24,29],[21,26],[18,22],[16,19],[15,18],[14,17]]){const r=wrap(q,fnt(p[0],'i',600),259,9);if(r.length<=ml){best={s:p[0],lh:p[1],lines:r};break}}
+  if(!best)best={s:14,lh:17,lines:wrap(q,fnt(14,'i',600),259,ml)};
+  it.push({k:'r',x:24,y:my+o+2,w:3,h:best.lines.length*best.lh-4,fill:T.ac});
+  best.lines.forEach((l,i)=>tx(l,37,my+i*best.lh,259,best.lh,best.s,{wt:600,c:pi}));my+=best.lines.length*best.lh+8}
+ if(N){wrap('Thank you'+(d.name?', '+d.name:'')+'. Nothing would be nothing without you.',fnt(12,'i',600),272,2).forEach((l,i)=>tx(l,24,my+i*15,272,15,12,{wt:600,c:T.ac,gl:T.ac,gb:6}))}
+ /* details */
+ const y1=Math.max(my+(N?36:12),334);
+ it.push({k:'d',x:24,y:y1+o,w:272,c:pi});
+ tx(T.n,24,y1+8,272,18,12.5,{wt:700,ls:.2,c:pi});tx(price,24,y1+7,272,20,15,{wt:800,c:N?T.cy:pi,al:'right',gl:N?T.cy:0,gb:6});
+ tx(S.row2,24,y1+27,272,15,10,{wt:600,ls:.6});
+ if(d.ig)tx('@'+d.ig,24,y1+42,272,15,10.5,{wt:700,c:T.ac,ls:.3});
+ /* stub: reference number + unique bars */
+ const y2=y1+(d.ig?64:50);
+ it.push({k:'d',x:24,y:y2+o,w:272,c:pi});
+ tx('REFERENCE NO.',24,y2+10,150,12,8.5,{wt:600,ls:1.8});
+ tx(d.ref||'PV-XXXXXX',24,y2+22,150,24,20,{wt:800,ls:-.4,c:N?T.cy:pi,op:d.ref?1:.3,gl:N&&d.ref?T.cy:0,gb:10});
+ barsFor(d.ref,176,120,y2+12+o,34,N?T.cy:pi).forEach(b=>{if(d.ref)it.push(Object.assign(b,{op:.9}))});
+ tx(S.f1,24,y2+54,272,14,9.5,{wt:800,ls:.4,c:pi});tx(S.f2,24,y2+68,272,13,9,{wt:500,ls:.15});
+ return {items:it,band:T.bnd,label:(paid?'Paid receipt, ':'Receipt preview, ')+T.n+' edition, '+(paid?'amount paid ':'planned price ')+price+', reference '+(d.ref||'not yet generated')+', issued to '+(d.name||'no name yet')}}
+const glow=(c,g)=>'0 0 '+g/2+'px '+rgba(c,.9)+', 0 0 '+g+'px '+rgba(c,.6);
+function domItem(it){
+ const e=document.createElement('div'),s=e.style;e.className='ti';e.setAttribute('aria-hidden','true');
+ if(it.k==='t'){s.left=it.x+'px';s.top=it.y+'px';s.width=it.w+'px';s.height=it.lh+'px';s.lineHeight=it.lh+'px';s.fontFamily=it.ff==='s'?FS:it.ff==='i'?FI:FM;s.fontSize=it.s+'px';s.fontWeight=it.wt;s.fontStyle=it.it?'italic':'normal';s.letterSpacing=it.ls+'px';s.color=it.c;s.textAlign=it.al;s.opacity=it.op;if(it.gl)s.textShadow=glow(it.gl,it.gb);e.textContent=it.tx}
+ else if(it.k==='h'){s.left=it.x+'px';s.top=it.y+'px';s.width=it.w+'px';s.height=it.lh+'px';s.lineHeight=it.lh+'px';s.fontFamily=FI;s.fontSize=it.s+'px';s.fontWeight=800;s.letterSpacing=it.ls+'px';s.color='transparent';s.webkitTextStroke='2px '+it.c;if(it.gl)s.filter='drop-shadow(0 0 5px '+rgba(it.gl,.9)+')';e.textContent=it.tx}
+ else if(it.k==='v'){const T=it.T;s.left=it.x+'px';s.top=it.y+'px';s.width=it.w+'px';s.height=it.h+'px';s.boxSizing='border-box';s.background=T.vf;s.border=(T.vd==='double'?'4px double ':'2px dashed ')+T.vs;
+  if(T.neon)s.boxShadow='0 0 7px '+rgba(T.vs,.85)+', inset 0 0 7px '+rgba(T.vs,.4);else s.boxShadow='6px 6px 0 '+T.vs}
+ else if(it.k==='r'){if(it.rad)s.borderRadius=it.rad+'px';s.left=it.x+'px';s.top=it.y+'px';s.width=it.w+'px';s.height=it.h+'px';s.boxSizing='border-box';if(it.fill)s.background=it.fill;if(it.bd)s.border='2px solid '+it.bd;s.opacity=it.op==null?1:it.op;if(it.gl)s.boxShadow='0 0 '+it.gb/2+'px '+rgba(it.gl,.9)+', inset 0 0 '+it.gb/2+'px '+rgba(it.gl,.5)}
+ else if(it.k==='d'){s.left=it.x+'px';s.top=it.y+'px';s.width=it.w+'px';s.height='2px';s.background='repeating-linear-gradient(90deg,'+rgba(it.c,.55)+' 0 6px,transparent 6px 10px)'}
+ else if(it.k==='s'){const T=it.T;e.className='stp';s.left=(it.cx-it.w/2)+'px';s.top=(it.cy-it.h/2)+'px';s.width=it.w+'px';s.height=it.h+'px';s.border=T.sw+'px '+T.ss+' '+T.sc;s.color=T.sc;s.transform='rotate(-8deg)';if(T.neon)s.boxShadow='0 0 6px '+rgba(T.sc,.9)+', inset 0 0 6px '+rgba(T.sc,.5);
+  const a=document.createElement('i'),b=document.createElement('i');
+  a.style.cssText='top:'+(it.one?it.h/2-9-T.sw:it.h/2-8-9-T.sw)+'px;font:800 15px/18px '+FI+';letter-spacing:1.5px;color:'+T.sc+(T.neon?';text-shadow:'+glow(T.sc,8):'');a.textContent=it.top;
+  b.style.cssText='top:'+(it.h/2+10-7-T.sw)+'px;font:800 8.5px/14px '+FI+';letter-spacing:2.55px;color:'+T.sc;b.textContent=it.bot;e.append(a,b)}
+ return e}
+function renderReceipt(d,cls){
+ const T=TI[d.t],L=layout(d),el=document.createElement('div');
+ el.className='rc t'+d.t+(cls?' '+cls:'');el.setAttribute('role','img');el.setAttribute('aria-label',L.label);
+ el.insertAdjacentHTML('beforeend','<svg width="320" height="512" viewBox="0 0 320 512" aria-hidden="true"><defs><clipPath id="zz'+d.t+'"><path d="'+ZZ+'"/></clipPath></defs><path d="'+ZZ+'" fill="'+T.pp+'"/><rect width="320" height="46" fill="'+L.band+'" clip-path="url(#zz'+d.t+')"/></svg>');
+ L.items.forEach(i=>el.appendChild(domItem(i)));return el}
+let SC=1;
+function canvasText(c,it){c.font=fnt(it.s,it.ff,it.wt,it.it);c.fillStyle=it.c;c.textBaseline='middle';c.globalAlpha=it.op;
+ const w=tw(it.tx,c.font,it.ls);let x=it.x;if(it.al==='center')x=it.x+(it.w-w)/2;else if(it.al==='right')x=it.x+it.w-w;
+ const y=it.y+it.lh/2;if(it.gl){c.shadowColor=rgba(it.gl,.95);c.shadowBlur=(it.gb||8)*SC}
+ if(it.ls){for(const ch of it.tx){c.fillText(ch,x,y);x+=c.measureText(ch).width+it.ls}}else c.fillText(it.tx,x,y);c.shadowBlur=0;c.shadowColor='transparent';c.globalAlpha=1}
+function drawReceipt(d,sc){
+ SC=sc;const T=TI[d.t],L=layout(d),cv=document.createElement('canvas');cv.width=320*sc;cv.height=512*sc;
+ const c=cv.getContext('2d');c.scale(sc,sc);c.fillStyle=T.pp;c.fill(new Path2D(ZZ));c.save();c.clip(new Path2D(ZZ));c.fillStyle=L.band;c.fillRect(0,0,320,46);c.restore();
+ for(const it of L.items){
+  if(it.k==='t')canvasText(c,it);
+  else if(it.k==='h'){c.font=fnt(it.s,'i',800,0);c.lineWidth=2;c.strokeStyle=it.c;c.lineJoin='round';c.textBaseline='middle';if(it.gl){c.shadowColor=rgba(it.gl,.95);c.shadowBlur=it.gb*SC*.6}let x=it.x;const y=it.y+it.lh/2;for(const ch of it.tx){c.strokeText(ch,x,y);x+=c.measureText(ch).width+it.ls}c.shadowBlur=0;c.shadowColor='transparent'}
+  else if(it.k==='v'){const t=it.T;if(t.neon){c.shadowColor=rgba(t.vs,.9);c.shadowBlur=7*sc}else{c.fillStyle=t.vs;c.fillRect(it.x+6,it.y+6,it.w,it.h)}
+   c.fillStyle=t.vf;c.fillRect(it.x,it.y,it.w,it.h);c.shadowBlur=0;c.shadowColor='transparent';c.strokeStyle=t.vs;
+   if(t.vd==='double'){c.lineWidth=1.3;c.strokeRect(it.x+.65,it.y+.65,it.w-1.3,it.h-1.3);c.strokeRect(it.x+2.65,it.y+2.65,it.w-5.3,it.h-5.3)}
+   else{if(t.neon){c.shadowColor=rgba(t.vs,.9);c.shadowBlur=7*sc}c.lineWidth=2;c.setLineDash([6,4]);c.strokeRect(it.x+1,it.y+1,it.w-2,it.h-2);c.setLineDash([]);c.shadowBlur=0;c.shadowColor='transparent'}}
+  else if(it.k==='r'){c.globalAlpha=it.op==null?1:it.op;const rr=(x,y,w,h,r)=>{c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()};
+   if(it.fill){c.fillStyle=it.fill;if(it.rad){rr(it.x,it.y,it.w,it.h,it.rad);c.fill()}else c.fillRect(it.x,it.y,it.w,it.h)}
+   if(it.bd){if(it.gl){c.shadowColor=rgba(it.gl,.95);c.shadowBlur=it.gb*sc}c.strokeStyle=it.bd;c.lineWidth=2;if(it.rad){rr(it.x+1,it.y+1,it.w-2,it.h-2,it.rad-1);c.stroke()}else c.strokeRect(it.x+1,it.y+1,it.w-2,it.h-2);c.shadowBlur=0;c.shadowColor='transparent'}c.globalAlpha=1}
+  else if(it.k==='d'){c.fillStyle=rgba(it.c,.55);for(let x=it.x;x<it.x+it.w;x+=10)c.fillRect(x,it.y,Math.min(6,it.x+it.w-x),2)}
+  else if(it.k==='s'){const t=it.T,w=it.w,h=it.h;c.save();c.translate(it.cx,it.cy);c.rotate(-8*Math.PI/180);if(!t.neon)c.globalCompositeOperation='multiply';c.strokeStyle=t.sc;
+   if(t.neon){c.shadowColor=rgba(t.sc,.95);c.shadowBlur=8*sc}
+   if(t.ss==='double'){const u=t.sw/3;c.lineWidth=u;c.strokeRect(-w/2+u/2,-h/2+u/2,w-u,h-u);c.strokeRect(-w/2+t.sw-u/2,-h/2+t.sw-u/2,w-2*t.sw+u,h-2*t.sw+u)}
+   else{c.lineWidth=t.sw;c.strokeRect(-w/2+t.sw/2,-h/2+t.sw/2,w-t.sw,h-t.sw)}
+   c.shadowBlur=0;c.shadowColor='transparent';
+   canvasText(c,{tx:it.top,x:-w/2,y:it.one?-9:-8-9,w:w,lh:18,s:15,ff:'i',wt:800,ls:1.5,c:t.sc,al:'center',it:0,op:1,gl:t.neon?t.sc:0,gb:6});
+   canvasText(c,{tx:it.bot,x:-w/2,y:10-7,w:w,lh:14,s:8.5,ff:'i',wt:800,ls:2.55,c:t.sc,al:'center',it:0,op:1});c.restore()}}
+ return cv}
+/* Share formats: 'receipt' (960x1536), 'post' (1080x1080, Instagram 1:1), 'story' (1080x1920, Instagram 9:16) */
+function compose(d,fmt,sc){
+ const rc=drawReceipt(d,sc||3);if(fmt==='receipt')return rc;
+ const T=TI[d.t],W=1080,H=fmt==='post'?1080:1920,cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');
+ c.fillStyle=T.bg;c.fillRect(0,0,W,H);
+ const th=fmt==='post'?1010:1500,twd=th*320/512,x=(W-twd)/2,y=fmt==='post'?(H-th)/2:(H-th)/2+10;
+ c.imageSmoothingQuality='high';c.shadowColor='rgba(0,0,0,.38)';c.shadowBlur=56;c.shadowOffsetY=24;c.drawImage(rc,x,y,twd,th);
+ c.shadowColor='transparent';c.shadowBlur=0;c.shadowOffsetY=0;c.textBaseline='middle';
+ const ctr=(s,yy,f,col,ls)=>{c.font=f;c.fillStyle=col;let xx=W/2-tw(s,f,ls)/2;for(const ch of s){c.fillText(ch,xx,yy);xx+=c.measureText(ch).width+ls}};
+ if(fmt==='story'){ctr('NOTHING',112,'800 40px '+FI,T.bi,-1);ctr('Pay. In return, absolutely nothing.',H-118,'800 38px '+FI,T.bi,-.8)}
+ return cv}
+const fmtDate=d=>String(d.getDate()).padStart(2,'0')+' '+MON[d.getMonth()]+' '+d.getFullYear();
+const fmtISO=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s);return m?m[3]+' '+MON[+m[2]-1]+' '+m[1]:''};
+const fontsReady=()=>document.fonts?Promise.all([fnt(20,'i',400,0),fnt(20,'i',500,0),fnt(20,'i',600,0),fnt(20,'i',700,0),fnt(20,'i',800,0)].map(f=>document.fonts.load(f))).catch(()=>{}):Promise.resolve();
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+function wirePalette(){document.querySelectorAll('[data-pal]').forEach(b=>b.addEventListener('click',()=>{document.body.dataset.p=b.dataset.pal;document.querySelectorAll('[data-pal]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)))}))}
+function wireReveal(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});document.querySelectorAll('.rv').forEach(e=>io.observe(e))}
+const fieldErr=(eid,iid,m)=>{const e=$(eid),i=$(iid);if(e)e.textContent=m;if(i){if(m)i.setAttribute('aria-invalid','true');else i.removeAttribute('aria-invalid')}};
+
+/* Integration points (all empty until a real backend exists):
+   body[data-checkout-endpoint]  POST {edition, amountCents} -> {url} of a payment-provider checkout page (https only)
+   body[data-wall-endpoint]      GET -> JSON array of verified, consented supporters
+   form#cf[data-endpoint]        POST {name,email,reason,message}                                           */
+const st={sel:-1,amt:'10'};
+const body=document.body,ep=a=>(body.getAttribute(a)||'').trim();
+function renderEditions(){
+ const box=$('eds');box.replaceChildren();
+ const D=['The standard way to pay for nothing.','A little more money. The same amount of nothing.','At least $10, or anything above it. Still nothing.'];
+ const P=['$1.49','$3.57','$10 minimum'];
+ TI.forEach((T,i)=>{const w=document.createElement('div');w.className='ec';
+  w.innerHTML='<input class="sr" type="radio" name="ed" id="e'+i+'" value="'+T.key+'"><label class="row" for="e'+i+'"><span class="tx"><h3></h3><span class="ds"></span></span><span class="pr"></span><span class="pick" aria-hidden="true">Select</span></label>';
+  w.querySelector('h3').textContent=T.n.charAt(0)+T.n.slice(1).toLowerCase().replace('nothing','NOTHING');
+  w.querySelector('.pr').textContent=P[i];w.querySelector('.ds').textContent=D[i];
+  if(i===2){const a=document.createElement('div');a.className='am';a.innerHTML='<label for="am">Your amount ($10 or more)</label><input id="am" type="text" inputmode="decimal" maxlength="9" autocomplete="off" aria-describedby="amerr" value="'+st.amt+'"><div class="err" id="amerr" role="alert"></div>';w.appendChild(a)}
+  box.appendChild(w)});
+ box.querySelectorAll('.sr').forEach((r,i)=>{r.checked=i===st.sel;r.addEventListener('change',()=>{st.sel=i;sync();box.querySelectorAll('.pick').forEach((p,j)=>p.textContent=j===i?'Selected':'Select')})});
+ const am=$('am');am.addEventListener('input',e=>{st.amt=e.target.value;if(amtCheck(st.amt,true).ok)fieldErr('amerr','am','');sync()});
+ am.addEventListener('blur',()=>{const a=amtCheck(st.amt,true);fieldErr('amerr','am',a.ok?'':a.msg)});
+ am.addEventListener('focus',()=>{if(st.sel!==2){st.sel=2;box.querySelectorAll('.sr')[2].checked=true;sync()}})}
+function order(){if(st.sel<0)return null;const T=TI[st.sel];
+ if(st.sel===2){const a=amtCheck(st.amt,true);return a.ok?{key:T.key,n:T.n,cents:a.cents,ok:true}:{key:T.key,n:T.n,ok:false}}
+ return{key:T.key,n:T.n,cents:T.min,ok:true}}
+const money=c=>'$'+(c/100).toFixed(2);
+/* ---- in-page overlay checkout (Gumroad / Lemon Squeezy): body[data-link-standard|more|extra] = https product URL, body[data-amount-param] = query name for a chosen amount (optional) ---- */
+const OVH=/^(?:[a-z0-9-]+\.)?(?:gumroad\.com|lemonsqueezy\.com|gum\.co)$/i;
+function ovLink(o){if(!o||!o.ok)return'';const v=(document.body.getAttribute('data-link-'+o.key)||'').trim();if(!v)return'';
+ try{const u=new URL(v);if(u.protocol!=='https:'||!OVH.test(u.hostname))return'';const pm=(document.body.getAttribute('data-amount-param')||'').trim();
+  if(pm&&o.key==='extra')u.searchParams.set(pm,(o.cents/100).toFixed(2));return u.href}catch(e){return''}}
+/* If the provider's script did not take over the click, never let the browser navigate away: stay on the page and say so. */
+document.addEventListener('DOMContentLoaded',()=>{try{ovInit()}catch(e){}});
+window.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[data-gumroad-overlay-checkout]');if(a&&!e.defaultPrevented){e.preventDefault();$('cosum').textContent='Checkout couldn’t open on this page. You haven’t been charged.';$('pay-btn').disabled=false}});
+const OVA={};let OVS=0;
+function ovInit(){['standard','more','extra'].forEach(k=>{const v=(document.body.getAttribute('data-link-'+k)||'').trim();if(!v||OVA[k])return;
+  let u;try{u=new URL(v)}catch(e){return}if(u.protocol!=='https:'||!OVH.test(u.hostname))return;
+  const a=document.createElement('a');a.href=u.href;a.className='gumroad-button lemonsqueezy-button';a.setAttribute('data-gumroad-overlay-checkout','true');a.setAttribute('aria-hidden','true');a.tabIndex=-1;a.style.cssText='position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden';a.textContent='checkout';document.body.appendChild(a);OVA[k]=a});
+ if(!Object.keys(OVA).length||OVS)return;OVS=1;const s=document.createElement('script');const ls=Object.values(OVA).some(a=>/lemonsqueezy/.test(a.href));
+ s.src=ls?'https://assets.lemonsqueezy.com/lemon.js':'https://gumroad.com/js/gumroad.js';s.async=true;s.onerror=()=>{OVS=-1};document.head.appendChild(s)}
+function ovOpen(href,key){ovInit();const a=OVA[key];if(!a||OVS===-1){$('cosum').textContent='Sorry, checkout couldn’t load. You haven’t been charged.';return}a.href=href;a.click()}
+function sync(){const o=order(),s=$('cosum'),pay=$('pay-btn'),live=!!ep('data-checkout-endpoint')||!!ovLink(o);
+ s.textContent=!o?'Choose a way to pay.':o.ok?o.n.charAt(0)+o.n.slice(1).toLowerCase().replace('nothing','NOTHING')+' · '+money(o.cents):'Enter a valid amount of $10 or more.';
+ pay.disabled=!(o&&o.ok&&live);$('conote').hidden=live;
+ const sf=$('cf');$('cs').disabled=!(sf.getAttribute('data-endpoint')||'').trim();$('cnote').hidden=!$('cs').disabled}
+async function pay(){const o=order(),url=ep('data-checkout-endpoint'),ov=ovLink(o);if(!o||!o.ok)return;if(ov&&!url){return ovOpen(ov,o.key)}if(!url)return;const b=$('pay-btn');b.disabled=true;
+ try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({edition:o.key,amountCents:o.cents})});
+  const j=await r.json();if(!r.ok||typeof j.url!=='string'||!/^https:\/\//.test(j.url))throw 0;location.assign(j.url)}
+ catch(e){$('cosum').textContent='Sorry, checkout couldn’t start. You haven’t been charged.';b.disabled=false}}
+/* ---- Wall: renders only verified + consented entries; all text via textContent; IG links built from a validated username ---- */
+const WALL={all:[],shown:20,page:20},EDK={standard:'STANDARD NOTHING',more:'MORE NOTHING',extra:'EXTRA NOTHING'};
+function wallClean(list){const out=[];(Array.isArray(list)?list:[]).forEach(e=>{
+ if(!e||e.verified!==true||e.listed!==true||typeof e.nickname!=='string'||!EDK[e.edition])return;const nm=clean(e.nickname,18);if(!nm)return;
+ const o={nm:nm,ed:EDK[e.edition]};if(e.showMessage===true&&typeof e.message==='string'){const m=clean(e.message,80);if(m)o.ms=m}
+ if(e.instagramConsent===true&&typeof e.instagram==='string'){const g=igCheck(e.instagram);if(g.ok&&g.val)o.ig=g.val}out.push(o)});return out}
+function renderWall(){const box=$('wallbox');box.replaceChildren();
+ if(!WALL.all.length){const d=document.createElement('div');d.className='wempty';d.innerHTML='<b>The Wall is being prepared.</b><p></p>';d.querySelector('p').textContent='It opens once there are real, verified supporters who have chosen to appear on it. Until then it’s empty, on purpose.';box.appendChild(d);return}
+ const g=document.createElement('div');g.className='wall';g.setAttribute('role','list');
+ WALL.all.slice(0,WALL.shown).forEach(e=>{const c=document.createElement('div');c.className='wc';c.setAttribute('role','listitem');
+  const a=document.createElement('div');a.className='nm';a.textContent=e.nm;const b=document.createElement('div');b.className='ed';b.textContent=e.ed;c.append(a,b);
+  if(e.ms){const m=document.createElement('div');m.className='ms';m.textContent='“'+e.ms+'”';c.appendChild(m)}
+  if(e.ig){const l=document.createElement('a');l.className='ig';l.href='https://www.instagram.com/'+encodeURIComponent(e.ig)+'/';l.target='_blank';l.rel='noopener noreferrer nofollow ugc';l.textContent='@'+e.ig;l.setAttribute('aria-label','Instagram profile of '+e.nm+' (opens in a new tab)');c.appendChild(l)}
+  g.appendChild(c)});box.appendChild(g);
+ const f=document.createElement('div');f.className='wmore';const n=document.createElement('span');n.className='fine';n.setAttribute('role','status');n.textContent='Showing '+Math.min(WALL.shown,WALL.all.length)+' of '+WALL.all.length;f.appendChild(n);
+ if(WALL.all.length>WALL.shown){const b=document.createElement('button');b.className='btn o';b.type='button';b.textContent='Show more';b.addEventListener('click',()=>{WALL.shown+=WALL.page;renderWall();const gg=$('wallbox').querySelectorAll('.wc');if(gg[WALL.shown-WALL.page])gg[WALL.shown-WALL.page].setAttribute('tabindex','-1'),gg[WALL.shown-WALL.page].focus()});f.appendChild(b)}
+ box.appendChild(f)}
+function setWall(list){WALL.all=wallClean(list);WALL.shown=WALL.page;renderWall()}
+async function loadWall(){const u=ep('data-wall-endpoint');if(!u)return;try{const r=await fetch(u,{credentials:'omit'});if(!r.ok)throw 0;setWall(await r.json())}catch(e){}}
+/* ---- Contact form: sends only if an endpoint is configured; never shows success without a real OK response ---- */
+async function submitContact(e){e.preventDefault();const m=$('cmsg'),f=$('cf'),u=(f.getAttribute('data-endpoint')||'').trim();m.style.color='var(--acc)';
+ const v={name:clean($('cn').value,80),email:$('ce').value.trim(),reason:$('cr').value,message:$('cm').value.trim()};
+ const bad=!v.name?['Please add your name.','cn']:!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email)?['Please enter a valid email address so we can reply.','ce']:!v.reason?['Please choose a reason for contact.','cr']:v.message.length<5?['Please write a short message.','cm']:!$('cc').checked?['Please tick the box so we know we may reply.','cc']:null;
+ if(bad){m.textContent=bad[0];$(bad[1]).focus();return}
+ if(!u){m.textContent='Sending isn’t switched on yet, so nothing was sent.';return}
+ m.style.color='inherit';m.textContent='Sending…';$('cs').disabled=true;
+ try{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(v)});if(!r.ok)throw 0;m.textContent='Thanks, your message was sent.';f.reset()}
+ catch(x){m.style.color='var(--acc)';m.textContent='Sorry, your message couldn’t be sent. Nothing was delivered. Please try again later.'}
+ $('cs').disabled=false}
+renderEditions();renderWall();sync();loadWall();wirePalette();wireReveal();
+$('pay-btn').addEventListener('click',pay);$('cf').addEventListener('submit',submitContact);
+document.querySelectorAll('[data-reason]').forEach(a=>a.addEventListener('click',()=>{$('cr').value=a.dataset.reason}));
+/* Small print lives in collapsible blocks: links to them open the block first */
+function openFor(id){const el=id&&document.getElementById(id);if(!el)return;let n=el;while(n&&n!==document.body){if(n.tagName==='DETAILS')n.open=true;n=n.parentElement}setTimeout(()=>el.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'}),30)}
+document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',()=>{const id=a.getAttribute('href').slice(1);if(['faq','wall','slots','contact','small'].includes(id)){if(id==='small'&&false)return;openFor(id)}}));
+if(location.hash)openFor(location.hash.slice(1));
+fontsReady().then(()=>{renderEditions();sync()});
+
+/* ---- receipt: shown ONLY after a purchase the server has verified (body[data-receipt-endpoint]) ---- */
+const rs={snap:null,fmt:'receipt'};
+const rsay=(m,bad)=>{const e=$('rstat');e.textContent=m;e.style.color=bad?'var(--acc)':'inherit'};
+function rrender(){const d=rs.snap;if(!d)return;
+ if(rs.fmt==='receipt'){$('rlive').hidden=false;$('rfp').hidden=true;$('rlive').replaceChildren(renderReceipt(d,''))}
+ else{$('rlive').hidden=true;const cv=compose(d,rs.fmt,1.5),fp=$('rfp');fp.width=cv.width;fp.height=cv.height;fp.getContext('2d').drawImage(cv,0,0);fp.style.width=Math.min(340,cv.width)+'px';fp.hidden=false}
+ document.querySelectorAll('#rfmt button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.f===rs.fmt)))}
+const RSUF={receipt:'',post:'-1x1',story:'-9x16'},rname=()=>'NOTHING-'+rs.snap.ref+RSUF[rs.fmt]+'.png';
+async function rblob(){await fontsReady();const cv=compose(rs.snap,rs.fmt,3);return new Promise((ok,no)=>cv.toBlob(b=>b&&b.size>4000?ok(b):no(new Error('empty')),'image/png'))}
+async function rdownload(){if(!rs.snap)return;try{const b=await rblob(),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=rname();document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);rsay('Saved '+rname()+'. If it opened in a new tab instead, press and hold the image to save it.')}catch(e){rsay('Sorry, the image couldn’t be made. Please try again.',1)}}
+async function rshare(){if(!rs.snap)return;let b;try{b=await rblob()}catch(e){rsay('Sorry, the image couldn’t be made. Please try again.',1);return}
+ let f=null;try{f=new File([b],rname(),{type:'image/png'})}catch(e){}
+ if(f&&navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'NOTHING · Series 01',text:'I own nothing.'});rsay('Shared.')}
+  catch(e){if(e&&e.name==='AbortError')rsay('Sharing cancelled. Nothing was shared.');else rsay('Sharing didn’t work. Use Download PNG instead.',1)}}
+ else rsay('This browser can’t share images directly. Use Download PNG instead.')}
+function paidMode(j){const T=TI.findIndex(t=>t.key===j.edition),ig=typeof j.instagram==='string'?igCheck(j.instagram):{ok:true,val:''};
+ const okAmt=Number.isInteger(j.amountCents)&&T>=0&&j.amountCents>=TI[T].min&&j.amountCents<=10000000;
+ if(j.verified!==true||T<0||!okAmt||!/^S01-[A-Z0-9]{6,12}$/.test(String(j.ref))||!fmtISO(j.date)||typeof j.nickname!=='string'||!clean(j.nickname,18)||!ig.ok)return false;
+ rs.snap={mode:'paid',t:T,name:clean(j.nickname,18),msg:typeof j.message==='string'?clean(j.message,80):'',ig:ig.val,amt:(j.amountCents/100).toFixed(2),ref:j.ref,date:fmtISO(j.date)};
+ $('receipt').hidden=false;$('rmsg').hidden=true;fontsReady().then(()=>{rrender();$('receipt').scrollIntoView({behavior:'auto',block:'start'})});rsay('Your receipt is ready. Choose a format, then download or share.');return true}
+async function loadPaid(){const u=(document.body.getAttribute('data-receipt-endpoint')||'').trim(),m=/^#r=([A-Za-z0-9_-]{8,128})$/.exec(location.hash);if(!m)return;
+ const v=$('rmsg');v.hidden=false;
+ if(!u){v.textContent='This page can’t load purchased receipts yet, and a link alone never proves a purchase.';return}
+ v.textContent='Checking your receipt…';
+ try{const r=await fetch(u+'?token='+encodeURIComponent(m[1]),{credentials:'omit'});if(!r.ok)throw 0;const j=await r.json();if(!paidMode(j))throw 0}
+ catch(e){v.textContent='We couldn’t verify this receipt, so none is shown.'}}
+$('rfmt').addEventListener('click',e=>{const b=e.target.closest('button');if(b){rs.fmt=b.dataset.f;rrender()}});
+$('rdl').addEventListener('click',rdownload);$('rsh').addEventListener('click',rshare);
+
+loadPaid();
+window.NOTHING={paidMode:paidMode,sync:sync,setWall:setWall,state:st,order:order};
+
+})();
+</script>
+</body>
+</html>
