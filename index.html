@@ -565,14 +565,17 @@ function ovLink(o){if(!o||!o.ok)return'';const v=(document.body.getAttribute('da
   if(pm&&o.key==='extra')u.searchParams.set(pm,(o.cents/100).toFixed(2));return u.href}catch(e){return''}}
 /* If the provider's script did not take over the click, never let the browser navigate away: stay on the page and say so. */
 document.addEventListener('DOMContentLoaded',()=>{try{ovInit()}catch(e){}});
-window.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[data-gumroad-overlay-checkout]');if(a&&!e.defaultPrevented){e.preventDefault();$('cosum').textContent='Checkout couldn’t open on this page. You haven’t been charged.';$('pay-btn').disabled=false}});
+window.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[data-gumroad-overlay-checkout]');if(a&&!e.defaultPrevented){e.preventDefault();$('cosum').textContent='Checkout couldn’t open on this page. You haven’t been charged. [script:'+(OVS===2?'loaded':OVS===-1?'blocked':'pending')+', buttons:'+Object.keys(OVA).length+', gumroad:'+(typeof window.GumroadOverlay)+']';$('pay-btn').disabled=false}});
 const OVA={};let OVS=0;
 function ovInit(){['standard','more','extra'].forEach(k=>{const v=(document.body.getAttribute('data-link-'+k)||'').trim();if(!v||OVA[k])return;
   let u;try{u=new URL(v)}catch(e){return}if(u.protocol!=='https:'||!OVH.test(u.hostname))return;
   const a=document.createElement('a');a.href=u.href;a.className='gumroad-button lemonsqueezy-button';a.setAttribute('data-gumroad-overlay-checkout','true');a.setAttribute('aria-hidden','true');a.tabIndex=-1;a.style.cssText='position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden';a.textContent='checkout';document.body.appendChild(a);OVA[k]=a});
  if(!Object.keys(OVA).length||OVS)return;OVS=1;const s=document.createElement('script');const ls=Object.values(OVA).some(a=>/lemonsqueezy/.test(a.href));
- s.src=ls?'https://assets.lemonsqueezy.com/lemon.js':'https://gumroad.com/js/gumroad.js';s.async=true;s.onerror=()=>{OVS=-1};document.head.appendChild(s)}
-function ovOpen(href,key){ovInit();const a=OVA[key];if(!a||OVS===-1){$('cosum').textContent='Sorry, checkout couldn’t load. You haven’t been charged.';return}a.href=href;a.click()}
+ s.src=ls?'https://assets.lemonsqueezy.com/lemon.js':'https://gumroad.com/js/gumroad.js';s.async=true;s.onerror=()=>{OVS=-1};s.onload=()=>{OVS=2};document.head.appendChild(s)}
+function ovOpen(href,key){ovInit();const a=OVA[key];if(!a||OVS===-1){$('cosum').textContent='Sorry, checkout couldn’t load. You haven’t been charged.';return}a.href=href;
+ if(OVS===2){a.click();return}$('cosum').textContent='Opening checkout…';const sc=document.querySelector('script[src*="gumroad.js"],script[src*="lemon.js"]');
+ const t=setTimeout(()=>{$('cosum').textContent='Sorry, checkout couldn’t load. You haven’t been charged.'},8000);
+ if(sc)sc.addEventListener('load',()=>{clearTimeout(t);setTimeout(()=>a.click(),150)},{once:true})}
 function sync(){const o=order(),s=$('cosum'),pay=$('pay-btn'),live=!!ep('data-checkout-endpoint')||!!ovLink(o);
  s.textContent=!o?'Choose a way to pay.':o.ok?o.n.charAt(0)+o.n.slice(1).toLowerCase().replace('nothing','NOTHING')+' · '+money(o.cents):'Enter a valid amount of $10 or more.';
  pay.disabled=!(o&&o.ok&&live);$('conote').hidden=live;
