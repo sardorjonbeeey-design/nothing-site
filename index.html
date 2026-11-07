@@ -315,7 +315,7 @@ footer{margin:0;padding:32px 0 48px;border-top:0;background:none}
   <p class="fine meta" id="conote">Checkout isn’t connected yet, so no payment is taken and nothing is issued. When it opens you’ll pay through a payment provider, and your receipt is issued only after that payment is confirmed.</p>
   <details id="claim" class="claim" hidden><summary>Already paid? Get your receipt</summary>
    <form class="cform" id="clf" novalidate>
-    <div class="fg"><div><label for="cl-k">License key (shown on your Gumroad page)</label><input id="cl-k" type="text" maxlength="64" autocomplete="off" autocapitalize="off" spellcheck="false" required></div><div><label for="cl-n">Name on your receipt</label><input id="cl-n" type="text" maxlength="18" autocomplete="nickname" required></div></div>
+    <div class="fg"><div><label for="cl-k">License key (on your purchase page)</label><input id="cl-k" type="text" maxlength="64" autocomplete="off" autocapitalize="off" spellcheck="false" required></div><div><label for="cl-n">Name on your receipt</label><input id="cl-n" type="text" maxlength="18" autocomplete="nickname" required></div></div>
     <div class="fg"><div><label for="cl-m">Message (optional, 80 characters)</label><input id="cl-m" type="text" maxlength="80"></div><div><label for="cl-i">Instagram (optional)</label><input id="cl-i" type="text" maxlength="31" autocapitalize="off" spellcheck="false"></div></div>
     <p class="fine">Your receipt can be claimed once per payment and can’t be edited afterwards.</p>
     <div class="cta"><button class="btn btn-primary" id="clb" type="submit">Get my receipt</button></div>
@@ -580,7 +580,7 @@ function ovOpen(href){CKL=document.activeElement;
   m.style.cssText='position:fixed;inset:0;z-index:1000;background:rgba(20,16,12,.55);display:flex;align-items:center;justify-content:center;padding:12px';
   const c=document.createElement('div');c.style.cssText='background:var(--bg,#faf6ef);border-radius:20px;width:min(560px,100%);height:min(88vh,780px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)';
   const hd=document.createElement('div');hd.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font:600 14px var(--f,system-ui)';
-  const t=document.createElement('span');t.textContent='Checkout · secure payment by Gumroad';const x=document.createElement('button');x.type='button';x.className='btn btn-ghost';x.textContent='Close';x.style.padding='6px 14px';x.addEventListener('click',ckClose);hd.append(t,x);
+  const t=document.createElement('span');t.textContent='Secure checkout';const x=document.createElement('button');x.type='button';x.className='btn btn-ghost';x.textContent='Close';x.style.padding='6px 14px';x.addEventListener('click',ckClose);hd.append(t,x);
   const f=document.createElement('iframe');f.title='Checkout';f.setAttribute('allow','payment *');f.setAttribute('referrerpolicy','strict-origin-when-cross-origin');f.style.cssText='flex:1;border:0;width:100%;background:#fff';
   c.append(hd,f);m.appendChild(c);m.addEventListener('click',e=>{if(e.target===m)ckClose()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!m.hidden)ckClose()});document.body.appendChild(m);CKM=m}
  CKM.querySelector('iframe').src=href;CKM.hidden=false;document.documentElement.style.overflow='hidden';CKM.querySelector('button').focus()}
@@ -655,7 +655,7 @@ function claimBase(){const v=(document.body.getAttribute('data-claim-endpoint')|
 function claimInit(){const b=claimBase();if(!b)return;$('claim').hidden=false;if(!(document.body.getAttribute('data-receipt-endpoint')||'').trim())document.body.setAttribute('data-receipt-endpoint',b+'/receipt')}
 async function claimSubmit(e){e.preventDefault();const b=claimBase(),m=$('clmsg'),btn=$('clb');if(!b)return;m.style.color='var(--acc)';
  const key=$('cl-k').value.trim(),nm=clean($('cl-n').value,18);
- if(!/^[A-Za-z0-9-]{8,64}$/.test(key)){m.textContent='Enter the license key from your Gumroad page.';return}
+ if(!/^[A-Za-z0-9-]{8,64}$/.test(key)){m.textContent='Enter the license key from your purchase page.';return}
  if(!nm){m.textContent='Enter the name for your receipt.';return}
  btn.disabled=true;m.textContent='Checking your payment…';
  try{const r=await fetch(b+'/claim',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({licenseKey:key,nickname:nm,message:$('cl-m').value,instagram:$('cl-i').value})});
