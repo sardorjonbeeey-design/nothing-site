@@ -310,7 +310,7 @@ footer{margin:0;padding:32px 0 48px;border-top:0;background:none}
  <div class="card co" id="co" aria-live="polite">
   <div class="cp-headline" id="cosum">Choose a way to pay.</div>
   <div class="cp-foot"><span>CHECKOUT</span><span>NOT OPEN YET</span></div>
-  <div class="cta" style="position:relative"><button class="btn btn-primary" id="pay-btn" type="button" disabled>Pay for nothing</button><a id="pay-ov" class="gumroad-button lemonsqueezy-button" data-gumroad-overlay-checkout="true" href="#pay" tabindex="-1" aria-hidden="true" hidden style="position:absolute;left:0;top:0;width:var(--pw,100%);height:100%;opacity:0;z-index:2;cursor:pointer"> </a></div>
+  <div class="cta"><button class="btn btn-primary" id="pay-btn" type="button" disabled>Pay for nothing</button></div>
   <p class="fine meta" id="conote">Checkout isn’t connected yet, so no payment is taken and nothing is issued. When it opens you’ll pay through a payment provider, and your receipt is issued only after that payment is confirmed.</p>
  </div>
 </section>
@@ -563,25 +563,23 @@ const OVH=/^(?:[a-z0-9-]+\.)?(?:gumroad\.com|lemonsqueezy\.com|gum\.co)$/i;
 function ovLink(o){if(!o||!o.ok)return'';const v=(document.body.getAttribute('data-link-'+o.key)||'').trim();if(!v)return'';
  try{const u=new URL(v);if(u.protocol!=='https:'||!OVH.test(u.hostname))return'';const pm=(document.body.getAttribute('data-amount-param')||'').trim();
   if(pm&&o.key==='extra')u.searchParams.set(pm,(o.cents/100).toFixed(2));return u.href}catch(e){return''}}
-/* If the provider's script did not take over the click, never let the browser navigate away: stay on the page and say so. */
-document.addEventListener('DOMContentLoaded',()=>{try{ovInit()}catch(e){}});
-function ovGuard(){if(ovGuard.on)return;ovGuard.on=1;window.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a[data-gumroad-overlay-checkout]');if(a&&!e.defaultPrevented){e.preventDefault();$('cosum').textContent='Checkout couldn’t open on this page. You haven’t been charged. [v4 target:'+(e.target.id||e.target.tagName)+', script:'+(OVS===2?'loaded':OVS===-1?'blocked':'pending')+', buttons:'+Object.keys(OVA).length+', gumroad:'+(typeof window.GumroadOverlay)+']';$('pay-btn').disabled=false}});}
-const OVA={};let OVS=0;
-function ovInit(){{const ov=$('pay-ov'),f=['standard','more','extra'].map(k=>(document.body.getAttribute('data-link-'+k)||'').trim()).find(Boolean);if(ov&&f&&ov.getAttribute('href')==='#pay')ov.setAttribute('href',f)}['standard','more','extra'].forEach(k=>{const v=(document.body.getAttribute('data-link-'+k)||'').trim();if(!v||OVA[k])return;
-  let u;try{u=new URL(v)}catch(e){return}if(u.protocol!=='https:'||!OVH.test(u.hostname))return;
-  const a=document.createElement('a');a.href=u.href;a.className='gumroad-button lemonsqueezy-button';a.setAttribute('data-gumroad-overlay-checkout','true');a.setAttribute('aria-hidden','true');a.tabIndex=-1;a.style.cssText='position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden';a.textContent='checkout';document.body.appendChild(a);OVA[k]=a});
- if(!Object.keys(OVA).length||OVS)return;OVS=1;const s=document.createElement('script');const ls=Object.values(OVA).some(a=>/lemonsqueezy/.test(a.href));
- s.src=ls?'https://assets.lemonsqueezy.com/lemon.js':'https://gumroad.com/js/gumroad.js';s.async=true;s.onerror=()=>{OVS=-1;ovGuard()};s.onload=()=>{OVS=2;ovGuard();try{sync()}catch(e){}};document.head.appendChild(s)}
-function ovOpen(href,key){ovInit();const a=OVA[key];if(!a||OVS===-1){$('cosum').textContent='Sorry, checkout couldn’t load. You haven’t been charged.';return}a.href=href;
- if(OVS===2){a.click();return}$('cosum').textContent='Opening checkout…';const sc=document.querySelector('script[src*="gumroad.js"],script[src*="lemon.js"]');
- const t=setTimeout(()=>{$('cosum').textContent='Sorry, checkout couldn’t load. You haven’t been charged.'},8000);
- if(sc)sc.addEventListener('load',()=>{clearTimeout(t);setTimeout(()=>a.click(),150)},{once:true})}
+/* ---- in-page checkout: the provider's hosted checkout opens inside a modal frame on this page (never leaves the page) ---- */
+let CKM=null,CKL=null;
+function ckClose(){if(CKM){CKM.hidden=true;CKM.querySelector('iframe').src='about:blank';document.documentElement.style.overflow='';if(CKL){try{CKL.focus()}catch(e){}}}}
+function ovOpen(href){CKL=document.activeElement;
+ if(!CKM){const m=document.createElement('div');m.id='ckm';m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-label','Checkout');
+  m.style.cssText='position:fixed;inset:0;z-index:1000;background:rgba(20,16,12,.55);display:flex;align-items:center;justify-content:center;padding:12px';
+  const c=document.createElement('div');c.style.cssText='background:var(--bg,#faf6ef);border-radius:20px;width:min(560px,100%);height:min(88vh,780px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)';
+  const hd=document.createElement('div');hd.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:12px 16px;font:600 14px var(--f,system-ui)';
+  const t=document.createElement('span');t.textContent='Checkout · secure payment by Gumroad';const x=document.createElement('button');x.type='button';x.className='btn btn-ghost';x.textContent='Close';x.style.padding='6px 14px';x.addEventListener('click',ckClose);hd.append(t,x);
+  const f=document.createElement('iframe');f.title='Checkout';f.setAttribute('allow','payment *');f.setAttribute('referrerpolicy','strict-origin-when-cross-origin');f.style.cssText='flex:1;border:0;width:100%;background:#fff';
+  c.append(hd,f);m.appendChild(c);m.addEventListener('click',e=>{if(e.target===m)ckClose()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!m.hidden)ckClose()});document.body.appendChild(m);CKM=m}
+ CKM.querySelector('iframe').src=href;CKM.hidden=false;document.documentElement.style.overflow='hidden';CKM.querySelector('button').focus()}
 function sync(){const o=order(),s=$('cosum'),pay=$('pay-btn'),live=!!ep('data-checkout-endpoint')||!!ovLink(o);
  s.textContent=!o?'Choose a way to pay.':o.ok?o.n.charAt(0)+o.n.slice(1).toLowerCase().replace('nothing','NOTHING')+' · '+money(o.cents):'Enter a valid amount of $10 or more.';
  pay.disabled=!(o&&o.ok&&live);$('conote').hidden=live;
- {const ov=$('pay-ov'),L=ovLink(o);if(ov){if(L&&OVS===2&&!ep('data-checkout-endpoint')){ov.href=L;ov.style.setProperty('--pw',pay.offsetWidth+'px');ov.hidden=false}else ov.hidden=true}}
  const sf=$('cf');$('cs').disabled=!(sf.getAttribute('data-endpoint')||'').trim();$('cnote').hidden=!$('cs').disabled}
-async function pay(){const o=order(),url=ep('data-checkout-endpoint'),ov=ovLink(o);if(!o||!o.ok)return;if(ov&&!url){return ovOpen(ov,o.key)}if(!url)return;const b=$('pay-btn');b.disabled=true;
+async function pay(){const o=order(),url=ep('data-checkout-endpoint'),ov=ovLink(o);if(!o||!o.ok)return;if(ov&&!url){return ovOpen(ov)}if(!url)return;const b=$('pay-btn');b.disabled=true;
  try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({edition:o.key,amountCents:o.cents})});
   const j=await r.json();if(!r.ok||typeof j.url!=='string'||!/^https:\/\//.test(j.url))throw 0;location.assign(j.url)}
  catch(e){$('cosum').textContent='Sorry, checkout couldn’t start. You haven’t been charged.';b.disabled=false}}
