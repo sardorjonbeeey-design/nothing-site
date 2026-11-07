@@ -275,9 +275,10 @@ footer{margin:0;padding:32px 0 48px;border-top:0;background:none}
 .vmsg{border:1px solid var(--line);border-radius:16px;background:var(--cv);padding:14px 18px;font-size:14px;margin:18px auto 0;max-width:60ch}
 .btn.o{background:none;color:var(--ink);border:1px solid var(--line)}.btn.o:hover{background:var(--sf);color:var(--ink);border-color:var(--mut)}
 .rc{filter:drop-shadow(0 18px 26px rgba(43,36,31,.28))}
+.claim{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}.claim summary{cursor:pointer;font-weight:600}.claim .cform{margin-top:12px}
 </style>
 </head>
-<body data-p="paper" data-checkout-endpoint="" data-link-standard="https://bakhriev.gumroad.com/l/jycyns" data-link-more="https://bakhriev.gumroad.com/l/gghbcg" data-link-extra="https://bakhriev.gumroad.com/l/qukzzt" data-amount-param="price" data-receipt-endpoint="" data-wall-endpoint="">
+<body data-p="paper" data-checkout-endpoint="" data-link-standard="https://bakhriev.gumroad.com/l/jycyns" data-link-more="https://bakhriev.gumroad.com/l/gghbcg" data-link-extra="https://bakhriev.gumroad.com/l/qukzzt" data-amount-param="price" data-receipt-endpoint="" data-claim-endpoint="" data-wall-endpoint="">
 <div class="proto"><span>PRE-LAUNCH · CHECKOUT NOT OPEN YET · NOTHING IS FOR SALE YET</span><span class="pal" hidden><button data-pal="paper" aria-pressed="true">PAPER</button><button data-pal="char" aria-pressed="false">CHARCOAL</button><button data-pal="esp" aria-pressed="false">ESPRESSO</button></span></div>
 <header><div class="w"><a class="wm" href="#top">NO<span>THING</span></a></div></header>
 <noscript><p style="padding:20px">NOTHING needs JavaScript to show its options. Please turn it on.</p></noscript>
@@ -312,6 +313,14 @@ footer{margin:0;padding:32px 0 48px;border-top:0;background:none}
   <div class="cp-foot"><span>CHECKOUT</span><span>NOT OPEN YET</span></div>
   <div class="cta"><button class="btn btn-primary" id="pay-btn" type="button" disabled>Pay for nothing</button></div>
   <p class="fine meta" id="conote">Checkout isn’t connected yet, so no payment is taken and nothing is issued. When it opens you’ll pay through a payment provider, and your receipt is issued only after that payment is confirmed.</p>
+  <details id="claim" class="claim" hidden><summary>Already paid? Get your receipt</summary>
+   <form class="cform" id="clf" novalidate>
+    <div class="fg"><div><label for="cl-k">License key (shown on your Gumroad page)</label><input id="cl-k" type="text" maxlength="64" autocomplete="off" autocapitalize="off" spellcheck="false" required></div><div><label for="cl-n">Name on your receipt</label><input id="cl-n" type="text" maxlength="18" autocomplete="nickname" required></div></div>
+    <div class="fg"><div><label for="cl-m">Message (optional, 80 characters)</label><input id="cl-m" type="text" maxlength="80"></div><div><label for="cl-i">Instagram (optional)</label><input id="cl-i" type="text" maxlength="31" autocapitalize="off" spellcheck="false"></div></div>
+    <p class="fine">Your receipt can be claimed once per payment and can’t be edited afterwards.</p>
+    <div class="cta"><button class="btn btn-primary" id="clb" type="submit">Get my receipt</button></div>
+    <p class="cmsg" id="clmsg" role="status" aria-live="polite"></p>
+   </form></details>
  </div>
 </section>
 
@@ -641,7 +650,20 @@ function paidMode(j){const T=TI.findIndex(t=>t.key===j.edition),ig=typeof j.inst
  if(j.verified!==true||T<0||!okAmt||!/^S01-[A-Z0-9]{6,12}$/.test(String(j.ref))||!fmtISO(j.date)||typeof j.nickname!=='string'||!clean(j.nickname,18)||!ig.ok)return false;
  rs.snap={mode:'paid',t:T,name:clean(j.nickname,18),msg:typeof j.message==='string'?clean(j.message,80):'',ig:ig.val,amt:(j.amountCents/100).toFixed(2),ref:j.ref,date:fmtISO(j.date)};
  $('receipt').hidden=false;$('rmsg').hidden=true;fontsReady().then(()=>{rrender();$('receipt').scrollIntoView({behavior:'auto',block:'start'})});rsay('Your receipt is ready. Choose a format, then download or share.');return true}
-async function loadPaid(){const u=(document.body.getAttribute('data-receipt-endpoint')||'').trim(),m=/^#r=([A-Za-z0-9_-]{8,128})$/.exec(location.hash);if(!m)return;
+/* ---- claim: buyer enters the Gumroad license key; the receipt server verifies it with Gumroad and issues a signed receipt (once per payment) ---- */
+function claimBase(){const v=(document.body.getAttribute('data-claim-endpoint')||'').trim();try{const u=new URL(v);return(u.protocol==='https:'||u.hostname==='localhost')?u.origin:''}catch(e){return''}}
+function claimInit(){const b=claimBase();if(!b)return;$('claim').hidden=false;if(!(document.body.getAttribute('data-receipt-endpoint')||'').trim())document.body.setAttribute('data-receipt-endpoint',b+'/receipt')}
+async function claimSubmit(e){e.preventDefault();const b=claimBase(),m=$('clmsg'),btn=$('clb');if(!b)return;m.style.color='var(--acc)';
+ const key=$('cl-k').value.trim(),nm=clean($('cl-n').value,18);
+ if(!/^[A-Za-z0-9-]{8,64}$/.test(key)){m.textContent='Enter the license key from your Gumroad page.';return}
+ if(!nm){m.textContent='Enter the name for your receipt.';return}
+ btn.disabled=true;m.textContent='Checking your payment…';
+ try{const r=await fetch(b+'/claim',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({licenseKey:key,nickname:nm,message:$('cl-m').value,instagram:$('cl-i').value})});
+  const j=await r.json().catch(()=>({}));if(!r.ok||typeof j.token!=='string'){m.textContent=(typeof j.message==='string'&&j.message)||'We couldn’t issue a receipt. You haven’t been charged anything extra.';btn.disabled=false;return}
+  m.textContent='';$('cl-k').value='';ckClose();location.hash='r='+j.token;await loadPaid();btn.disabled=false}
+ catch(err){m.textContent='Couldn’t reach the receipt server. Try again in a minute.';btn.disabled=false}}
+$('clf').addEventListener('submit',claimSubmit);claimInit();
+async function loadPaid(){const u=(document.body.getAttribute('data-receipt-endpoint')||'').trim(),m=/^#r=([A-Za-z0-9_.-]{8,2000})$/.exec(location.hash);if(!m)return;
  const v=$('rmsg');v.hidden=false;
  if(!u){v.textContent='This page can’t load purchased receipts yet, and a link alone never proves a purchase.';return}
  v.textContent='Checking your receipt…';
