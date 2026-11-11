@@ -1,0 +1,38 @@
+services:
+  game-server:
+    build:
+      context: ..
+      dockerfile: game_server/Dockerfile
+    env_file:
+      - .env
+    restart: unless-stopped
+    expose:
+      - "8080"
+    volumes:
+      - game_uploads:/app/ZAMIN_FK_MANAGEMENT/game_server/uploads
+    healthcheck:
+      test: ["CMD","node","-e","fetch('http://127.0.0.1:8080/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      game-server:
+        condition: service_healthy
+    environment:
+      GAME_DOMAIN: ${GAME_DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+volumes:
+  game_uploads:
+  caddy_data:
+  caddy_config:
