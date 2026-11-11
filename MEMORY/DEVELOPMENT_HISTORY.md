@@ -21,3 +21,16 @@ Chronological record. Append entries; do not erase earlier history.
 - Match results are probabilistic and influenced mostly by squad strength.
 - League activates when at least 10 clubs exist.
 - Starting budget and detailed balance remain undecided.
+
+## 2026-11-11 — Isolated game server and client (recorded retrospectively)
+- An isolated Node.js game server (game_server/) and mobile client (game_client/) were added after the club-setup prototype. This was not recorded in memory at the time.
+
+## 2026-11-11 — Move to dedicated repository
+- Project moved to repository sardorjonbeeey-design/nothing-site, branch zamin-fk-management. Owner instructed that all work stays on this branch. Earlier references to branch zamin-management-isolated and the ZAMIN_FK_MANAGEMENT/ folder are historical.
+
+## 2026-11-11 — Local verification phase
+- Owner approved a verification-only phase: no production, no Neon/live database, no Telegram Mini App integration, no deployment, no new gameplay features, no design or balance changes.
+- Fixed three defects: client static files returned 500; x-frame-options conflicted with the Telegram frame-ancestors policy; seed script failed on PostgreSQL.
+- Added integration tests (throwaway local PostgreSQL, mock/dev authentication) and an emulated mobile browser smoke test.
+- Results: unit 19 passed; integration 22 passed; mobile smoke 54 checks passed. Untested areas and known issues recorded in game_server/VERIFICATION_STATUS.md.
+- Known design/balance issues were observed and deliberately left unchanged pending owner decisions.

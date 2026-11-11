@@ -27,7 +27,7 @@ function rateLimit(key,limit=60,windowMs=60000){
 function cors(req,res){
  const origin=req.headers.origin;
  if(origin&&config.webOrigin&&origin===config.webOrigin){res.setHeader('access-control-allow-origin',origin);res.setHeader('vary','Origin');res.setHeader('access-control-allow-headers','authorization,content-type,x-dev-user-id');res.setHeader('access-control-allow-methods','GET,POST,OPTIONS');}
- res.setHeader('x-frame-options','DENY');res.setHeader('referrer-policy','no-referrer');res.setHeader('permissions-policy','camera=(),microphone=(),geolocation=()');
+ res.setHeader('content-security-policy',"frame-ancestors https://web.telegram.org https://*.telegram.org https://t.me");res.setHeader('referrer-policy','no-referrer');res.setHeader('permissions-policy','camera=(),microphone=(),geolocation=()');
 }
 async function ownedClub(clientOrDb,clubId,userId,lock=false){
  const result=await clientOrDb.query('SELECT * FROM clubs WHERE id=$1 AND owner_user_id=$2'+(lock?' FOR UPDATE':''),[clubId,userId]);
@@ -132,7 +132,7 @@ async function handle(req,res){
  cors(req,res);
  if(req.method==='OPTIONS'){res.writeHead(204);return res.end();}
  const url=new URL(req.url,'http://localhost'),path=url.pathname;
- if(req.method==='GET'&&staticFiles[path]){const file=staticFiles[path],bytes=await fs.readFile(path.join(clientRoot,file));res.writeHead(200,{'content-type':staticTypes[pathModule.extname(file)],'cache-control':file==='index.html'?'no-cache':'public,max-age=300','x-content-type-options':'nosniff'});return res.end(bytes);}
+ if(req.method==='GET'&&staticFiles[path]){const file=staticFiles[path],bytes=await fs.readFile(pathModule.join(clientRoot,file));res.writeHead(200,{'content-type':staticTypes[pathModule.extname(file)],'cache-control':file==='index.html'?'no-cache':'public,max-age=300','x-content-type-options':'nosniff'});return res.end(bytes);}
  if(req.method==='GET'&&path==='/health')return json(res,200,{ok:true,service:'zamin-fk-game-server'});
  if(req.method==='GET'&&path==='/ready'){await assertGameSchema(db());return json(res,200,{ok:true,database:true,schema:true,seeded:true});}
  if(req.method==='GET'&&path.startsWith('/uploads/')){const file=await readCrest(path.slice('/uploads/'.length));res.writeHead(200,{'content-type':file.type,'cache-control':'public,max-age=31536000,immutable','x-content-type-options':'nosniff'});return res.end(file.bytes);}

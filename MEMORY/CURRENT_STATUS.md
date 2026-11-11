@@ -1,29 +1,31 @@
 # Current Status
 
 Last updated: 2026-11-11
-Branch: zamin-management-isolated
-Phase: foundation and independent prototype
+Repository: sardorjonbeeey-design/nothing-site
+Branch: zamin-fk-management
+Phase: isolated server + client, locally verified
 Production connection: NONE
 Integration approval: NOT GRANTED
 
-## Completed / recorded
-- [x] Main game concept and baseline documented in project guidelines.
-- [x] Initial read-only audit recorded in AUDIT.md.
-- [x] Independent memory structure prepared in MEMORY/.
-- [x] Owner-approved decisions separated from open questions.
-- [x] Isolation and no-integration rules recorded.
+## What exists
+- prototype/ — original browser-only club-setup demo (localStorage). Superseded by game_client/. IMPLEMENTED / UNVERIFIED.
+- game_server/ — Node.js API and PostgreSQL schema: auth, clubs, squad, lineup, transfers, upgrades, missions, league, fixtures, match simulation.
+- game_client/ — mobile-first single-page client served by the game server.
+- game_server/deploy/ — Docker, Caddy and cloud guides. NOT EXECUTED.
 
-## Existing prototype
-A standalone HTML/CSS/JavaScript club-setup prototype exists in ZAMIN_FK_MANAGEMENT/prototype/. It includes a club identity form, crest preview/upload, dashboard and placeholder UZS / development-point balances.
+## Verification (2026-11-11, local only)
+VERIFIED locally against a throwaway local PostgreSQL, with mock/dev authentication:
+- Unit tests: 19 passed.
+- Integration tests of the complete game loop: 22 passed.
+- Emulated mobile browser smoke test (Pixel 7 and 360 px): 54 checks passed.
+Three defects were found and fixed (client static files returned 500, frame-header conflict, seed script failed). Details, untested areas and known issues: game_server/VERIFICATION_STATUS.md.
 
-Verification: source files were inspected, but no successful live-browser test is recorded. Treat as IMPLEMENTED / UNVERIFIED until tested.
+NOT verified: real phone, real Telegram, Docker/Caddy, hosted database, load and security.
 
-## Next steps
-1. Verify the prototype on a mobile browser without changing existing project files.
-2. Create a separate player-and-squad prototype using mock data only.
-3. Test Starting XI selection, positions and formation interaction.
-4. Record playtest observations and update OPEN_QUESTIONS.md.
-5. Proceed to economy and player development prototypes after squad testing.
+## Next steps (PROPOSED, awaiting owner)
+1. Owner decisions on balance and competition (see OPEN_QUESTIONS.md and game_server/OPEN_DECISIONS.md): opening budget, starter-squad fairness, UZS income, one club per user, league/season format.
+2. Then address the known issues listed in VERIFICATION_STATUS.md.
+3. Event-driven match visualisation (approved decision 3 is only partly met).
 
 ## Boundaries
-Do not connect Telegram authentication, live bot, existing backend, production database, supporter economy or existing squad/community systems. No merge, deployment or integration without explicit owner approval.
+Do not connect the live Telegram Mini App, live bot, existing backend, production or Neon database, supporter economy or existing community systems. No merge, deployment or integration without explicit owner approval.

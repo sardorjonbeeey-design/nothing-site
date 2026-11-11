@@ -16,6 +16,11 @@ Independent Node.js API and PostgreSQL schema for the management-game candidate.
 5. Run npm install, npm run db:migrate, npm run db:seed, npm test, then npm start.
 6. Set WEB_ORIGIN to the exact game origin before production use.
 
+## Local verification
+- `npm test` — unit tests; no database required.
+- `npm run test:integration` — full game loop. Requires `INTEGRATION_DATABASE_URL` pointing at a throwaway PostgreSQL database named zamin_game on localhost. The test resets that database and refuses any non-local host. Never point it at Neon or a shared database.
+- `node scripts/mobile-smoke.cjs http://127.0.0.1:<port>` — emulated mobile browser check against a local development server (`NODE_ENV=development`, `ALLOW_DEV_AUTH=true`). Requires Playwright, which is not a project dependency.
+
 ## Authentication
 Production requests use Telegram Mini App initData sent as JSON to POST /api/auth/telegram. The server validates Telegram's HMAC signature and freshness, then issues a short-lived signed bearer token. Never put the bot token or session secret in browser code. For isolated local testing only, ALLOW_DEV_AUTH=true permits x-dev-user-id; this is rejected outside NODE_ENV=development.
 
