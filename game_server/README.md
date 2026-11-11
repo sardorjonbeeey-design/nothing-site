@@ -19,7 +19,18 @@ Independent Node.js API and PostgreSQL schema for the management-game candidate.
 ## Local verification
 - `npm test` — unit tests; no database required.
 - `npm run test:integration` — full game loop. Requires `INTEGRATION_DATABASE_URL` pointing at a throwaway PostgreSQL database named zamin_game on localhost. The test resets that database and refuses any non-local host. Never point it at Neon or a shared database.
-- `node scripts/mobile-smoke.cjs http://127.0.0.1:<port>` — emulated mobile browser check against a local development server (`NODE_ENV=development`, `ALLOW_DEV_AUTH=true`). Requires Playwright, which is not a project dependency.
+- `node scripts/mobile-smoke.cjs http://127.0.0.1:<port> postgresql://postgres@localhost:<port>/zamin_game` — emulated mobile browser check against a local development server (`NODE_ENV=development`, `ALLOW_DEV_AUTH=true`) on a freshly migrated and seeded local database. Requires Playwright, which is not a project dependency.
+
+Users cannot start matches, so both the integration test and the smoke script move kick-off times into the past directly in the local database and then wait for the server's own scheduler. There is no API or setting that accelerates a match.
+
+## League schedule and scheduler
+- The league is created when the 10th club exists: 18 rounds, 90 fixtures, every opponent home and away.
+- One round per day at 20:00 Asia/Tashkent (computed in PostgreSQL with that IANA zone, never from the server's local timezone). Matchdays 1–9, a rest day on day 10, matchdays 11–19.
+- A match lasts 60 seconds. `src/matches.js` runs a scheduler inside the server process: it sleeps until the next fixture's kick-off + 60 s, then settles every due fixture in kick-off order, one transaction each, and updates standings, Development Points and missions. It starts with the server, needs no user to be online and settles anything missed during downtime at start-up.
+- Settlement uses `FOR UPDATE SKIP LOCKED`, so several server instances can run without settling a fixture twice.
+- `SCHEDULER_MAX_IDLE_MS` (default 15000) only sets how often an idle scheduler looks for newly created fixtures. It does not change kick-off or settlement times.
+- Friendlies are created only from an accepted challenge, are settled by the same scheduler, and never change standings, league progression, Development Points or missions. A match occupies [kick-off, kick-off + 60 s); a friendly cannot overlap a league match or another friendly of either club. When a league is created, an already accepted friendly in a league slot is cancelled.
+- On opening, the client shows the club's latest completed match first (newest unviewed result, otherwise the latest result), with the report and earlier results, then continues to the dashboard. Result history and the viewed state live in the database (`fixture_result_views`); opening the game only reads.
 
 ## Authentication
 Production requests use Telegram Mini App initData sent as JSON to POST /api/auth/telegram. The server validates Telegram's HMAC signature and freshness, then issues a short-lived signed bearer token. Never put the bot token or session secret in browser code. For isolated local testing only, ALLOW_DEV_AUTH=true permits x-dev-user-id; this is rejected outside NODE_ENV=development.
@@ -46,7 +57,11 @@ Production requests use Telegram Mini App initData sent as JSON to POST /api/aut
 - POST /api/clubs/:clubId/leagues/ensure
 - GET /api/clubs/:clubId/league
 - GET /api/clubs/:clubId/fixtures
-- POST /api/fixtures/:fixtureId/play
+- GET /api/clubs/:clubId/results, GET /api/clubs/:clubId/results/:fixtureId, POST /api/clubs/:clubId/results/viewed
+- GET /api/clubs/:clubId/opponents
+- GET and POST /api/clubs/:clubId/friendlies, POST /api/clubs/:clubId/friendlies/:requestId/accept|decline|cancel
+
+No route starts or settles a match; see "League schedule and scheduler".
 
 The game client is served by the same origin at /, /app.js, /styles.css and /config.js. Uploaded crest images are stored in the server's persistent uploads directory.
 

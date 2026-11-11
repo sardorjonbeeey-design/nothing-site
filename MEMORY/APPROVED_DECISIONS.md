@@ -9,6 +9,14 @@ Only decisions explicitly accepted by the owner belong here.
 4. APPROVED — Match results are randomized but depend mostly on squad level; stronger squads have better odds, not guaranteed wins.
 5. APPROVED — Create a league when 10 or more clubs have been created.
 
+## League schedule and matches (approved 2026-11-11)
+19. APPROVED — 10-club league, home and away against every opponent: 18 matchdays. Matchdays 1–9, full rest day on day 10, matchdays 11–19; 19 calendar days.
+20. APPROVED — Each club plays exactly one league match per day. All five fixtures kick off at 20:00 Asia/Tashkent (IANA zone, not server local time).
+21. APPROVED — A match lasts exactly 60 seconds; the server settles all five at 20:01 whether or not anyone is online. Users cannot start, delay, accelerate, replay or settle league matches.
+22. APPROVED — Friendlies use a challenge with a proposed date and time; only accepted requests create fixtures; they never change standings and must not overlap either club's one-minute league slot or other fixtures.
+23. APPROVED — On opening, the game shows the club's latest completed match first, with access to the report and earlier results; history and viewed state are stored server-side; opening never triggers simulation.
+Note: decision 3 (accelerated / speed-up view) is superseded for league matches by the fixed 60-second, server-settled match.
+
 ## Club and players
 6. APPROVED — Club identity includes name and crest/logo upload.
 7. APPROVED — No in-game logo editor; provide an editable external-generation prompt and upload flow.

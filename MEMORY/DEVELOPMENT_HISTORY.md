@@ -34,3 +34,10 @@ Chronological record. Append entries; do not erase earlier history.
 - Added integration tests (throwaway local PostgreSQL, mock/dev authentication) and an emulated mobile browser smoke test.
 - Results: unit 19 passed; integration 22 passed; mobile smoke 54 checks passed. Untested areas and known issues recorded in game_server/VERIFICATION_STATUS.md.
 - Known design/balance issues were observed and deliberately left unchanged pending owner decisions.
+
+## 2026-11-11 — League scheduling, friendlies and opening result screen
+- Owner finalised the league rules: one league match per club per day at 20:00 Asia/Tashkent, 18 matchdays over 19 days with a rest day on day 10, 60-second matches settled by the server at 20:01, no user control over league matches; friendlies through an accepted challenge; the latest result shown first when the game opens.
+- Implemented: migration 003, double round-robin schedule, in-process scheduler (src/matches.js), removal of the manual play route, results and viewed-state endpoints, friendly request endpoints, client fixtures/results/friendlies pages and the opening result screen.
+- The single round-robin with a Play button (45 fixtures) is replaced.
+- Results: unit 22 passed; integration 29 subtests passed; mobile smoke 111 checks passed. See game_server/VERIFICATION_STATUS.md.
+- Provisional choices made during implementation are listed in game_server/OPEN_DECISIONS.md for owner confirmation.

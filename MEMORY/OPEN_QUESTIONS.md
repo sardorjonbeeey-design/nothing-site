@@ -16,11 +16,10 @@ Everything here is OPEN unless explicitly approved. Do not implement a proposed 
 - Club progression beyond player development.
 
 ## Competition and simulation
-- League format and maximum number of clubs.
-- Single or double round-robin.
-- Season length, fixture cadence and tie-break rules.
+- Maximum number of clubs and additional leagues.
+- Tie-break rules; what happens after a season ends.
 - Handling clubs joining mid-season.
-- Match duration and speed controls.
+- Whether lineups freeze at kick-off; whether a pitch view is shown during the live minute.
 - Match-event model and probability formula.
 - Influence of formation, tactics, positions, fatigue and fitness.
 - Match simulation validation and replay.

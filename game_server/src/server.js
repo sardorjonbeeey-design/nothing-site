@@ -6,9 +6,9 @@ import {config} from './config.js';
 import {requireDb,inTransaction,assertIsolatedDatabase,assertGameSchema,pool} from './db.js';
 import {authenticate,telegramLogin} from './auth.js';
 import {json,readJson,HttpError,safeString,colour,uuid} from './http.js';
-import {simulateMatch} from './simulation.js';
 import {saveCrest,readCrest} from './uploads.js';
-import {generateRoundRobin} from './league.js';
+import {leagueSchedule,LEAGUE_TIMEZONE,LEAGUE_KICKOFF_TIME,MATCH_DURATION_SECONDS} from './league.js';
+import {awardDevelopmentPoints,startScheduler} from './matches.js';
 import {saleValueUzs,upgradeCost,qualityForOverall,marketValueUzs} from './economy.js';
 
 const db=()=>requireDb();
@@ -65,68 +65,46 @@ async function makeClub(userId,input){
   return {club,players:selected};
  });
 }
+const LEAGUE_LOCK=8111001;
+// Creates the single league season once 10 clubs exist. Day 1 is the next calendar day in Asia/Tashkent;
+// every fixture gets its fixed 20:00 Tashkent kick-off here and is later settled only by the scheduler.
 async function ensureLeague(client){
- await client.query('SELECT pg_advisory_xact_lock(8111001)');
- const existing=await client.query("SELECT id FROM leagues WHERE status='active' LIMIT 1");
+ await client.query('SELECT pg_advisory_xact_lock($1)',[LEAGUE_LOCK]);
+ const existing=await client.query('SELECT id FROM leagues WHERE starts_on IS NOT NULL ORDER BY created_at DESC LIMIT 1');
  if(existing.rowCount)return existing.rows[0].id;
  const clubs=await client.query('SELECT id FROM clubs ORDER BY created_at ASC,id ASC LIMIT 10');
  const total=await client.query('SELECT COUNT(*)::int AS count FROM clubs');
  if(Number(total.rows[0].count)<10)return null;
- const league=(await client.query("INSERT INTO leagues(name,season_number,status) VALUES('ZAMIN FK League',1,'active') RETURNING id")).rows[0];
+ const league=(await client.query("INSERT INTO leagues(name,season_number,status,starts_on) VALUES('ZAMIN FK League',1,'active',(NOW() AT TIME ZONE $1)::date+1) RETURNING id,starts_on::text AS starts_on",[LEAGUE_TIMEZONE])).rows[0];
  const ids=clubs.rows.map(r=>r.id);
  for(const id of ids)await client.query('INSERT INTO league_members(league_id,club_id) VALUES($1,$2)',[league.id,id]);
- const rounds=generateRoundRobin(ids);
- for(const round of rounds)for(const fixture of round){
-  await client.query('INSERT INTO fixtures(league_id,round_number,home_club_id,away_club_id) VALUES($1,$2,$3,$4)',[league.id,fixture.roundNumber,fixture.homeClubId,fixture.awayClubId]);
+ for(const fixture of leagueSchedule(ids)){
+  await client.query("INSERT INTO fixtures(league_id,kind,round_number,day_number,home_club_id,away_club_id,kickoff_at) VALUES($1,'league',$2,$3::int,$4,$5,(($6::date+($3::int-1))+$7::time) AT TIME ZONE $8)",
+   [league.id,fixture.roundNumber,fixture.dayNumber,fixture.homeClubId,fixture.awayClubId,league.starts_on,LEAGUE_KICKOFF_TIME,LEAGUE_TIMEZONE]);
  }
+ // A friendly accepted before the league existed gives way to a league match in the same slot.
+ await client.query("WITH c AS (UPDATE fixtures fr SET status='cancelled' WHERE fr.kind='friendly' AND fr.status='scheduled' AND EXISTS(SELECT 1 FROM fixtures l WHERE l.league_id=$1 AND (l.home_club_id IN (fr.home_club_id,fr.away_club_id) OR l.away_club_id IN (fr.home_club_id,fr.away_club_id)) AND l.kickoff_at>fr.kickoff_at-make_interval(secs=>$2) AND l.kickoff_at<fr.kickoff_at+make_interval(secs=>$2)) RETURNING fr.id) UPDATE friendly_requests SET status='cancelled',responded_at=NOW() WHERE fixture_id IN (SELECT id FROM c)",[league.id,MATCH_DURATION_SECONDS]);
  return league.id;
 }
+const fixtureColumns="f.id,f.kind,f.league_id,f.round_number,f.day_number,f.kickoff_at,f.status,f.home_club_id,f.away_club_id,f.home_goals,f.away_goals,f.played_at,CASE WHEN f.status='scheduled' AND f.kickoff_at<=NOW() THEN 'live' WHEN f.status='scheduled' THEN 'upcoming' ELSE f.status END AS phase,h.name AS home_name,h.short_name AS home_short_name,h.crest_url AS home_crest_url,h.primary_colour AS home_colour,a.name AS away_name,a.short_name AS away_short_name,a.crest_url AS away_crest_url,a.primary_colour AS away_colour";
+const fixtureJoins=' FROM fixtures f JOIN clubs h ON h.id=f.home_club_id JOIN clubs a ON a.id=f.away_club_id';
+// Completed matches of one club, newest first, with the result from that club's side and its server-side viewed flag.
+function resultsSql(withEvents,filter){
+ return "SELECT x.*,CASE WHEN x.home_goals=x.away_goals THEN 'draw' WHEN (x.home_club_id=$1::uuid)=(x.home_goals>x.away_goals) THEN 'win' ELSE 'loss' END AS outcome,(v.fixture_id IS NOT NULL) AS viewed FROM (SELECT "+fixtureColumns+(withEvents?',f.events':'')+fixtureJoins+" WHERE f.status='played' AND (f.home_club_id=$1::uuid OR f.away_club_id=$1::uuid)"+filter+') x LEFT JOIN fixture_result_views v ON v.fixture_id=x.id AND v.club_id=$1::uuid ORDER BY x.kickoff_at DESC NULLS LAST,x.played_at DESC,x.id';
+}
+async function unviewedCount(clientOrDb,clubId){
+ const r=await clientOrDb.query("SELECT COUNT(*)::int AS count FROM fixtures f WHERE f.status='played' AND (f.home_club_id=$1 OR f.away_club_id=$1) AND NOT EXISTS(SELECT 1 FROM fixture_result_views v WHERE v.fixture_id=f.id AND v.club_id=$1)",[clubId]);
+ return Number(r.rows[0].count);
+}
+// A match occupies [kick-off, kick-off + 60 s). Two matches of the same club conflict when those intervals overlap.
+async function clubsBusy(client,clubIds,kickoff){
+ const r=await client.query("SELECT 1 FROM fixtures WHERE status='scheduled' AND (home_club_id=ANY($1::uuid[]) OR away_club_id=ANY($1::uuid[])) AND kickoff_at>$2::timestamptz-make_interval(secs=>$3) AND kickoff_at<$2::timestamptz+make_interval(secs=>$3) LIMIT 1",[clubIds,kickoff,MATCH_DURATION_SECONDS]);
+ return r.rowCount>0;
+}
+const friendlySelect="SELECT r.id,r.status,r.proposed_kickoff_at,r.fixture_id,r.created_at,r.responded_at,r.from_club_id,r.to_club_id,CASE WHEN r.to_club_id=$1 THEN 'incoming' ELSE 'outgoing' END AS direction,fc.name AS from_name,fc.short_name AS from_short_name,fc.crest_url AS from_crest_url,fc.primary_colour AS from_colour,tc.name AS to_name,tc.short_name AS to_short_name,tc.crest_url AS to_crest_url,tc.primary_colour AS to_colour FROM friendly_requests r JOIN clubs fc ON fc.id=r.from_club_id JOIN clubs tc ON tc.id=r.to_club_id";
 async function clubSquad(clubId){
  const r=await db().query('SELECT p.*,l.formation,l.starters,l.substitutes FROM players p LEFT JOIN lineups l ON l.club_id=p.club_id WHERE p.club_id=$1 ORDER BY p.position,p.overall DESC',[clubId]);
  return r.rows;
-}
-async function awardDevelopmentPoints(client,clubId,amount,reason,referenceId=null){
- const r=await client.query('UPDATE clubs SET development_points=development_points+$2 WHERE id=$1 RETURNING development_points',[clubId,amount]);
- await client.query('INSERT INTO development_ledger(club_id,amount_dp,balance_after_dp,reason,reference_id) VALUES($1,$2,$3,$4,$5)',[clubId,amount,r.rows[0].development_points,reason,referenceId]);
-}
-async function progressMission(client,clubId,metric,amount){
- const rows=await client.query('SELECT cm.mission_id,cm.progress,cm.completed_at,cm.claimed_at,m.target,m.reward_dp FROM club_missions cm JOIN missions m ON m.id=cm.mission_id WHERE cm.club_id=$1 AND m.metric=$2 FOR UPDATE',[clubId,metric]);
- for(const row of rows.rows){
-  if(row.completed_at)continue;
-  const next=Math.min(Number(row.target),Number(row.progress)+amount);
-  const done=next>=Number(row.target);
-  await client.query('UPDATE club_missions SET progress=$3,completed_at=CASE WHEN $4 THEN NOW() ELSE NULL END,claimed_at=CASE WHEN $4 THEN NOW() ELSE NULL END WHERE club_id=$1 AND mission_id=$2',[clubId,row.mission_id,next,done]);
-  if(done)await awardDevelopmentPoints(client,clubId,Number(row.reward_dp),'mission_reward',null);
- }
-}
-async function playFixture(fixtureId,userId){
- return inTransaction(async client=>{
-  const f=(await client.query('SELECT * FROM fixtures WHERE id=$1 FOR UPDATE',[fixtureId])).rows[0];
-  if(!f)throw new HttpError(404,'Fixture not found');
-  const clubs=await client.query('SELECT * FROM clubs WHERE id=ANY($1::uuid[])',[[f.home_club_id,f.away_club_id]]);
-  const home=clubs.rows.find(c=>c.id===f.home_club_id),away=clubs.rows.find(c=>c.id===f.away_club_id);
-  if(!home||!away)throw new HttpError(404,'Fixture club not found');
-  if(home.owner_user_id!==userId&&away.owner_user_id!==userId)throw new HttpError(403,'You do not manage either club in this fixture');
-  if(f.status==='played')return {alreadyPlayed:true,fixture:f};
-  const [hl,al]=await Promise.all([
-   client.query('SELECT p.*,l.formation FROM lineups l CROSS JOIN LATERAL unnest(l.starters) WITH ORDINALITY s(id,ord) JOIN players p ON p.id=s.id WHERE l.club_id=$1 ORDER BY s.ord',[home.id]),
-   client.query('SELECT p.* FROM lineups l CROSS JOIN LATERAL unnest(l.starters) WITH ORDINALITY s(id,ord) JOIN players p ON p.id=s.id WHERE l.club_id=$1 ORDER BY s.ord',[away.id])
-  ]);
-  const result=simulateMatch(hl.rows,al.rows,{homeFormation:hl.rows[0]?.formation||'4-3-3',awayFormation:al.rows[0]?.formation||'4-3-3'});
-  const played=await client.query("UPDATE fixtures SET status='played',home_goals=$2,away_goals=$3,events=$4::jsonb,played_at=NOW() WHERE id=$1 AND status='scheduled' RETURNING *",[fixtureId,result.homeGoals,result.awayGoals,JSON.stringify(result.events)]);
-  if(!played.rowCount)throw new HttpError(409,'Fixture was already settled');
-  for(const [clubId,gf,ga] of [[home.id,result.homeGoals,result.awayGoals],[away.id,result.awayGoals,result.homeGoals]]){
-   const win=gf>ga,draw=gf===ga,loss=gf<ga;
-   await client.query('UPDATE league_members SET played=played+1,wins=wins+$3,draws=draws+$4,losses=losses+$5,goals_for=goals_for+$6,goals_against=goals_against+$7,points=points+$8 WHERE league_id=$1 AND club_id=$2',
-    [f.league_id,clubId,win?1:0,draw?1:0,loss?1:0,gf,ga,win?3:draw?1:0]);
-   await awardDevelopmentPoints(client,clubId,2,'match_reward',fixtureId);
-   await progressMission(client,clubId,'matches_played',1);
-   await progressMission(client,clubId,'wins',win?1:0);
-   await progressMission(client,clubId,'goals_scored',gf);
-   await progressMission(client,clubId,'clean_sheets',ga===0?1:0);
-  }
-  return {fixture:played.rows[0],simulation:result};
- });
 }
 async function handle(req,res){
  cors(req,res);
@@ -252,12 +230,78 @@ async function handle(req,res){
    return json(res,200,{leagueId:id,created:Boolean(id)});
   }
   if(req.method==='GET'&&parts[3]==='fixtures'){
-   const r=await db().query('SELECT f.*,h.name AS home_name,h.short_name AS home_short_name,h.crest_url AS home_crest_url,h.primary_colour AS home_colour,a.name AS away_name,a.short_name AS away_short_name,a.crest_url AS away_crest_url,a.primary_colour AS away_colour FROM fixtures f JOIN clubs h ON h.id=f.home_club_id JOIN clubs a ON a.id=f.away_club_id WHERE f.home_club_id=$1 OR f.away_club_id=$1 ORDER BY f.round_number',[clubId]);
-   return json(res,200,{fixtures:r.rows});
+   const r=await db().query('SELECT '+fixtureColumns+',NOW() AS server_time'+fixtureJoins+' WHERE (f.home_club_id=$1 OR f.away_club_id=$1) AND f.kickoff_at IS NOT NULL ORDER BY f.kickoff_at,f.id',[clubId]);
+   return json(res,200,{fixtures:r.rows,timezone:LEAGUE_TIMEZONE,matchDurationSeconds:MATCH_DURATION_SECONDS});
   }
- }
- if(req.method==='POST'&&parts[0]==='api'&&parts[1]==='fixtures'&&parts[3]==='play'){
-  const fixtureId=uuid(parts[2],'Fixture ID');return json(res,200,await playFixture(fixtureId,user.id));
+  if(parts[3]==='results'){
+   if(req.method==='GET'&&parts.length===4){
+    const limit=Math.max(1,Math.min(50,Number(url.searchParams.get('limit'))||20));
+    const r=await db().query(resultsSql(false,'')+' LIMIT $2',[clubId,limit]);
+    return json(res,200,{results:r.rows,unviewedCount:await unviewedCount(db(),clubId),timezone:LEAGUE_TIMEZONE});
+   }
+   if(req.method==='POST'&&parts[4]==='viewed'&&parts.length===5){
+    const body=await readJson(req);let ids=null;
+    if(body.all!==true){
+     if(!Array.isArray(body.fixtureIds)||!body.fixtureIds.length||body.fixtureIds.length>100)throw new HttpError(400,'Provide fixtureIds or all');
+     ids=body.fixtureIds.map(id=>uuid(id,'Fixture ID'));
+    }
+    await db().query("INSERT INTO fixture_result_views(club_id,fixture_id) SELECT $1,f.id FROM fixtures f WHERE f.status='played' AND (f.home_club_id=$1 OR f.away_club_id=$1) AND ($2::uuid[] IS NULL OR f.id=ANY($2::uuid[])) ON CONFLICT DO NOTHING",[clubId,ids]);
+    return json(res,200,{unviewedCount:await unviewedCount(db(),clubId)});
+   }
+   if(req.method==='GET'&&parts.length===5){
+    const fixtureId=uuid(parts[4],'Fixture ID');
+    const r=await db().query(resultsSql(true,' AND f.id=$2::uuid'),[clubId,fixtureId]);
+    if(!r.rowCount)throw new HttpError(404,'Result not found');
+    return json(res,200,{result:r.rows[0],timezone:LEAGUE_TIMEZONE});
+   }
+  }
+  if(req.method==='GET'&&parts[3]==='opponents'&&parts.length===4){
+   const r=await db().query('SELECT id,name,short_name,crest_url,primary_colour FROM clubs WHERE owner_user_id<>$1 ORDER BY name,id LIMIT 200',[user.id]);
+   return json(res,200,{clubs:r.rows});
+  }
+  if(parts[3]==='friendlies'){
+   if(req.method==='GET'&&parts.length===4){
+    const r=await db().query(friendlySelect+' WHERE r.from_club_id=$1 OR r.to_club_id=$1 ORDER BY r.created_at DESC LIMIT 50',[clubId]);
+    return json(res,200,{requests:r.rows,timezone:LEAGUE_TIMEZONE,matchDurationSeconds:MATCH_DURATION_SECONDS});
+   }
+   if(req.method==='POST'&&parts.length===4){
+    const body=await readJson(req),opponentId=uuid(body.opponentClubId,'Opponent club ID');
+    if(typeof body.kickoffAt!=='string'||body.kickoffAt.length>40||Number.isNaN(Date.parse(body.kickoffAt)))throw new HttpError(400,'Kick-off date and time are invalid');
+    const proposed=new Date(Date.parse(body.kickoffAt)).toISOString();
+    const request=await inTransaction(async client=>{
+     const opponent=(await client.query('SELECT id,owner_user_id FROM clubs WHERE id=$1',[opponentId])).rows[0];
+     if(!opponent)throw new HttpError(404,'Opponent club not found');
+     if(opponent.owner_user_id===user.id)throw new HttpError(400,'You cannot challenge one of your own clubs');
+     const t=(await client.query("SELECT k,k>=NOW()+interval '2 minutes' AS late_enough,k<=NOW()+interval '30 days' AS soon_enough FROM (SELECT date_trunc('minute',$1::timestamptz) AS k) q",[proposed])).rows[0];
+     if(!t.late_enough)throw new HttpError(400,'Kick-off must be at least 2 minutes in the future');
+     if(!t.soon_enough)throw new HttpError(400,'Kick-off must be within the next 30 days');
+     const pending=await client.query("SELECT COUNT(*)::int AS count FROM friendly_requests WHERE from_club_id=$1 AND status='pending'",[clubId]);
+     if(Number(pending.rows[0].count)>=10)throw new HttpError(409,'Too many pending friendly requests');
+     if(await clubsBusy(client,[clubId,opponentId],t.k))throw new HttpError(409,'One of the clubs already has a match at that time');
+     const inserted=await client.query("INSERT INTO friendly_requests(from_club_id,to_club_id,proposed_kickoff_at) VALUES($1,$2,$3) ON CONFLICT (from_club_id,to_club_id,proposed_kickoff_at) WHERE status='pending' DO NOTHING RETURNING *",[clubId,opponentId,t.k]);
+     if(!inserted.rowCount)throw new HttpError(409,'This friendly request already exists');
+     return inserted.rows[0];
+    });
+    return json(res,201,{request});
+   }
+   if(req.method==='POST'&&parts.length===6&&['accept','decline','cancel'].includes(parts[5])){
+    const requestId=uuid(parts[4],'Request ID'),action=parts[5];
+    const result=await inTransaction(async client=>{
+     // The same lock as league creation, so a friendly can never slip into a slot a new league is taking.
+     if(action==='accept')await client.query('SELECT pg_advisory_xact_lock($1)',[LEAGUE_LOCK]);
+     const r=(await client.query('SELECT r.*,(r.proposed_kickoff_at>NOW()) AS in_future FROM friendly_requests r WHERE r.id=$1 AND '+(action==='cancel'?'r.from_club_id':'r.to_club_id')+'=$2 FOR UPDATE OF r',[requestId,clubId])).rows[0];
+     if(!r)throw new HttpError(404,'Friendly request not found');
+     if(r.status!=='pending')throw new HttpError(409,'This request is already '+r.status);
+     if(action!=='accept')return {request:(await client.query('UPDATE friendly_requests SET status=$2,responded_at=NOW() WHERE id=$1 RETURNING *',[requestId,action==='decline'?'declined':'cancelled'])).rows[0]};
+     if(!r.in_future)throw new HttpError(409,'The proposed kick-off time has passed');
+     if(await clubsBusy(client,[r.from_club_id,r.to_club_id],r.proposed_kickoff_at))throw new HttpError(409,'One of the clubs already has a match at that time');
+     const fixture=(await client.query("INSERT INTO fixtures(kind,home_club_id,away_club_id,kickoff_at) VALUES('friendly',$1,$2,$3) RETURNING id,kind,home_club_id,away_club_id,kickoff_at,status",[r.from_club_id,r.to_club_id,r.proposed_kickoff_at])).rows[0];
+     const request=(await client.query("UPDATE friendly_requests SET status='accepted',responded_at=NOW(),fixture_id=$2 WHERE id=$1 RETURNING *",[requestId,fixture.id])).rows[0];
+     return {request,fixture};
+    });
+    return json(res,200,result);
+   }
+  }
  }
  throw new HttpError(404,'Route not found');
 }
@@ -273,6 +317,8 @@ const server=http.createServer(async(req,res)=>{
  }
 });
 server.listen(config.port,'0.0.0.0',()=>console.log('ZAMIN FK isolated game server listening on '+config.port));
+// League and friendly matches are settled here, by the server alone, whether or not anyone is online.
+if(pool)startScheduler({maxIdleMs:config.schedulerMaxIdleMs});
 async function shutdown(){server.close(async()=>{try{await pool?.end();process.exit(0);}catch(error){console.error(error);process.exit(1);}});}
 process.on('SIGTERM',shutdown);
 process.on('SIGINT',shutdown);

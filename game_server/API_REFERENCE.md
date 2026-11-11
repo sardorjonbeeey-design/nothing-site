@@ -71,10 +71,26 @@ Money, transfers, upgrade costs and DP balances are recalculated server-side. Th
 - GET /api/clubs/:clubId/missions — objective progress and rewards.
 - GET /api/clubs/:clubId/ledger — last 30 UZS transactions.
 - GET /api/clubs/:clubId/development-ledger — last 30 DP transactions.
-- POST /api/clubs/:clubId/leagues/ensure — checks the 10-club threshold and creates the provisional league if needed.
+- POST /api/clubs/:clubId/leagues/ensure — checks the 10-club threshold and creates the league if needed. It cannot start or settle matches.
 - GET /api/clubs/:clubId/league — standings.
-- GET /api/clubs/:clubId/fixtures — the club's scheduled and completed fixtures.
-- POST /api/fixtures/:fixtureId/play — settles one scheduled fixture. Either participating club owner can trigger it; a fixture can be settled only once.
+- GET /api/clubs/:clubId/fixtures — the club's league and friendly fixtures in kick-off order, each with `kind`, `day_number`, `kickoff_at`, `status` and `phase` (`upcoming`, `live`, `played`, `cancelled`).
+
+There is no route that starts, delays, accelerates, replays or settles a match. `POST /api/fixtures/:fixtureId/play` has been removed. Matches are settled only by the server's scheduler (see README, "League schedule and scheduler").
+
+## Results
+- GET /api/clubs/:clubId/results?limit=20 — completed matches of the club, newest first, each with `outcome` (`win`, `draw`, `loss`) and `viewed`; also `unviewedCount`. Reading does not change the viewed state.
+- GET /api/clubs/:clubId/results/:fixtureId — one completed match including its `events` (the match report).
+- POST /api/clubs/:clubId/results/viewed — body `{fixtureIds:[...]}` or `{all:true}`. Stores the viewed state on the server, per club.
+
+## Friendlies
+- GET /api/clubs/:clubId/opponents — clubs of other users that can be challenged.
+- GET /api/clubs/:clubId/friendlies — sent and received requests.
+- POST /api/clubs/:clubId/friendlies — body `{opponentClubId,kickoffAt}` (ISO date-time, truncated to the minute). Creates a pending request only.
+- POST /api/clubs/:clubId/friendlies/:requestId/accept — receiving club only; creates the friendly fixture (requesting club at home).
+- POST /api/clubs/:clubId/friendlies/:requestId/decline — receiving club only.
+- POST /api/clubs/:clubId/friendlies/:requestId/cancel — requesting club only, while pending.
+
+A request or acceptance is refused with 409 when either club already has a match whose one-minute slot overlaps the proposed one.
 
 ## Public operational routes
 - GET /health — process liveness.

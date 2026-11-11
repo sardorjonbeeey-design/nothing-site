@@ -13,3 +13,22 @@ export function generateRoundRobin(clubIds){
  }
  return rounds;
 }
+// League timing is fixed by the game rules and deliberately not configurable through the environment or the API.
+export const LEAGUE_TIMEZONE='Asia/Tashkent';
+export const LEAGUE_KICKOFF_TIME='20:00';
+export const MATCH_DURATION_SECONDS=60;
+// Home and away against every opponent: the second half mirrors the first with the venues swapped.
+export function generateDoubleRoundRobin(clubIds){
+ const first=generateRoundRobin(clubIds),half=first.length;
+ const second=first.map((round,index)=>round.map(f=>({roundNumber:half+index+1,homeClubId:f.awayClubId,awayClubId:f.homeClubId})));
+ return [...first,...second];
+}
+// One league round per calendar day, with one full rest day between the two halves of the season.
+export function dayForRound(roundNumber,roundsPerHalf){
+ if(!Number.isInteger(roundNumber)||!Number.isInteger(roundsPerHalf)||roundNumber<1||roundNumber>roundsPerHalf*2)throw new Error('Round is outside the season');
+ return roundNumber<=roundsPerHalf?roundNumber:roundNumber+1;
+}
+export function leagueSchedule(clubIds){
+ const rounds=generateDoubleRoundRobin(clubIds),half=rounds.length/2;
+ return rounds.flatMap(round=>round.map(f=>({...f,dayNumber:dayForRound(f.roundNumber,half)})));
+}
