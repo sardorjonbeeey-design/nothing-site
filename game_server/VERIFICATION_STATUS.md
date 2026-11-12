@@ -1,7 +1,36 @@
 # Verification status — isolated management candidate
 
-Updated: 2026-11-12 (price curve rebalanced after checkpoint 978bf21; rerun pending)
+Updated: 2026-11-12 (Phase A rerun of the price rebalance at branch head fc1e333)
 Branch: zamin-fk-management
+
+## Phase A rerun — price rebalance (migration 005) — FAILED on 3 unit tests; formations not started
+
+Environment: isolated cloud container, Node v22.23.4, PostgreSQL 16.15 local cluster on localhost:5432, disposable databases `zamin_game` and `zamin_legacy`, dev/mock authentication, headless Chromium via Playwright. Nothing external was contacted.
+
+| Command | Result |
+|---|---|
+| `npm ci` | ok |
+| `node scripts/verify-price-migration.mjs postgresql://postgres:<pw>@localhost:5432` | 13 checks passed, 0 failed |
+| `npm test` | 45 tests: 41 passed, **3 failed**, 1 skipped (integration, no database URL) |
+| `INTEGRATION_DATABASE_URL=postgresql://postgres:<pw>@localhost:5432/zamin_game npm run test:integration` | 32 subtests passed, 0 failed (run once) |
+| `node scripts/mobile-smoke.cjs http://127.0.0.1:18181 postgresql://postgres:<pw>@localhost:5432/zamin_game` | 123 checks passed, 0 failed (run once, fresh migrated and seeded database) |
+
+### Migration results (passed)
+- Empty database: 001–005 apply in order; a second run applies nothing; all 372 seeded players (overall 45–74) match `11,000,000 × 1.112^(overall − 80)` rounded to 10,000.
+- Legacy-shaped database (schema 001–004, 2 users, 2 clubs, 36 owned players, 100 free agents covering overall 1–100, all priced on the old 30M × 1.10 curve, lineups, money ledger with `club_created` / `player_signing` / `player_sale` rows, Development Points ledger): only 005 applies; every one of the 136 rows is repriced to the new formula (SQL and JavaScript rounding agree for overall 1–100); ownership, attributes, origin, first-sale flags, lineups, formations, club budgets, Development Points and both ledgers are byte-identical before and after.
+- Confirmed values: OVR 58 academy first sale 530,000; OVR 74 standard resale 4,656,000; starter squad list value 10,520,000 (unit test line and integration test); OVR 80 = 11,000,000.
+
+### Failures — `npm test`, `test/economy.test.js` (the implementation matches the approved formula; the assertions do not)
+1. `price curve …` — "strictly increasing at 30". The 10,000 rounding makes OVR 29 = 30 = 50,000 and OVR 32 = 33 = 70,000. The curve is strictly increasing only from OVR 34. The threshold 30 was valid for the old curve.
+2. `a new club can afford one 80-rated player …` — expects cash 22,100,000 and 100,000 left; actual 22,090,000 and 90,000 (the five dearest academy players sell for 2,090,000 at 50%).
+3. `resale …` — "buy and resell never makes money" uses a strict `<` for overall 1–100; OVR 1–7 are priced at 0 under the new curve, so 0 < 0 fails.
+
+Suggested fix (owner decision needed for 3): (1) raise the strict-monotonic threshold to 34; (2) correct the expected figures to 22,090,000 and 90,000; (3) either add a 10,000 UZS price floor in `marketValueUzs` and migration SQL, or restrict the assertion to the playable range (overall ≥ 45; no in-game player is below 45). None of the three affects a player that can exist in the game today.
+
+### Not tested in this rerun
+- Migration 004+005 together on a database from before 004. Real devices, Telegram, hosted databases, as listed below.
+
+## Earlier checkpoint (978bf21) — kept for reference
 
 Everything below was run in an isolated development container against a throwaway local PostgreSQL 16 cluster (database `zamin_game` on localhost) with dev/mock authentication. No Neon, live database, Telegram service, Mini App or deployment was involved. No real device and no production system was used.
 
@@ -57,4 +86,4 @@ Headless Chromium, Pixel 7 emulation and a 360 px viewport. Newly covered: 20,00
 - Formation fit still moves strength by up to ±4, which under the new model is worth about as much as 4 overall.
 
 ## Release status
-Price-curve rebalancing checkpoint committed to the isolated development branch; updated tests are pending execution. Not production-tested, not deployed, not connected to the existing Mini App or any live database.
+Price-curve rebalance verified at the database level; three stale unit-test assertions fail (see top). The 12-formation work is blocked until they are resolved. Not production-tested, not deployed, not connected to the existing Mini App or any live database.
