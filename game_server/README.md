@@ -18,6 +18,7 @@ Independent Node.js API and PostgreSQL schema for the management-game candidate.
 
 ## Local verification
 - `npm test` — unit tests; no database required.
+- `node scripts/verify-price-migration.mjs` and `node scripts/verify-rating-migration.mjs` with a local base URL (`postgresql://postgres:<pw>@localhost:<port>`) — migration 005 and 006 checks on throwaway local databases `zamin_game` and `zamin_legacy`.
 - `npm run test:integration` — full game loop. Requires `INTEGRATION_DATABASE_URL` pointing at a throwaway PostgreSQL database named zamin_game on localhost. The test resets that database and refuses any non-local host. Never point it at Neon or a shared database.
 - `node scripts/mobile-smoke.cjs http://127.0.0.1:<port> postgresql://postgres@localhost:<port>/zamin_game` — emulated mobile browser check against a local development server (`NODE_ENV=development`, `ALLOW_DEV_AUTH=true`) on a freshly migrated and seeded local database. Requires Playwright, which is not a project dependency.
 
@@ -28,6 +29,7 @@ Values are fixed in `src/economy.js`, not in the environment. See BALANCING_DEFA
 - Each user manages one club. A new club gets 20,000,000 UZS and an identical generated academy squad of 18 (`src/catalog.js`).
 - Players have an `origin`: `market` (seeded catalogue), `academy` (starter squads) or `generated` (youth supply). All are fictional.
 - Price is 11,000,000 × 1.112^(overall − 80), rounded to 10,000 UZS. An 80 OVR player costs 11M; a 60 OVR player costs about 1.32M. Academy players sell for 50% the first time, everything else for 80%. Squads hold 13 to 26 players. Migration `005_price_rebalance.sql` reprices existing database rows.
+- Ratings: every player belongs to a rating profile (`players.category`). The only profile is `uzbek_league`: overall 40–90, potential up to 90, attributes up to 99. The limits live in `src/ratings.js` and in the `rating_profiles` table (migration `006_rating_profiles.sql`); a trigger on `players` enforces them on every insert and rating update. The seeded catalogue still tops out at 74. A later category needs one profile entry and one table row, not a schema change.
 - League clubs earn 750,000 UZS per completed league match. Clubs outside the league receive the same amount per completed league matchday (`stipend_runs` and `stipend_payments` make each payment once-only).
 - When a season completes, the scheduler creates the next one for the same ten clubs, starting two rest days after day 19. A unique index on the season number makes this once-only.
 - The match model and its verification are in `src/simulation.js` and `test/simulation.test.js`.

@@ -1,34 +1,40 @@
 # Verification status — isolated management candidate
 
-Updated: 2026-11-12 (Phase A rerun of the price rebalance at branch head fc1e333)
+Updated: 2026-11-12 (rating profiles, Uzbek League 40–90, on top of 4d78e78)
 Branch: zamin-fk-management
 
-## Phase A rerun — price rebalance (migration 005) — FAILED on 3 unit tests; formations not started
+## Rating profiles — Uzbek League 40–90 (migration 006) — all checks passed
 
 Environment: isolated cloud container, Node v22.23.4, PostgreSQL 16.15 local cluster on localhost:5432, disposable databases `zamin_game` and `zamin_legacy`, dev/mock authentication, headless Chromium via Playwright. Nothing external was contacted.
 
 | Command | Result |
 |---|---|
-| `npm ci` | ok |
-| `node scripts/verify-price-migration.mjs postgresql://postgres:<pw>@localhost:5432` | 13 checks passed, 0 failed |
-| `npm test` | 45 tests: 41 passed, **3 failed**, 1 skipped (integration, no database URL) |
-| `INTEGRATION_DATABASE_URL=postgresql://postgres:<pw>@localhost:5432/zamin_game npm run test:integration` | 32 subtests passed, 0 failed (run once) |
+| `npm test` | 55 tests: 54 passed, 0 failed, 1 skipped (integration, no database URL) |
+| `node scripts/verify-rating-migration.mjs postgresql://postgres:<pw>@localhost:5432` | 40 checks passed, 0 failed |
+| `node scripts/verify-price-migration.mjs postgresql://postgres:<pw>@localhost:5432` | 12 checks passed, 0 failed |
+| `INTEGRATION_DATABASE_URL=postgresql://postgres:<pw>@localhost:5432/zamin_game npm run test:integration` | 34 subtests passed, 0 failed (run twice) |
 | `node scripts/mobile-smoke.cjs http://127.0.0.1:18181 postgresql://postgres:<pw>@localhost:5432/zamin_game` | 123 checks passed, 0 failed (run once, fresh migrated and seeded database) |
 
-### Migration results (passed)
-- Empty database: 001–005 apply in order; a second run applies nothing; all 372 seeded players (overall 45–74) match `11,000,000 × 1.112^(overall − 80)` rounded to 10,000.
-- Legacy-shaped database (schema 001–004, 2 users, 2 clubs, 36 owned players, 100 free agents covering overall 1–100, all priced on the old 30M × 1.10 curve, lineups, money ledger with `club_created` / `player_signing` / `player_sale` rows, Development Points ledger): only 005 applies; every one of the 136 rows is repriced to the new formula (SQL and JavaScript rounding agree for overall 1–100); ownership, attributes, origin, first-sale flags, lineups, formations, club budgets, Development Points and both ledgers are byte-identical before and after.
-- Confirmed values: OVR 58 academy first sale 530,000; OVR 74 standard resale 4,656,000; starter squad list value 10,520,000 (unit test line and integration test); OVR 80 = 11,000,000.
+### What was verified
+- **Profile:** `uzbek_league` is the only category, in code (`src/ratings.js`) and in the `rating_profiles` table, and the two agree: overall 40–90, potential up to 90, attributes 1–99.
+- **Validation:** overall 40 and 90 accepted; 39, 91 and 100 rejected in code and by the database on insert and on update; potential 91 rejected; potential below overall rejected; attribute 99 accepted, 100 and 0 rejected; an unknown category rejected.
+- **Generation:** all 360 catalogue players, 50 academy squads and 1,200 youth players comply. The catalogue is unchanged at overall 46–74; exactly the nine potentials that were 91–92 are now 90. No player was added.
+- **Upgrades:** through the API, a player at 89 with potential 90 reaches exactly 90 and is priced 31,800,000; every further upgrade is refused with no Development Points spent; an attribute already at 99 cannot be raised.
+- **Migration 006 on legacy data** (schema 001–005, 2 clubs, 36 owned players, 10 free agents, lineups, both ledgers): 16 potentials above 90 lowered to exactly 90, 30 others untouched; ownership, overall, attributes, market values, origin, first-sale flags, lineups, budgets, Development Points and both ledgers identical before and after. The runner skips it afterwards, and running the SQL a second time changes no row.
+- **Abort:** with one legacy player at overall 39, 91 or 100 the migration stops, rolls back completely and leaves every row as it was.
+- **Economy:** price formula, 50% and 80% resale, starting budget and squad value 10,520,000 unchanged; OVR 40 = 160,000, OVR 90 = 31,800,000.
+- **Future capacity:** a 95–115 profile defined only inside a test passes the same validation, attribute-template and overall functions; in the database, inside a rolled-back transaction, one extra `rating_profiles` row admitted an overall of 115 with no schema change. No such profile, player or market feature exists in the game.
 
-### Failures — `npm test`, `test/economy.test.js` (the implementation matches the approved formula; the assertions do not)
-1. `price curve …` — "strictly increasing at 30". The 10,000 rounding makes OVR 29 = 30 = 50,000 and OVR 32 = 33 = 70,000. The curve is strictly increasing only from OVR 34. The threshold 30 was valid for the old curve.
-2. `a new club can afford one 80-rated player …` — expects cash 22,100,000 and 100,000 left; actual 22,090,000 and 90,000 (the five dearest academy players sell for 2,090,000 at 50%).
-3. `resale …` — "buy and resell never makes money" uses a strict `<` for overall 1–100; OVR 1–7 are priced at 0 under the new curve, so 0 < 0 fails.
+### Phase A failures now resolved (`test/economy.test.js`)
+The three assertions that failed at 4d78e78 were corrected; the price code was not changed.
+1. Strictly increasing prices are asserted over the playable range 40–90 (rounding to 10,000 flattens the curve only below 34).
+2. Selling the five dearest academy players gives 22,090,000 and leaves 90,000 after two 80-rated signings (the test expected 22,100,000 and 100,000).
+3. "Resale never makes money" is strict over 40–90 and non-strict over 1–100 (overall 1–7 price at 0, which no player can have).
 
-Suggested fix (owner decision needed for 3): (1) raise the strict-monotonic threshold to 34; (2) correct the expected figures to 22,090,000 and 90,000; (3) either add a 10,000 UZS price floor in `marketValueUzs` and migration SQL, or restrict the assertion to the playable range (overall ≥ 45; no in-game player is below 45). None of the three affects a player that can exist in the game today.
-
-### Not tested in this rerun
-- Migration 004+005 together on a database from before 004. Real devices, Telegram, hosted databases, as listed below.
+### Not tested
+- A real device, Telegram, hosted databases, as listed below.
+- Migration 004 on a database from before it.
+- A match involving a rating above 90: no such player can exist. `squadStrength` still clamps at 100, which must be revisited before any 95–115 category is activated.
 
 ## Earlier checkpoint (978bf21) — kept for reference
 
@@ -75,7 +81,7 @@ Headless Chromium, Pixel 7 emulation and a 360 px viewport. Newly covered: 20,00
 
 ## Remaining limitations
 - All players are fictional. The real-player database is not implemented (data rights and source access are unresolved).
-- The seeded market tops out at overall 74, so nothing rated 75+ can be bought yet; elite pricing was tested with a player inserted by the test.
+- The seeded market tops out at overall 74, so nothing rated 75–90 can be bought yet and no player is rated 90; pricing and upgrades at 80–90 were tested with players inserted by the tests.
 - Waiting clubs never enter a league; they only receive the stipend.
 - No running costs: cash accumulates season after season.
 - Missions are one-off and do not reset in season 2.
@@ -86,4 +92,4 @@ Headless Chromium, Pixel 7 emulation and a 360 px viewport. Newly covered: 20,00
 - Formation fit still moves strength by up to ±4, which under the new model is worth about as much as 4 overall.
 
 ## Release status
-Price-curve rebalance verified at the database level; three stale unit-test assertions fail (see top). The 12-formation work is blocked until they are resolved. Not production-tested, not deployed, not connected to the existing Mini App or any live database.
+Price rebalance and the 40–90 Uzbek League rating profile are verified on the isolated branch; all suites pass. The 12-formation work has not started. Not production-tested, not deployed, not connected to the existing Mini App or any live database.

@@ -13,6 +13,7 @@ import {insertPlayer,ensureYouthSupply} from './players.js';
 import {generateAcademySquad,YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL} from './catalog.js';
 import {repairClubLineup} from './lineup.js';
 import {awardDevelopmentPoints,startScheduler} from './matches.js';
+import {ratingProfileFor,assertValidRating} from './ratings.js';
 import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValueUzs,overallFromAttributes,STARTING_BUDGET_UZS,MIN_SQUAD_SIZE,MAX_SQUAD_SIZE} from './economy.js';
 
 const db=()=>requireDb();
@@ -205,12 +206,15 @@ async function handle(req,res){
     const c=await ownedClub(client,clubId,user.id,true);
     const p=(await client.query('SELECT * FROM players WHERE id=$1 AND club_id=$2 FOR UPDATE',[playerId,clubId])).rows[0];
     if(!p)throw new HttpError(404,'Player not found');
-    const attrs={...p.attributes},start=Number(attrs[attribute]||1),end=Math.min(Number(p.potential),start+levels);
+    // Potential is already limited by the player's rating profile; the profile is applied again so an upgrade can never pass it.
+    const profile=ratingProfileFor(p.category),potential=Math.min(Number(p.potential),profile.maxPotential);
+    const attrs={...p.attributes},start=Number(attrs[attribute]||1),end=Math.min(potential,profile.maxAttribute,start+levels);
     const actual=end-start;if(actual<1)throw new HttpError(400,'Player has reached the upgrade cap for this attribute');
     const cost=upgradeCost(start,actual);
     if(Number(c.development_points)<cost)throw new HttpError(400,'Not enough development points');
     attrs[attribute]=end;
-    const overall=overallFromAttributes(attrs,p.overall,p.potential);
+    const overall=overallFromAttributes(attrs,p.overall,potential);
+    assertValidRating({overall,potential,attributes:attrs},profile);
     const quality=qualityForOverall(overall);
     const marketValue=marketValueUzs(overall);
     await client.query('UPDATE players SET attributes=$2::jsonb,overall=$3,quality=$4,market_value_uzs=$5 WHERE id=$1',[playerId,JSON.stringify(attrs),overall,quality,marketValue]);

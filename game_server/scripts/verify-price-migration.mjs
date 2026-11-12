@@ -1,6 +1,8 @@
 // Phase A check for migration 005 against DISPOSABLE LOCAL databases only.
 // Usage: node scripts/verify-price-migration.mjs postgresql://postgres:local@localhost:5432
 // Needs two empty local databases: zamin_game (fresh chain) and zamin_legacy (pre-005 rows). Both are wiped.
+// The legacy case applies migration 005 on its own, so it can cover the price formula for overall 1-100;
+// later migrations (rating profiles) are checked by scripts/verify-rating-migration.mjs.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
@@ -22,7 +24,7 @@ const mispriced=async c=>{
 {
  const c=await open('zamin_game');
  const out=node('src/migrate.js','zamin_game');
- check('fresh: migrations 001-005 applied from empty',['001_initial','002_development_ledger','003_league_schedule','004_economy','005_price_rebalance'].every(v=>out.includes('Applied migration '+v)));
+ check('fresh: migrations 001-006 applied from empty',['001_initial','002_development_ledger','003_league_schedule','004_economy','005_price_rebalance','006_rating_profiles'].every(v=>out.includes('Applied migration '+v)));
  check('fresh: second run applies nothing',!node('src/migrate.js','zamin_game').includes('Applied'));
  node('src/seed.js','zamin_game');
  const m=await mispriced(c);
@@ -69,8 +71,9 @@ const mispriced=async c=>{
   };
  };
  const before=await snap();
- const out=node('src/migrate.js','zamin_legacy');
- check('legacy: only migration 005 applied',out.includes('Applied migration 005_price_rebalance')&&(out.match(/Applied/g)||[]).length===1);
+ await c.query('BEGIN');await c.query(await fs.readFile(path.join(root,'db','005_price_rebalance.sql'),'utf8'));
+ await c.query("INSERT INTO schema_migrations(version) VALUES('005_price_rebalance')");await c.query('COMMIT');
+ check('legacy: migration 005 applied on its own',(await c.query('SELECT 1 FROM schema_migrations')).rowCount===5);
  const after=await snap();
  for(const [key,label] of [['players','player ownership, attributes, origin and first-sale flags'],['clubs','club budgets and Development Points'],['users','users'],['lineups','lineups and formations'],['money','money ledger (transfer history)'],['dp','Development Points ledger']])
   check('legacy: unchanged — '+label,before[key]===after[key]);

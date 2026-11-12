@@ -24,7 +24,7 @@ export async function assertIsolatedDatabase(clientOrPool) {
 
 export async function assertGameSchema(clientOrPool) {
  await assertIsolatedDatabase(clientOrPool);
- const required=['clubs','players','lineups','missions','club_missions','leagues','league_members','fixtures','money_ledger','development_ledger','friendly_requests','fixture_result_views'];
+ const required=['clubs','players','lineups','missions','club_missions','leagues','league_members','fixtures','money_ledger','development_ledger','friendly_requests','fixture_result_views','rating_profiles'];
  const result=await clientOrPool.query('SELECT '+required.map(name=>"to_regclass('public."+name+"') AS "+name).join(','));
  if(required.some(name=>!result.rows[0]?.[name]))throw new Error('Game database migrations are incomplete');
  const counts=await clientOrPool.query('SELECT (SELECT COUNT(*)::int FROM players) AS players,(SELECT COUNT(*)::int FROM missions WHERE active=true) AS missions');

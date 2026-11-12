@@ -49,7 +49,7 @@ Accepts PNG, JPEG or WEBP up to 2 MB. Returns a server-local persistent upload p
 
 ## Squad, lineup and transfers
 
-- GET /api/clubs/:clubId/squad — virtual players, attributes, potential and values.
+- GET /api/clubs/:clubId/squad — virtual players, attributes, potential and values. Every player has `category` `uzbek_league`: overall 40–90, potential at most 90, attributes at most 99. An upgrade never raises an attribute above the player's potential, so overall cannot pass 90.
 - GET /api/clubs/:clubId/lineup — current formation, starters and substitutes.
 - POST /api/clubs/:clubId/lineup — requires 11 unique owned starters including at least one goalkeeper; up to 7 unique owned substitutes.
 

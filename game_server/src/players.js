@@ -1,9 +1,13 @@
 // Player rows created by the server itself: academy squads and the standing supply of generated youth players.
 import {youthSlots,generateYouthPlayer,YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL} from './catalog.js';
+import {ratingProfileFor,assertValidRating,DEFAULT_CATEGORY} from './ratings.js';
 const YOUTH_LOCK=8111002;
 export async function insertPlayer(client,p,clubId=null){
- const r=await client.query('INSERT INTO players(club_id,full_name,nationality,age,position,quality,overall,potential,attributes,market_value_uzs,origin,catalog_key) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12) ON CONFLICT (catalog_key) DO NOTHING RETURNING *',
-  [clubId,p.fullName,p.nationality,p.age,p.position,p.quality,p.overall,p.potential,JSON.stringify(p.attributes),p.marketValueUzs,p.origin,p.catalogKey||null]);
+ const category=p.category||DEFAULT_CATEGORY;
+ // The rating profile is checked here and again by the database trigger.
+ assertValidRating(p,ratingProfileFor(category));
+ const r=await client.query('INSERT INTO players(club_id,full_name,nationality,age,position,quality,overall,potential,attributes,market_value_uzs,origin,catalog_key,category) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12,$13) ON CONFLICT (catalog_key) DO NOTHING RETURNING *',
+  [clubId,p.fullName,p.nationality,p.age,p.position,p.quality,p.overall,p.potential,JSON.stringify(p.attributes),p.marketValueUzs,p.origin,p.catalogKey||null,category]);
  return r.rows[0]||null;
 }
 // Tops the market up so that every slot has a free generated 45–50 player. It only ever fills gaps:

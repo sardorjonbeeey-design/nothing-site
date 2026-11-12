@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {marketValueUzs,qualityForOverall,upgradeCost,saleValueUzs,resaleRatePercent,overallFromAttributes,STARTING_BUDGET_UZS,LEAGUE_MATCH_INCOME_UZS,WAITING_STIPEND_UZS,MIN_SQUAD_SIZE,MAX_SQUAD_SIZE,STARTING_SQUAD_SIZE} from '../src/economy.js';
 import {academySquadTemplate} from '../src/catalog.js';
+import {UZBEK_LEAGUE} from '../src/ratings.js';
 
 test('approved economy constants',()=>{
  assert.equal(STARTING_BUDGET_UZS,20000000n);assert.equal(LEAGUE_MATCH_INCOME_UZS,750000n);assert.equal(WAITING_STIPEND_UZS,750000n);
@@ -12,21 +13,23 @@ test('price curve: 11,000,000 x 1.112^(overall-80), rounded to 10,000 UZS',()=>{
  for(const [overall,price] of Object.entries(expected))assert.equal(marketValueUzs(Number(overall)),price,'overall '+overall);
  for(let o=2;o<=100;o++){
   assert.ok(marketValueUzs(o)>=marketValueUzs(o-1),'never decreasing at '+o);
-  if(o>=30)assert.ok(marketValueUzs(o)>marketValueUzs(o-1),'strictly increasing at '+o);
+  // Rounding to 10,000 UZS flattens the curve below the playable range; inside it every rating point costs more.
+  if(o>UZBEK_LEAGUE.minOverall&&o<=UZBEK_LEAGUE.maxOverall)assert.ok(marketValueUzs(o)>marketValueUzs(o-1),'strictly increasing at '+o);
   assert.equal(marketValueUzs(o)%10000,0);
   assert.ok(Math.abs(marketValueUzs(o)-11e6*1.112**(o-80))<=5000);
  }
+ assert.equal(marketValueUzs(UZBEK_LEAGUE.minOverall),160000);assert.equal(marketValueUzs(UZBEK_LEAGUE.maxOverall),31800000);
  assert.throws(()=>marketValueUzs(0));assert.throws(()=>marketValueUzs(101));assert.throws(()=>marketValueUzs(70.5));
 });
 test('a new club can afford one 80-rated player, but not two without selling players',()=>{
  assert.equal(marketValueUzs(80),11000000);
  assert.ok(BigInt(marketValueUzs(80))<=STARTING_BUDGET_UZS);
  assert.ok(2n*BigInt(marketValueUzs(80))>STARTING_BUDGET_UZS);
- // Selling the five most valuable academy players leaves 13 and adds 2.1M cash, enough for two 80s with only 100K left.
+ // Selling the five most valuable academy players leaves 13 and adds 2,090,000 cash, enough for two 80s with only 90,000 left.
  const values=academySquadTemplate.map(([,o])=>marketValueUzs(o)).sort((a,b)=>b-a);
  const cash=STARTING_BUDGET_UZS+values.slice(0,5).reduce((n,v)=>n+saleValueUzs(v,50),0n);
- assert.equal(cash,22100000n);
- assert.equal(cash-2n*BigInt(marketValueUzs(80)),100000n);
+ assert.equal(cash,22090000n);
+ assert.equal(cash-2n*BigInt(marketValueUzs(80)),90000n);
  assert.equal(values.reduce((a,b)=>a+b,0),10520000,'starting squad list value');
 });
 test('quality tiers use provisional thresholds',()=>{
@@ -44,8 +47,12 @@ test('resale: academy players 50% on their first sale, everyone else 80%',()=>{
  assert.equal(saleValueUzs('10000001'),8000000n);assert.equal(saleValueUzs('10000001',50),5000000n);
  assert.equal(saleValueUzs(marketValueUzs(58),50),530000n);assert.equal(saleValueUzs(marketValueUzs(74),80),4656000n);
  assert.throws(()=>saleValueUzs(100,100));assert.throws(()=>saleValueUzs(-1));
- // Buying and reselling can never make money at either rate.
- for(let o=1;o<=100;o++)assert.ok(saleValueUzs(marketValueUzs(o),80)<BigInt(marketValueUzs(o)));
+ // Buying and reselling can never make money at either rate, for every rating a player can have.
+ for(let o=1;o<=100;o++)assert.ok(saleValueUzs(marketValueUzs(o),80)<=BigInt(marketValueUzs(o)));
+ for(let o=UZBEK_LEAGUE.minOverall;o<=UZBEK_LEAGUE.maxOverall;o++){
+  assert.ok(marketValueUzs(o)>0);
+  assert.ok(saleValueUzs(marketValueUzs(o),80)<BigInt(marketValueUzs(o)));assert.ok(saleValueUzs(marketValueUzs(o),50)<saleValueUzs(marketValueUzs(o),80));
+ }
 });
 test('overall is the rounded-down attribute average, capped by potential, never lowered',()=>{
  const a={pace:56,shooting:62,passing:50,dribbling:55,defending:44,physical:57};

@@ -15,7 +15,9 @@ These are implementation defaults used to make the isolated prototype playable. 
 | League income | 750,000 UZS per completed league match, no win or draw bonus | Owner-approved |
 | Waiting-list stipend | 750,000 UZS per completed league matchday to every club outside that league (18 per season) | Owner-approved |
 | Friendly income | None | Owner-approved |
-| Potential | Catalogue: overall + 8–20, capped at 92. Academy: overall + 12. Youth: overall + 10 | Provisional |
+| Player category | `uzbek_league` only. Defined once in `src/ratings.js` and in the `rating_profiles` table | Owner-approved (2026-11-12) |
+| Rating limits (`uzbek_league`) | Overall 40–90, potential from overall to 90, each attribute 1–99 | Owner-approved (2026-11-12) |
+| Potential | Catalogue: overall + 8–20. Academy: overall + 12. Youth: overall + 10. All capped at the profile maximum of 90 | Provisional formula, approved cap |
 | Quality tiers | Below 54, below 62, below 69, 69+ (shown as Prospect, Developing, Established, Elite) | Provisional |
 | Attribute templates | Fixed offsets per position that sum to zero, so attributes average exactly to overall | Owner-approved |
 | Overall after upgrades | Rounded-down average of the six attributes, capped by potential: +1 overall per 6 attribute points | Owner-approved |

@@ -17,6 +17,7 @@ import pg from 'pg';
 import {upgradeCost,saleValueUzs,marketValueUzs,qualityForOverall} from '../../src/economy.js';
 import {academySquadTemplate,youthSlots} from '../../src/catalog.js';
 import {isValidLineup} from '../../src/lineup.js';
+import {UZBEK_LEAGUE} from '../../src/ratings.js';
 
 const DB_URL=process.env.INTEGRATION_DATABASE_URL||'';
 const serverRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
@@ -114,7 +115,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const second=await run('src/migrate.js');
   assert.match(second,/Skipped migration 001_initial/);assert.match(second,/Skipped migration 002_development_ledger/);
   await run('src/seed.js');await run('src/seed.js');
-  assert.match(first,/Applied migration 003_league_schedule/);assert.match(first,/Applied migration 004_economy/);assert.match(first,/Applied migration 005_price_rebalance/);assert.match(second,/Skipped migration 004_economy/);assert.match(second,/Skipped migration 005_price_rebalance/);
+  assert.match(first,/Applied migration 003_league_schedule/);assert.match(first,/Applied migration 004_economy/);assert.match(first,/Applied migration 005_price_rebalance/);assert.match(first,/Applied migration 006_rating_profiles/);assert.match(second,/Skipped migration 004_economy/);assert.match(second,/Skipped migration 005_price_rebalance/);assert.match(second,/Skipped migration 006_rating_profiles/);
   const counts=(await db.query("SELECT (SELECT COUNT(*)::int FROM players WHERE origin='market') AS market,(SELECT COUNT(*)::int FROM players WHERE origin='generated') AS generated,(SELECT COUNT(*)::int FROM players WHERE origin='academy') AS academy,(SELECT COUNT(DISTINCT catalog_key)::int FROM players) AS keys,(SELECT COUNT(*)::int FROM missions) AS missions")).rows[0];
   assert.deepEqual(counts,{market:360,generated:12,academy:0,keys:360,missions:5},'seeding twice creates nothing twice');
   // The migration's SQL price formula and the server's JavaScript formula agree for every rating.
@@ -733,6 +734,66 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM leagues')).n),2,'an unfinished season creates no successor');
   await assertLedgersConsistent();
   for(let i=0;i<13;i++)await assertLineupValid(i);
+ });
+
+ await t.test('rating profile: every stored player is an Uzbek League player rated 40-90 with potential up to 90',async()=>{
+  const profile=await one('SELECT * FROM rating_profiles');
+  assert.deepEqual(profile,{category:'uzbek_league',min_overall:UZBEK_LEAGUE.minOverall,max_overall:UZBEK_LEAGUE.maxOverall,max_potential:UZBEK_LEAGUE.maxPotential,max_attribute:UZBEK_LEAGUE.maxAttribute});
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM rating_profiles')).n),1);
+  const stats=await one("SELECT COUNT(*)::int AS n,MIN(overall)::int AS low,MAX(overall)::int AS high,MAX(potential)::int AS potential,COUNT(*) FILTER (WHERE category<>'uzbek_league')::int AS foreign_rows,COUNT(*) FILTER (WHERE potential<overall)::int AS inverted FROM players");
+  assert.ok(stats.n>500);assert.ok(stats.low>=40&&stats.high<=90&&stats.potential<=90);assert.equal(stats.foreign_rows,0);assert.equal(stats.inverted,0);
+  // The seeded catalogue was not extended: its best player is still 74, and nine potentials sit at the 90 cap.
+  const catalogue=await one("SELECT MAX(overall)::int AS high,MIN(overall)::int AS low,COUNT(*)::int AS n,COUNT(*) FILTER (WHERE potential=90)::int AS capped FROM players WHERE catalog_key IS NOT NULL");
+  assert.equal(catalogue.n,360);assert.equal(catalogue.low,46);assert.ok(catalogue.capped>=9);
+  const bad=(await db.query("SELECT 1 FROM players p,jsonb_each_text(p.attributes) a WHERE a.value::numeric NOT BETWEEN 1 AND 99")).rowCount;
+  assert.equal(bad,0);
+  const insert="INSERT INTO players(full_name,age,position,quality,overall,potential,attributes,market_value_uzs,origin) VALUES('Rating Probe',22,'ST','elite',$1,$2,$3::jsonb,0,'market') RETURNING id";
+  const attrs=(n,extra={})=>JSON.stringify({pace:n,shooting:n,passing:n,dribbling:n,defending:n,physical:n,...extra});
+  const probes=[];
+  for(const [o,pot,a] of [[40,40,attrs(40)],[90,90,attrs(90)],[90,90,attrs(88,{physical:99,defending:99})]])probes.push((await one(insert,[o,pot,a])).id);
+  await assert.rejects(()=>db.query(insert,[39,60,attrs(39)]),/outside 40-90/);
+  await assert.rejects(()=>db.query(insert,[91,91,attrs(91)]),/outside 40-90/);
+  await assert.rejects(()=>db.query(insert,[80,91,attrs(80)]),/Potential 91 is above 90/);
+  await assert.rejects(()=>db.query(insert,[80,79,attrs(80)]),/players_potential_not_below_overall/);
+  await assert.rejects(()=>db.query(insert,[90,90,attrs(90,{pace:100})]),/outside 1-99/);
+  await assert.rejects(()=>db.query('UPDATE players SET overall=91,potential=91 WHERE id=$1',[probes[1]]),/outside 40-90/);
+  await assert.rejects(()=>db.query("UPDATE players SET category='international_iconic' WHERE id=$1",[probes[1]]),/international_iconic|foreign key/);
+  await db.query('DELETE FROM players WHERE id=ANY($1::uuid[])',[probes]);
+ });
+
+ await t.test('upgrades can never push a player past overall 90, and attributes stop at potential',async()=>{
+  const id=clubs[0].id,path=clubPath(0)+'/players/upgrade',names=['pace','shooting','passing','dribbling','defending','physical'];
+  const cost=upgradeCost(89,1),budget=await budgetOf(0);
+  // Development Points for the test are booked through the ledger so the balance stays consistent.
+  const dp=(await one('UPDATE clubs SET development_points=development_points+$2 WHERE id=$1 RETURNING development_points',[id,cost*6+50])).development_points;
+  await db.query("INSERT INTO development_ledger(club_id,amount_dp,balance_after_dp,reason) VALUES($1,$2,$3,'test_grant')",[id,cost*6+50,dp]);
+  const flat=n=>JSON.stringify(Object.fromEntries(names.map(k=>[k,n])));
+  const star=(await one("INSERT INTO players(club_id,full_name,age,position,quality,overall,potential,attributes,market_value_uzs,origin) VALUES($1,'Rating Ceiling',24,'CM','elite',89,90,$2::jsonb,$3,'market') RETURNING id",[id,flat(89),marketValueUzs(89)])).id;
+  for(let i=0;i<6;i++){
+   // Asking for five levels still stops each attribute at the potential of 90.
+   const r=await ok(users[0],'POST',path,{playerId:star,attribute:names[i],levels:5});
+   assert.equal(r.player.attributes[names[i]],90);assert.equal(r.spentDp,cost);assert.equal(r.player.overall,i<5?89:90);
+  }
+  const stored=await one('SELECT overall,potential,attributes,market_value_uzs,quality,category FROM players WHERE id=$1',[star]);
+  assert.equal(stored.overall,90);assert.equal(stored.potential,90);assert.equal(stored.category,'uzbek_league');
+  assert.equal(Number(stored.market_value_uzs),marketValueUzs(90));assert.equal(Number(stored.market_value_uzs),31800000);
+  assert.ok(Object.values(stored.attributes).every(v=>v===90));
+  const spent=(await one('SELECT development_points FROM clubs WHERE id=$1',[id])).development_points;
+  for(const attribute of names){
+   const more=await call(users[0],'POST',path,{playerId:star,attribute,levels:5});
+   assert.equal(more.status,400);assert.match(more.data.error,/upgrade cap/);
+  }
+  // A 90-rated player whose attribute is already 99 cannot be raised either.
+  await db.query("UPDATE players SET attributes=jsonb_set(jsonb_set(attributes,'{physical}','99'),'{defending}','81') WHERE id=$1",[star]);
+  assert.equal((await call(users[0],'POST',path,{playerId:star,attribute:'physical',levels:1})).status,400);
+  const end=await one('SELECT overall,potential,attributes FROM players WHERE id=$1',[star]);
+  assert.equal(end.overall,90);assert.equal(end.attributes.physical,99);
+  assert.equal((await one('SELECT development_points FROM clubs WHERE id=$1',[id])).development_points,spent,'refused upgrades cost nothing');
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM players WHERE overall>90 OR potential>90')).n),0);
+  // Money is untouched by upgrades, and removing the test player leaves the squad as it was.
+  assert.equal(await budgetOf(0),budget);
+  await db.query('DELETE FROM players WHERE id=$1',[star]);
+  await assertLedgersConsistent();await assertLineupValid(0);
  });
 
  await t.test('no request or scheduler run produced a server error',()=>{
