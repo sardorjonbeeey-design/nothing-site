@@ -10,8 +10,8 @@ Environment: isolated cloud container, Node v22.23.4, PostgreSQL 16.15 local clu
 | Command | Result |
 |---|---|
 | `npm test` | 55 tests: 54 passed, 0 failed, 1 skipped (integration, no database URL) |
-| `node scripts/verify-rating-migration.mjs postgresql://postgres:<pw>@localhost:5432` | 40 checks passed, 0 failed |
-| `node scripts/verify-price-migration.mjs postgresql://postgres:<pw>@localhost:5432` | 12 checks passed, 0 failed |
+| `node scripts/verify-rating-migration.mjs postgresql://postgres:<pw>@localhost:5432` | 39 checks passed, 0 failed |
+| `node scripts/verify-price-migration.mjs postgresql://postgres:<pw>@localhost:5432` | 13 checks passed, 0 failed |
 | `INTEGRATION_DATABASE_URL=postgresql://postgres:<pw>@localhost:5432/zamin_game npm run test:integration` | 34 subtests passed, 0 failed (run twice) |
 | `node scripts/mobile-smoke.cjs http://127.0.0.1:18181 postgresql://postgres:<pw>@localhost:5432/zamin_game` | 123 checks passed, 0 failed (run once, fresh migrated and seeded database) |
 
