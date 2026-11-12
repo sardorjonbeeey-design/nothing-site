@@ -42,7 +42,7 @@ test('resale: academy players 50% on their first sale, everyone else 80%',()=>{
  assert.equal(resaleRatePercent({origin:'market',first_sale_done:false}),80);
  assert.equal(resaleRatePercent({origin:'generated',first_sale_done:false}),80);
  assert.equal(saleValueUzs('10000001'),8000000n);assert.equal(saleValueUzs('10000001',50),5000000n);
- assert.equal(saleValueUzs(marketValueUzs(58),50),1845000n);assert.equal(saleValueUzs(marketValueUzs(74),80),13544000n);
+ assert.equal(saleValueUzs(marketValueUzs(58),50),530000n);assert.equal(saleValueUzs(marketValueUzs(74),80),4656000n);
  assert.throws(()=>saleValueUzs(100,100));assert.throws(()=>saleValueUzs(-1));
  // Buying and reselling can never make money at either rate.
  for(let o=1;o<=100;o++)assert.ok(saleValueUzs(marketValueUzs(o),80)<BigInt(marketValueUzs(o)));

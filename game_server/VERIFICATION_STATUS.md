@@ -18,7 +18,7 @@ Time was never accelerated through the application. Tests moved `kickoff_at` int
 ### Integration tests — `npm run test:integration` — 32 subtests passed, 0 failed (run four times)
 Server processes run with `TZ=America/New_York`. Newly covered:
 - Previous checkpoint: migration 004 on a clean database; seeding twice gives 360 market and 12 generated players. Migration 005 and its new SQL formula checks have been added, but not executed yet.
-- Club creation: 20,000,000 UZS, the exact 18-player distribution, all `academy`, attributes averaging to overall, squad value 38,510,000, XI of the eleven strongest.
+- Club creation (previous checkpoint): 20,000,000 UZS, the exact 18-player distribution, all `academy`, attributes averaging to overall, squad value 38,510,000. The rebalanced expected squad valuation is 10,520,000; updated test has not been run yet.
 - One club per user: second request 409; three simultaneous requests create one club; a direct database insert is refused by the unique index.
 - Market: prices follow the curve; an 80-rated player is refused at the opening budget; `maxValue` filter; youth stock covers all 12 slots; buying one creates exactly one replacement; selling it back creates none.
 - Resale: academy first sale 50%, bought back at full price and resold at 80%; youth and catalogue players 80%.
