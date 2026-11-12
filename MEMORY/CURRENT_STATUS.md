@@ -3,7 +3,7 @@
 Last updated: 2026-11-12
 Repository: sardorjonbeeey-design/nothing-site
 Branch: zamin-fk-management
-Phase: isolated server + client with scheduled league, seasons and economy, locally verified
+Phase: isolated server + client with scheduled league, seasons and economy; price curve rebalanced on branch, tests pending rerun
 Production connection: NONE
 Integration approval: NOT GRANTED
 
@@ -15,9 +15,8 @@ Integration approval: NOT GRANTED
 
 ## Verification (2026-11-12, local only)
 VERIFIED locally against a throwaway local PostgreSQL, with mock/dev authentication:
-- Unit tests: 44 passed.
-- Integration tests: 32 subtests passed.
-- Emulated mobile browser smoke test (Pixel 7 and 360 px): 123 checks passed.
+- Previous checkpoint (commit 978bf21) had unit 44 passed, integration 32 subtests passed, mobile emulation 123 checks passed.
+- The subsequent price-curve rebalancing changed price assertions and added migration 005; rerun all suites before treating those results as current.
 Details, untested areas and limitations: game_server/VERIFICATION_STATUS.md.
 
 NOT verified: real-time kick-offs and seasons, real phone, real Telegram, Docker/Caddy, hosted database, load and security.
@@ -32,7 +31,7 @@ NOT verified: real-time kick-offs and seasons, real phone, real Telegram, Docker
 
 ## Economy (IMPLEMENTED, owner-approved rules)
 - One club per user. 20,000,000 UZS and an identical 18-player generated academy squad.
-- Price 30,000,000 × 1.10^(OVR − 80). Academy first sale 50%, otherwise 80%. Squad 13–26.
+- Rebalanced price 11,000,000 × 1.112^(OVR − 80), rounded to 10,000 UZS. Academy first sale 50%, otherwise 80%. Squad 13–26.
 - 750,000 UZS per completed league match; the same stipend per league matchday for clubs outside the league.
 - The market always offers generated 45–50 players. Sold starters are replaced in the XI automatically.
 - All players are fictional. The real-player database is NOT implemented.

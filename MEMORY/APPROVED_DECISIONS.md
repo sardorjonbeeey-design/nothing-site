@@ -19,7 +19,7 @@ Note: decision 3 (accelerated / speed-up view) is superseded for league matches 
 
 ## Economy, seasons and match model (approved 2026-11-12)
 24. APPROVED — 20,000,000 UZS starting budget; 18-player starting squad; squad minimum 13, maximum 26.
-25. APPROVED — Player price 30,000,000 × 1.10^(OVR − 80) UZS.
+25. SUPERSEDED — Initial player price 30,000,000 × 1.10^(OVR − 80) UZS (replaced by decision 35).
 26. APPROVED — Academy players sell for 50% on their first sale; transfer-market players for 80%. Sold academy players stay on the market.
 27. APPROVED — 750,000 UZS per completed league match; no win or draw bonus; no friendly income.
 28. APPROVED — Waiting-list stipend: 750,000 UZS per equivalent league matchday, 18 per season.
@@ -29,6 +29,7 @@ Note: decision 3 (accelerated / speed-up view) is superseded for league matches 
 32. APPROVED — Automatic lineup replacement after a starter is sold.
 33. APPROVED — Attribute offsets per position that sum to zero; attributes average exactly to OVR.
 34. APPROVED — Match engine: scale S = 40 with home advantage +2 (verified in tests).
+35. APPROVED — Rebalanced player price: 11,000,000 × 1.112^(OVR − 80) UZS, rounded to 10,000 UZS. An 80 OVR player costs 11M and a 60 OVR player costs 1.32M. Reprice existing market values through migration 005.
 Pending, not approved: real-player database (rights and data source unresolved); real photographs are excluded in any case.
 
 ## Club and players

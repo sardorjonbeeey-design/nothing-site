@@ -10,7 +10,7 @@ These are implementation defaults used to make the isolated prototype playable. 
 | One club per user | Enforced by the server and a unique database index | Owner-approved |
 | Transfer market | 360 seeded fictional players rated 46–74, plus generated youth | Provisional content |
 | Youth supply | The market always holds a free generated player rated 45–50 for each of 12 position slots | Owner-approved |
-| Market value | 30,000,000 × 1.10^(overall − 80) UZS, rounded to 10,000 | Owner-approved |
+| Market value | 11,000,000 × 1.112^(overall − 80) UZS, rounded to 10,000 | Owner-approved (rebalanced 2026-11-12) |
 | Player sale price | Academy players 50% on their first sale; every other sale 80% | Owner-approved |
 | League income | 750,000 UZS per completed league match, no win or draw bonus | Owner-approved |
 | Waiting-list stipend | 750,000 UZS per completed league matchday to every club outside that league (18 per season) | Owner-approved |
@@ -44,3 +44,16 @@ UZS and Development Points are stored and tracked separately. UZS transactions a
 
 ## Before launch
 Rows marked Owner-approved were approved on 2026-11-11 and 2026-11-12. The owner should still approve player tier thresholds, DP rewards and upgrade costs. Do not silently treat these prototype defaults as final.
+
+
+## Rebalanced player-price reference (UZS)
+
+| OVR | Market value | OVR | Market value |
+|---:|---:|---:|---:|
+| 50 | 460,000 | 70 | 3,800,000 |
+| 55 | 770,000 | 75 | 6,470,000 |
+| 60 | 1,320,000 | 80 | 11,000,000 |
+| 65 | 2,240,000 | 85 | 18,700,000 |
+| 90 | 31,800,000 | | |
+
+The new curve keeps an 80 OVR signing within the initial 20M budget, while two 80 OVR players exceed it without sales. Values are recalculated for all existing player rows by migration `005_price_rebalance.sql`.

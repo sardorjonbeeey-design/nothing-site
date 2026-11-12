@@ -78,7 +78,7 @@ function tashkentInput(hour){const d=new Date(Date.now()+5*3600000+2*86400000);r
   const budgetBefore=BigInt((await api(dev,'GET','/api/clubs')).clubs[0].budget_uzs);
   await page.locator('#youth-list [data-action="sign"]').first().click();await toast('Player signed');
   const budgetAfter=BigInt((await api(dev,'GET','/api/clubs')).clubs[0].budget_uzs);
-  check(label+': signing a youth player costs its listed price',budgetBefore-budgetAfter>=1070000n&&budgetBefore-budgetAfter<=1720000n);
+  check(label+': signing a youth player costs its listed price',budgetBefore-budgetAfter>=270000n&&budgetBefore-budgetAfter<=460000n);
   await tab('squad');await page.waitForSelector('.player');
   await page.locator('.player:has-text("STARTING XI") [data-action="sell"]').first().click();await toast('promoted to the XI');
   await page.waitForFunction(()=>document.querySelectorAll('.player').length===18,null,{timeout:8000});

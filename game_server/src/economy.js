@@ -5,10 +5,10 @@ export const WAITING_STIPEND_UZS=750_000n;
 export const MIN_SQUAD_SIZE=13;
 export const MAX_SQUAD_SIZE=26;
 export const STARTING_SQUAD_SIZE=18;
-// 30,000,000 UZS at overall 80, 10% more per rating point, rounded to 10,000 UZS.
+// 11,000,000 UZS at overall 80, 11.2% more per rating point, rounded to 10,000 UZS.
 export function marketValueUzs(overall){
  if(!Number.isInteger(overall)||overall<1||overall>100)throw new RangeError('Overall must be between 1 and 100');
- return Math.round(30_000_000*Math.pow(1.10,overall-80)/10_000)*10_000;
+ return Math.round(11_000_000*Math.pow(1.112,overall-80)/10_000)*10_000;
 }
 export function qualityForOverall(overall){
  if(overall<54)return 'academy';

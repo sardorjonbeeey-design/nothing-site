@@ -1,6 +1,6 @@
 # Verification status — isolated management candidate
 
-Updated: 2026-11-12 (economy, seasons and match model)
+Updated: 2026-11-12 (price curve rebalanced after checkpoint 978bf21; rerun pending)
 Branch: zamin-fk-management
 
 Everything below was run in an isolated development container against a throwaway local PostgreSQL 16 cluster (database `zamin_game` on localhost) with dev/mock authentication. No Neon, live database, Telegram service, Mini App or deployment was involved. No real device and no production system was used.
@@ -9,7 +9,7 @@ Time was never accelerated through the application. Tests moved `kickoff_at` int
 
 ## Executed and passed
 ### Unit tests — `npm test` — 44 passed, 0 failed (integration test skipped without a database)
-- **Economy:** constants; the price table (80 = 30,000,000; 85 = 48,320,000; 90 = 77,810,000) and monotonic curve; a 75 fits the opening budget and a 76 does not; selling the five best academy players leaves 27,415,000, below the price of an 80; 50% and 80% resale; a buy-and-resell never profits; overall formula.
+- **Economy (previous checkpoint):** tests passed for constants, resale, ledger rules and upgrade formula. The price curve was changed afterward and its test assertions have been updated to the new table: OVR 60 = 1,320,000; 70 = 3,800,000; 80 = 11,000,000; 85 = 18,700,000; 90 = 31,800,000. The rebalanced tests have not yet been executed.
 - **Catalogue:** approved offsets sum to zero; templates average exactly to overall for every position and rating 1–99; 360 market players consistent; the academy squad matches the approved distribution in 20 generated squads; youth players are 45–50.
 - **Lineup repair:** same position, same line, goalkeeper rules, cleaning of invalid entries, and 20,000 random squads and lineups that all end with a valid XI.
 - **Match model (40,000 seeded matches per pairing):** win rate and points at gaps 0, 3, 6, 10, 15, 20, 26 within 2 points / 0.05 of the approved table; same gap worth the same at ratings 46 to 80; home win about 40% between equal sides; about 2.95 goals per match; all five formations fair when their own shape is fielded; a wrong shape costs strength, bounded at 8 points in the worst case.
@@ -17,7 +17,7 @@ Time was never accelerated through the application. Tests moved `kickoff_at` int
 
 ### Integration tests — `npm run test:integration` — 32 subtests passed, 0 failed (run four times)
 Server processes run with `TZ=America/New_York`. Newly covered:
-- Migration 004 on a clean database; seeding twice gives 360 market and 12 generated players; the migration's SQL price formula equals the server formula for every rating.
+- Previous checkpoint: migration 004 on a clean database; seeding twice gives 360 market and 12 generated players. Migration 005 and its new SQL formula checks have been added, but not executed yet.
 - Club creation: 20,000,000 UZS, the exact 18-player distribution, all `academy`, attributes averaging to overall, squad value 38,510,000, XI of the eleven strongest.
 - One club per user: second request 409; three simultaneous requests create one club; a direct database insert is refused by the unique index.
 - Market: prices follow the curve; an 80-rated player is refused at the opening budget; `maxValue` filter; youth stock covers all 12 slots; buying one creates exactly one replacement; selling it back creates none.
@@ -57,4 +57,4 @@ Headless Chromium, Pixel 7 emulation and a 360 px viewport. Newly covered: 20,00
 - Formation fit still moves strength by up to ±4, which under the new model is worth about as much as 4 overall.
 
 ## Release status
-Locally verified development candidate. Not production-tested, not deployed, not connected to the existing Mini App or any live database.
+Price-curve rebalancing checkpoint committed to the isolated development branch; updated tests are pending execution. Not production-tested, not deployed, not connected to the existing Mini App or any live database.

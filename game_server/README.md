@@ -27,7 +27,7 @@ Users cannot start matches, so both the integration test and the smoke script mo
 Values are fixed in `src/economy.js`, not in the environment. See BALANCING_DEFAULTS.md for the full table.
 - Each user manages one club. A new club gets 20,000,000 UZS and an identical generated academy squad of 18 (`src/catalog.js`).
 - Players have an `origin`: `market` (seeded catalogue), `academy` (starter squads) or `generated` (youth supply). All are fictional.
-- Price is 30,000,000 × 1.10^(overall − 80). Academy players sell for 50% the first time, everything else for 80%. Squads hold 13 to 26 players.
+- Price is 11,000,000 × 1.112^(overall − 80), rounded to 10,000 UZS. An 80 OVR player costs 11M; a 60 OVR player costs about 1.32M. Academy players sell for 50% the first time, everything else for 80%. Squads hold 13 to 26 players. Migration `005_price_rebalance.sql` reprices existing database rows.
 - League clubs earn 750,000 UZS per completed league match. Clubs outside the league receive the same amount per completed league matchday (`stipend_runs` and `stipend_payments` make each payment once-only).
 - When a season completes, the scheduler creates the next one for the same ten clubs, starting two rest days after day 19. A unique index on the season number makes this once-only.
 - The match model and its verification are in `src/simulation.js` and `test/simulation.test.js`.
@@ -77,8 +77,7 @@ The game client is served by the same origin at /, /app.js, /styles.css and /con
 All mutation routes require authentication and ownership checks. Money and match results are calculated server-side. Transfers and match settlement use database transactions and row locks.
 
 ## Configuration notes
-- Starting budget defaults to 0 UZS because the owner has not approved an opening amount.
-- Starting squad size defaults to 18 as a provisional implementation setting, not a frozen game-design decision.
+- The starting budget is 20,000,000 UZS and the starting squad is 18 generated academy players; both are owner-approved.
 - Player ratings, attribute costs, transfer values, match probabilities and mission rewards are initial balancing defaults and should be tuned after playtesting.
 - The league is created only after at least 10 clubs exist. League size and season format are provisionally set to a 10-club round-robin.
 - This is a deployment candidate, not production-approved. Security review, backups, rate limiting, monitoring, load testing and cloud configuration remain required before launch.

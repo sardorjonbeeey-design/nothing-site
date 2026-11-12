@@ -114,13 +114,13 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const second=await run('src/migrate.js');
   assert.match(second,/Skipped migration 001_initial/);assert.match(second,/Skipped migration 002_development_ledger/);
   await run('src/seed.js');await run('src/seed.js');
-  assert.match(first,/Applied migration 003_league_schedule/);assert.match(first,/Applied migration 004_economy/);assert.match(second,/Skipped migration 004_economy/);
+  assert.match(first,/Applied migration 003_league_schedule/);assert.match(first,/Applied migration 004_economy/);assert.match(first,/Applied migration 005_price_rebalance/);assert.match(second,/Skipped migration 004_economy/);assert.match(second,/Skipped migration 005_price_rebalance/);
   const counts=(await db.query("SELECT (SELECT COUNT(*)::int FROM players WHERE origin='market') AS market,(SELECT COUNT(*)::int FROM players WHERE origin='generated') AS generated,(SELECT COUNT(*)::int FROM players WHERE origin='academy') AS academy,(SELECT COUNT(DISTINCT catalog_key)::int FROM players) AS keys,(SELECT COUNT(*)::int FROM missions) AS missions")).rows[0];
   assert.deepEqual(counts,{market:360,generated:12,academy:0,keys:360,missions:5},'seeding twice creates nothing twice');
   // The migration's SQL price formula and the server's JavaScript formula agree for every rating.
-  const sqlPrices=(await db.query("SELECT o::int AS overall,(ROUND(30000000*POWER(1.10::numeric,o-80)/10000)*10000)::bigint AS price FROM generate_series(1,100) o")).rows;
+  const sqlPrices=(await db.query("SELECT o::int AS overall,(ROUND(11000000*POWER(1.112::numeric,o-80)/10000)*10000)::bigint AS price FROM generate_series(1,100) o")).rows;
   for(const r of sqlPrices)assert.equal(Number(r.price),marketValueUzs(r.overall),'overall '+r.overall);
-  assert.equal((await db.query("SELECT 1 FROM players WHERE market_value_uzs<>(ROUND(30000000*POWER(1.10::numeric,overall-80)/10000)*10000)::bigint")).rowCount,0);
+  assert.equal((await db.query("SELECT 1 FROM players WHERE market_value_uzs<>(ROUND(11000000*POWER(1.112::numeric,overall-80)/10000)*10000)::bigint")).rowCount,0);
  });
 
  await t.test('database isolation guard refuses a differently named database',async()=>{
@@ -186,7 +186,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
    assert.equal(Number(p.market_value_uzs),marketValueUzs(p.overall));assert.equal(p.quality,qualityForOverall(p.overall));
    assert.equal(Object.values(p.attributes).reduce((a,b)=>a+b,0),p.overall*6,'attributes average exactly to overall');
   }
-  assert.equal(squad.reduce((n,p)=>n+Number(p.market_value_uzs),0),38510000);
+  assert.equal(squad.reduce((n,p)=>n+Number(p.market_value_uzs),0),10520000);
   const lineup=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/lineup')).lineup;
   assert.equal(lineup.formation,'4-3-3');assert.equal(lineup.starters.length,11);assert.equal(lineup.substitutes.length,7);
   assert.ok(squad.some(p=>p.position==='GK'&&lineup.starters.includes(p.id)));
@@ -230,7 +230,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   await ok(users[0],'POST',route,{formation:'4-3-3',starters:lineup.starters,substitutes:lineup.substitutes});
  });
 
- await t.test('transfer market: price curve, classification, elite players out of reach, youth supply',async()=>{
+ await t.test('transfer market: rebalanced price curve, classification, 80-rated signing affordability, youth supply',async()=>{
   const market=await ok(users[0],'GET','/api/market');
   assert.deepEqual(market.squadLimits,{min:13,max:26});
   assert.ok(market.players.length>0&&market.players.length<=100);
@@ -244,10 +244,11 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const capped=(await ok(users[0],'GET','/api/market?maxValue=3000000')).players;
   assert.ok(capped.length>0&&capped.every(p=>BigInt(p.market_value_uzs)<=3000000n));
   assert.equal((await call(users[0],'GET','/api/market?maxValue=abc')).status,400);
-  // An 80-rated player costs 30,000,000 UZS: more than the opening budget.
+  // An 80-rated player costs 11,000,000 UZS: one fits the opening budget, two do not.
   const elite=(await one("INSERT INTO players(full_name,age,position,quality,overall,potential,attributes,market_value_uzs,origin) VALUES('Test Elite',27,'ST','elite',80,84,'{\"pace\":82,\"shooting\":88,\"passing\":76,\"dribbling\":81,\"defending\":70,\"physical\":83}',$1,'market') RETURNING id",[marketValueUzs(80)])).id;
-  const refused=await call(users[0],'POST',clubPath(0)+'/players/sign',{playerId:elite});
-  assert.equal(refused.status,400);assert.match(refused.data.error,/Insufficient club budget/);
+  assert.equal(marketValueUzs(80),11000000);
+  assert.ok(marketValueUzs(80)<=20000000);
+  assert.ok(2*marketValueUzs(80)>20000000);
   assert.equal(await budgetOf(0),20000000n);
   // Buying a youth player goes through the normal signing rules and is replaced by exactly one new youth player.
   const youth=market.youth.find(p=>p.position==='CM');
@@ -389,15 +390,15 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   let budget=await budgetOf(0);
   // 1. Academy player, first sale: 50%.
   const cb=bench('CB',50),first=await sell(cb.id);
-  assert.equal(first.status,200);assert.equal(first.data.resaleRatePercent,50);assert.equal(first.data.feeUzs,saleValueUzs(cb.market_value_uzs,50).toString());assert.equal(first.data.feeUzs,'860000');
-  budget+=860000n;assert.equal(first.data.budgetUzs,budget.toString());assert.deepEqual(first.data.promoted,[],'selling a substitute promotes nobody');
+  assert.equal(first.status,200);assert.equal(first.data.resaleRatePercent,50);assert.equal(first.data.feeUzs,saleValueUzs(cb.market_value_uzs,50).toString());assert.equal(first.data.feeUzs,'230000');
+  budget+=230000n;assert.equal(first.data.budgetUzs,budget.toString());assert.deepEqual(first.data.promoted,[],'selling a substitute promotes nobody');
   assert.equal((await sell(cb.id)).status,404);
   const listed=await one('SELECT club_id,origin,first_sale_done,market_value_uzs FROM players WHERE id=$1',[cb.id]);
   assert.deepEqual(listed,{club_id:null,origin:'academy',first_sale_done:true,market_value_uzs:String(marketValueUzs(50))},'the sold academy player stays on the market at full price');
-  assert.ok((await ok(users[0],'GET','/api/market?maxValue=1720000')).players.some(p=>p.id===cb.id));
+  assert.ok((await ok(users[0],'GET','/api/market?maxValue=1000000')).players.some(p=>p.id===cb.id));
   // 2. Buying him back costs the full price; selling him again pays 80%: the 50% rate applies once only.
-  assert.equal((await sign(cb.id)).status,200);budget-=1720000n;
-  const again=await sell(cb.id);assert.equal(again.data.resaleRatePercent,80);assert.equal(again.data.feeUzs,'1376000');budget+=1376000n;
+  assert.equal((await sign(cb.id)).status,200);budget-=460000n;
+  const again=await sell(cb.id);assert.equal(again.data.resaleRatePercent,80);assert.equal(again.data.feeUzs,'368000');budget+=368000n;
   // 3. A generated youth player is a transfer-market player: 80%.
   const youth=squad.find(p=>p.id===clubs[0].youthId),soldYouth=await sell(youth.id);
   assert.equal(soldYouth.data.resaleRatePercent,80);assert.equal(soldYouth.data.feeUzs,saleValueUzs(youth.market_value_uzs,80).toString());budget+=BigInt(soldYouth.data.feeUzs);

@@ -7,26 +7,27 @@ test('approved economy constants',()=>{
  assert.equal(STARTING_BUDGET_UZS,20000000n);assert.equal(LEAGUE_MATCH_INCOME_UZS,750000n);assert.equal(WAITING_STIPEND_UZS,750000n);
  assert.equal(MIN_SQUAD_SIZE,13);assert.equal(MAX_SQUAD_SIZE,26);assert.equal(STARTING_SQUAD_SIZE,18);
 });
-test('price curve: 30,000,000 x 1.10^(overall-80), rounded to 10,000 UZS',()=>{
- const expected={45:1070000,47:1290000,50:1720000,54:2520000,58:3690000,60:4460000,65:7180000,70:11570000,75:18630000,76:20490000,80:30000000,85:48320000,90:77810000};
+test('price curve: 11,000,000 x 1.112^(overall-80), rounded to 10,000 UZS',()=>{
+ const expected={45:270000,47:330000,50:460000,54:700000,58:1060000,60:1320000,65:2240000,70:3800000,75:6470000,76:7190000,80:11000000,85:18700000,90:31800000};
  for(const [overall,price] of Object.entries(expected))assert.equal(marketValueUzs(Number(overall)),price,'overall '+overall);
  for(let o=2;o<=100;o++){
   assert.ok(marketValueUzs(o)>=marketValueUzs(o-1),'never decreasing at '+o);
   if(o>=30)assert.ok(marketValueUzs(o)>marketValueUzs(o-1),'strictly increasing at '+o);
   assert.equal(marketValueUzs(o)%10000,0);
-  assert.ok(Math.abs(marketValueUzs(o)-30e6*1.1**(o-80))<=5000);
+  assert.ok(Math.abs(marketValueUzs(o)-11e6*1.112**(o-80))<=5000);
  }
  assert.throws(()=>marketValueUzs(0));assert.throws(()=>marketValueUzs(101));assert.throws(()=>marketValueUzs(70.5));
 });
-test('a new club cannot afford an elite player with its opening budget',()=>{
- assert.ok(BigInt(marketValueUzs(75))<=STARTING_BUDGET_UZS);
- assert.ok(BigInt(marketValueUzs(76))>STARTING_BUDGET_UZS);
- // Even after selling the five most valuable academy players (down to the 13-player minimum) an 80 stays out of reach.
+test('a new club can afford one 80-rated player, but not two without selling players',()=>{
+ assert.equal(marketValueUzs(80),11000000);
+ assert.ok(BigInt(marketValueUzs(80))<=STARTING_BUDGET_UZS);
+ assert.ok(2n*BigInt(marketValueUzs(80))>STARTING_BUDGET_UZS);
+ // Selling the five most valuable academy players leaves 13 and adds 2.1M cash, enough for two 80s with only 100K left.
  const values=academySquadTemplate.map(([,o])=>marketValueUzs(o)).sort((a,b)=>b-a);
  const cash=STARTING_BUDGET_UZS+values.slice(0,5).reduce((n,v)=>n+saleValueUzs(v,50),0n);
- assert.equal(cash,27415000n);
- assert.ok(cash<BigInt(marketValueUzs(80)));
- assert.equal(values.reduce((a,b)=>a+b,0),38510000,'starting squad list value');
+ assert.equal(cash,22100000n);
+ assert.equal(cash-2n*BigInt(marketValueUzs(80)),100000n);
+ assert.equal(values.reduce((a,b)=>a+b,0),10520000,'starting squad list value');
 });
 test('quality tiers use provisional thresholds',()=>{
  assert.equal(qualityForOverall(53),'academy');assert.equal(qualityForOverall(54),'developing');

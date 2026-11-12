@@ -48,3 +48,10 @@ Chronological record. Append entries; do not erase earlier history.
 - Starter squads are now generated academy players, identical for every club; nothing is taken from the market.
 - Results: unit 44 passed; integration 32 subtests passed; mobile smoke 123 checks passed. Local only.
 - Not done: real-player database. Research found FotMob ratings for the league, but sources could not be opened from this environment and data and name rights are unresolved.
+
+
+## 2026-11-12 — Player price curve rebalanced
+- Owner noted the initial curve made a 60 OVR player cost 4.46M UZS, too high against the 20M opening budget, and approved a lower curve.
+- New price anchor: 11M UZS at OVR 80, with 1.112× per rating point, rounded to 10,000 UZS. Examples: OVR 60 = 1.32M, 70 = 3.8M, 80 = 11M, 90 = 31.8M.
+- Added migration 005 to reprice existing database rows; updated server formula, unit/integration assertions, mobile smoke price range, balancing and status docs.
+- Tests must be rerun after this change; this edit workflow did not execute the test suite.
