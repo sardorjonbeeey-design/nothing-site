@@ -87,13 +87,8 @@ test('home advantage and scoring level',()=>{
  near(record(side(80),side(54),{seed:8}).goals,2.95,0.1,'goals per match with a large gap');
  near(record(side(62),side(60),{seed:9}).points,record(side(60),side(60),{seed:9}).points+0.07,0.05,'+2 rating is roughly worth home advantage');
 });
-test('every formation is fair when its own shape is fielded; a wrong shape costs strength',()=>{
- const shapes={'4-3-3':shape433,'4-4-2':['GK','CB','CB','LB','RB','CM','CM','LW','RW','ST','ST'],'4-2-3-1':['GK','CB','CB','LB','RB','DM','DM','AM','LW','RW','ST'],'3-5-2':['GK','CB','CB','CB','DM','CM','CM','LW','RW','ST','ST'],'4-1-4-1':shape433};
- for(const [formation,positions] of Object.entries(shapes)){
-  assert.equal(squadStrength(side(60,positions),formation),64,formation+' matched shape gets the full +4');
-  const r=record(side(60,positions),side(60),{seed:500+formation.length,formationA:formation});
-  near(r.points,1.38,0.05,formation+' against 4-3-3 with equal ratings');
- }
+test('a wrong shape costs strength, bounded at 8 points in the worst case (all 12 formations: formations.test.js)',()=>{
+ assert.equal(squadStrength(side(60),'4-3-3'),64,'matched shape gets the full +4');
  const mismatched=squadStrength(side(60),'3-5-2');
  assert.ok(mismatched<64&&mismatched>=56,'mismatch penalty is bounded: '+mismatched);
  const r=record(side(60),side(60),{seed:900,formationA:'3-5-2'});

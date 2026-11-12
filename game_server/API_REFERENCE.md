@@ -51,7 +51,10 @@ Accepts PNG, JPEG or WEBP up to 2 MB. Returns a server-local persistent upload p
 
 - GET /api/clubs/:clubId/squad — virtual players, attributes, potential and values. Every player has `category` `uzbek_league`: overall 40–90, potential at most 90, attributes at most 99. An upgrade never raises an attribute above the player's potential, so overall cannot pass 90.
 - GET /api/clubs/:clubId/lineup — current formation, starters and substitutes.
-- POST /api/clubs/:clubId/lineup — requires 11 unique owned starters including at least one goalkeeper; up to 7 unique owned substitutes.
+- POST /api/clubs/:clubId/lineup — requires one of the 12 formations, 11 unique owned starters with exactly one goalkeeper who can fill every slot of that formation in a natural or cover role, and up to 7 unique owned substitutes who are not starters. Anything else is refused with 400 and nothing is stored. Two allowances keep existing clubs from being locked out: the lineup the club already has is always accepted again unchanged, and an XI may hold as many players out of position as the squad's best possible XI in that formation needs, or as the saved XI already holds in the same formation (it can be improved, never made worse). Formation, 11 unique owned starters and a goalkeeper are always required. Only `formation`, `starters` and `substitutes` are read; the response carries the server's own `analysis` (fit, formation fit bonus, strength, slot of each player).
+- GET /api/clubs/:clubId/formations — the 12 formations (slots with natural and cover positions, note), the analysis of the saved lineup (`current`), and for each formation the best XI this squad can field (`best`: starters, substitutes, fit, strength, valid).
+
+Formations: 4-3-3, 4-2-3-1, 4-4-2, 4-1-4-1, 4-4-1-1, 3-5-2, 3-4-3, 3-4-2-1, 5-3-2, 5-4-1, 4-2-2-2, 4-3-2-1. Definitions live in `src/formations.js`.
 
 Lineup request:
 ```json

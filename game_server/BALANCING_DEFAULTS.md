@@ -26,8 +26,9 @@ These are implementation defaults used to make the isolated prototype playable. 
 | Match reward | 2 DP per completed league match per club (friendlies pay nothing) | Provisional |
 | Mission rewards | 5–12 DP depending on objective; one-off, not reset each season | Provisional |
 | Match strength | Average Starting XI overall, fitness factor, formation fit of −4 to +4 | Provisional |
+| Formation fit | +4 with eleven natural roles; −1.5 per player out of position, −0.75 per player in a cover role; floor −4. Same rule for all 12 formations | Provisional, scale unchanged |
 | Match model | Goal share = 1 / (1 + 10^(−(home + 2 − away) / 40)); home advantage is +2 rating points | Owner-approved, verified in tests |
-| Lineup repair | A sold starter is replaced automatically (same position, then same line, then best remaining; goalkeeper for goalkeeper); every XI is re-checked before a match | Owner-approved |
+| Lineup repair | A sold starter is replaced automatically (natural for the open slot, then cover, then same line, then best remaining; goalkeeper for goalkeeper); every XI is re-checked before a match | Owner-approved |
 | Season rollover | Next season starts 2 rest days after day 19 (21-day cycle) with the same ten clubs; cash, squads, upgrades and history are kept | Owner-approved |
 | League threshold | 10 created clubs | Owner-approved |
 | League format | First 10 clubs, home and away against every opponent: 18 rounds, 90 fixtures | Owner-approved |

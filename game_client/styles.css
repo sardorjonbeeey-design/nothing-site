@@ -34,3 +34,16 @@
 .pill.outcome.win{color:#7fd6a8;border-color:#7fd6a8}.pill.outcome.loss{color:var(--danger);border-color:var(--danger)}.pill.outcome.draw{color:var(--gold);border-color:var(--gold)}.pill.live{color:var(--danger);border-color:var(--danger)}
 .opening>.btn{width:100%;margin-top:14px}
 @media(max-width:700px){.result-goals{font-size:26px}.result-card .crest{transform:scale(.8)}}
+
+.formations{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.formation{position:relative;background:#15211c;border:1px solid #33473d;border-radius:12px;color:#c9d6ce;padding:12px 4px 10px;min-height:76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;cursor:pointer}
+.formation strong{font:700 17px 'DM Mono',monospace;letter-spacing:.01em;white-space:nowrap;color:#fff}.formation small{font-size:9px;color:#8fa397;white-space:nowrap}
+.formation em{position:absolute;top:-6px;right:6px;font:700 7px 'DM Mono',monospace;font-style:normal;letter-spacing:.06em;color:#10201a;background:var(--gold);border-radius:6px;padding:2px 5px}
+.formation.saved{border-color:var(--gold)}.formation.active{background:#1d6a4b;border-color:#8fd3ad;box-shadow:0 0 0 2px #8fd3ad55}.formation.active small{color:#d5eadc}.formation.unfit .f-fit{color:var(--danger)}
+.fit-line{margin:8px 0 4px;font-size:10px!important;color:#cfe0d4!important}.fit-line.bad{color:var(--danger)!important}
+.roles{list-style:none;margin:8px 0 12px;padding:0;border:1px solid #33473d;border-radius:11px;overflow:hidden}
+.role{display:grid;grid-template-columns:38px minmax(0,1fr) 48px 82px;align-items:center;gap:6px;padding:7px 9px;font-size:11px;border-top:1px solid #26362e}.role:first-child{border-top:0}
+.role b{font:700 9px 'DM Mono',monospace;color:#8fa397}.role span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}.role em{font:9px 'DM Mono',monospace;font-style:normal;color:#c9d6ce;white-space:nowrap}
+.role i{font-style:normal;font-size:9px;text-align:right;white-space:nowrap;color:#7fd6a8}.role.cover i{color:var(--gold)}.role.wrong i{color:var(--danger)}.role.empty span,.role.empty i{color:var(--muted)}
+.pill.unsaved{color:#ffedb5;background:#594a27}
+@media(max-width:700px){.formations{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.formation strong{font-size:16px}}

@@ -62,12 +62,60 @@ function tashkentInput(hour){const d=new Date(Date.now()+5*3600000+2*86400000);r
   check(label+': lineup shows 11/11',(await content()).includes('11/11 selected'));
   check(label+': squad limits and academy resale are shown',(await content()).includes('MIN 13 · MAX 26')&&(await page.locator('.player:has-text("ACADEMY PRODUCT · first sale pays 50%")').count())===18);
   check(label+': squad fits the viewport',await noOverflow());
-  await page.selectOption('#formation-select','4-4-2');
-  await page.click('[data-action="auto-lineup"]');await toast('Starting XI saved');
-  check(label+': auto-pick XI saves the lineup',true);
-  await page.locator('[data-action="toggle-starter"]:has-text("Remove XI")').first().click();await toast('10 / 11 selected');
-  await page.locator('[data-action="toggle-starter"]:has-text("Add to XI")').first().click();await toast('Starting XI saved');
-  check(label+': manual XI toggle saves at 11 players',true);
+  // ---- Formations: all 12 are shown, selectable and playable; nothing is saved by merely looking at one.
+  const ALL=['4-3-3','4-2-3-1','4-4-2','4-1-4-1','4-4-1-1','3-5-2','3-4-3','3-4-2-1','5-3-2','5-4-1','4-2-2-2','4-3-2-1'];
+  const chips=page.locator('.formations .formation');
+  check(label+': all 12 formations are offered',JSON.stringify(await page.locator('.formations .formation strong').allTextContents())===JSON.stringify(ALL));
+  check(label+': no pitch drawing is left in the formation interface',(await page.locator('.mini-pitch, .fpitch, .lineup svg, .lineup canvas, .lineup img, .structure').count())===0);
+  check(label+': the formation number is the main element of every card',(await chips.evaluateAll(els=>els.every(el=>{const size=x=>parseFloat(getComputedStyle(x).fontSize),strong=el.querySelector('strong');return size(strong)>=15&&[...el.querySelectorAll('small')].every(x=>size(x)<size(strong))&&strong.scrollWidth<=el.clientWidth;}))));
+  check(label+': every formation shows best XI strength and formation fit',(await page.locator('.formations .f-strength').allTextContents()).every(x=>/^Best XI \d+\.\d$/.test(x))&&(await page.locator('.formations .f-fit').allTextContents()).every(x=>/^Fit [+-]\d\.\d\d$/.test(x))&&(await page.locator('.formations .f-fit').count())===12);
+  check(label+': formation cards are large enough to tap and form an even grid',(await chips.evaluateAll(els=>{const r=els.map(el=>el.getBoundingClientRect());return r.every(x=>x.width>=80&&x.height>=56&&x.left>=0&&x.right<=window.innerWidth)&&new Set(r.map(x=>Math.round(x.width))).size===1&&r.every((a,i)=>r.every((b,j)=>i>=j||a.right<=b.left+1||b.right<=a.left+1||a.bottom<=b.top+1||b.bottom<=a.top+1));})));
+  check(label+': exactly the saved formation is marked',(await page.locator('.formation.saved strong').allTextContents()).join()==='4-3-3'&&(await page.locator('.formation.saved em').textContent())==='SAVED');
+  const savedLineup=async()=>(await api(dev,'GET','/api/clubs/'+club.id+'/lineup')).lineup;
+  // The role list: eleven rows, one per slot, each with a player, inside the panel and never cut off sideways.
+  const rolesOk=async()=>page.evaluate(()=>{
+   const panel=document.querySelector('.lineup').getBoundingClientRect(),rows=[...document.querySelectorAll('.roles .role')];
+   const inside=rows.every(el=>[el,...el.children].every(x=>{const r=x.getBoundingClientRect();return r.left>=panel.left-1&&r.right<=panel.right+1;}));
+   const names=rows.map(el=>el.querySelector('span').textContent),labels=rows.map(el=>el.querySelector('b').textContent);
+   return {count:rows.length,inside,unique:names.every(Boolean)&&new Set(labels).size===labels.length&&new Set(names).size===names.length,empty:document.querySelectorAll('.roles .role.empty').length,wrong:document.querySelectorAll('.roles .role.wrong').length};
+  });
+  let allOk=true,detail='',previous='4-3-3';
+  for(const id of ALL){
+   await page.click('.formation[data-formation="'+id+'"]');
+   await page.waitForSelector('.formation.active[data-formation="'+id+'"]');
+   const before=await savedLineup(),p=await rolesOk();
+   const selected=(await page.locator('.formation.active strong').allTextContents()).join()===id&&(await page.textContent('.lineup .field label')).includes(id);
+   const previewOnly=id===previous||((await page.textContent('#lineup-state')).includes('Not saved')&&before.formation===previous);
+   await page.click('[data-action="auto-lineup"]');await toast('Starting XI saved');
+   await page.waitForFunction(f=>document.querySelector('#lineup-state')?.textContent.includes('Saved · '+f),id);
+   const after=await savedLineup(),q=await rolesOk();
+   const marked=(await page.locator('.formation.saved strong').allTextContents()).join()===id;
+   const fine=selected&&previewOnly&&marked&&p.count===11&&p.inside&&q.count===11&&q.inside&&q.unique&&q.empty===0&&q.wrong===0&&after.formation===id&&new Set(after.starters).size===11&&await noOverflow()&&(await page.locator('#lineup-fit').count())===1;
+   if(!fine){allOk=false;detail+=id+' '+JSON.stringify({selected,previewOnly,p,q,saved:after.formation})+' ';}
+   if(['3-4-2-1','5-3-2'].includes(id))await shot('formation-'+id);
+   previous=id;await page.waitForFunction(()=>!document.querySelector('.toast'));
+  }
+  check(label+': each of the 12 formations previews, auto-picks 11 unique players in valid roles, saves and fits the screen',allOk,detail);
+  await page.click('.formation[data-formation="4-4-2"]');await page.click('[data-action="auto-lineup"]');await toast('Starting XI saved');
+  check(label+': auto-pick XI saves the lineup',(await savedLineup()).formation==='4-4-2');
+  await page.reload();await page.waitForSelector('.club-card, .opening');await tab('squad');await page.waitForSelector('.roles');
+  check(label+': the saved formation is shown after a reload',(await page.locator('.formation.active strong').allTextContents()).join()==='4-4-2'&&(await page.textContent('#lineup-state')).includes('Saved · 4-4-2'));
+  // Manual changes: removing a player leaves an empty role; an eleven the server refuses is not saved.
+  const stored=await savedLineup();
+  const striker=page.locator('.player:has-text("ST ·") [data-action="toggle-starter"]:has-text("Remove XI")').first(),strikerId=await striker.getAttribute('data-player');
+  await striker.click();await toast('10 / 11 selected');
+  check(label+': a removed starter leaves one empty role in the list',(await page.locator('.roles .role.empty').count())===1&&(await page.locator('.roles .role').count())===11&&(await page.textContent('#lineup-problem')).includes('10 selected'));
+  await page.waitForFunction(()=>!document.querySelector('.toast'));
+  await page.locator('.player:has-text("GK ·") [data-action="toggle-starter"]:has-text("Add to XI")').first().click();await toast('Not saved');
+  check(label+': a second goalkeeper is refused with a reason and nothing is saved',(await page.textContent('#lineup-problem')).includes('exactly one goalkeeper')&&(await page.textContent('#lineup-state')).includes('Not saved')&&(await page.locator('.roles .role.wrong').count())===1&&JSON.stringify(await savedLineup())===JSON.stringify(stored));
+  const direct=await fetch(base+'/api/clubs/'+club.id+'/lineup',{method:'POST',headers:{'content-type':'application/json','x-dev-user-id':String(dev),'x-forwarded-for':'10.1.0.'+(dev%250)},body:JSON.stringify({formation:'4-4-2',starters:await page.evaluate(()=>[...document.querySelectorAll('[data-action="toggle-starter"]')].filter(b=>b.textContent==='Remove XI').map(b=>b.dataset.player))})});
+  check(label+': the server refuses the same eleven when it is sent directly',direct.status===400);
+  await page.waitForFunction(()=>!document.querySelector('.toast'));
+  await page.locator('.player:has-text("GK ·") [data-action="toggle-starter"]:has-text("Remove XI")').last().click();await toast('10 / 11 selected');
+  await page.locator('[data-action="toggle-starter"][data-player="'+strikerId+'"]').click();await toast('Starting XI saved');
+  check(label+': manual XI toggle saves at 11 players',(await savedLineup()).starters.includes(strikerId));
+  check(label+': squad with the lineup panel fits the viewport',await noOverflow());
+  await shot('squad-formation');
 
   await tab('market');await page.waitForSelector('.player');
   check(label+': market lists free agents',(await page.locator('.player').count())>0);

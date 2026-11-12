@@ -1,7 +1,6 @@
-import {formationShapes} from './lineup.js';
+import {analyseLineup} from './formations.js';
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const average=(xs)=>xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:45;
-const shapes=formationShapes;
 // Owner-approved match model (2026-11-12): the goal share depends on the rating DIFFERENCE on an Elo-style
 // curve with scale 40, and the home side plays as if it were 2 rating points stronger.
 export const MATCH_RATING_SCALE=40;
@@ -9,18 +8,17 @@ export const MATCH_HOME_ADVANTAGE_POINTS=2;
 export function goalShare(homeStrength,awayStrength){
  return 1/(1+Math.pow(10,-((homeStrength+MATCH_HOME_ADVANTAGE_POINTS)-awayStrength)/MATCH_RATING_SCALE));
 }
-export function squadStrength(players,formation='4-3-3') {
- if (!Array.isArray(players)||players.length<11) return 35;
+// Strength of a Starting XI in a formation: average overall, fitness, and the formation fit of -4 to +4.
+// fit is how well these players suit the formation's roles (see formations.js); nothing here depends on the formation's name.
+export function lineupStrength(players,formation='4-3-3') {
+ if (!Array.isArray(players)||players.length<11) return {strength:35,fit:0,analysis:null};
  const starters=players.slice(0,11);
  const base=average(starters.map(p=>Number(p.overall)||40));
  const fitness=average(starters.map(p=>Number(p.fitness??100)));
- const expected=shapes[formation]||shapes['4-3-3'];
- const actual={};for(const p of starters)actual[p.position]=(actual[p.position]||0)+1;
- const keys=new Set([...Object.keys(expected),...Object.keys(actual)]);
- const mismatch=[...keys].reduce((sum,key)=>sum+Math.abs((actual[key]||0)-(expected[key]||0)),0);
- const shapeBonus=clamp(4-mismatch*0.75,-4,4);
- return clamp(base*(0.9+fitness/1000)+shapeBonus,25,100);
+ const analysis=analyseLineup(starters,formation);
+ return {strength:clamp(base*(0.9+fitness/1000)+analysis.fitBonus,25,100),fit:analysis.fit,analysis};
 }
+export function squadStrength(players,formation='4-3-3') {return lineupStrength(players,formation).strength;}
 function poisson(lambda,rng) {
  const limit=Math.exp(-lambda);let k=0,product=1;
  do{k++;product*=rng();}while(product>limit&&k<8);

@@ -1,7 +1,7 @@
 (() => {
 const root=document.getElementById('app');
 const cfg=window.ZAMIN_GAME_CONFIG||{};
-const state={token:null,user:null,clubs:[],club:null,squad:[],market:[],lineup:null,lineupDraft:[],missions:[],fixtures:[],table:[],ledger:[],dpLedger:[],tab:'overview',crestData:'',results:[],newResults:0,resultIndex:0,opening:false,report:null,friendlies:[],opponents:[],youth:[],affordableOnly:false,season:null,previousSeason:null,squadLimits:{min:13,max:26}};
+const state={token:null,user:null,clubs:[],club:null,squad:[],market:[],lineup:null,lineupDraft:[],missions:[],fixtures:[],table:[],ledger:[],dpLedger:[],tab:'overview',crestData:'',results:[],newResults:0,resultIndex:0,opening:false,report:null,friendlies:[],opponents:[],youth:[],affordableOnly:false,season:null,previousSeason:null,squadLimits:{min:13,max:26},formations:[],formationInfo:null,formationDraft:null};
 const esc=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=(v)=>{try{return new Intl.NumberFormat('en-US').format(BigInt(v||0))+' UZS';}catch{return '0 UZS';}};
 const $=(s)=>root.querySelector(s);
@@ -37,13 +37,69 @@ function overview(){
 const tierNames={academy:'PROSPECT',developing:'DEVELOPING',established:'ESTABLISHED',elite:'ELITE'};
 function tier(p){return esc(tierNames[p.quality]||p.quality);}
 function resaleRate(p){return p.origin==='academy'&&!p.first_sale_done?50:80;}
+// ---- Formations. Definitions, suitability and the best XI per formation come from the server; the client only lists them.
+const formationDef=id=>state.formations.find(f=>f.id===id)||state.formations[0]||null;
+const slotFit=(slot,position)=>slot.natural.includes(position)?1:slot.cover.includes(position)?0.5:0;
+// Same rule as the server: as many players as possible in a valid role, then as many natural roles as possible.
+function arrangeXI(def,players){
+ const n=Math.min(players.length,11),size=1<<11,best=new Int16Array(size).fill(-1),from=new Int8Array(size);best[0]=0;
+ for(let mask=0;mask<size;mask++){
+  if(best[mask]<0)continue;let k=0;for(let m=mask;m;m&=m-1)k++;if(k>=n)continue;
+  for(let s=0;s<11;s++){const bit=1<<s;if(mask&bit)continue;const f=slotFit(def.slots[s],players[k].position),score=best[mask]+(f===1?34:f?33:0);if(score>best[mask|bit]){best[mask|bit]=score;from[mask|bit]=s;}}
+ }
+ let end=0,top=-1;for(let mask=0;mask<size;mask++){let k=0;for(let m=mask;m;m&=m-1)k++;if(k===n&&best[mask]>top){top=best[mask];end=mask;}}
+ const slots=def.slots.map(slot=>({slot,player:null,fit:0}));
+ for(let k=n-1,mask=end;k>=0;k--){const s=from[mask];slots[s].player=players[k];slots[s].fit=slotFit(def.slots[s],players[k].position);mask^=1<<s;}
+ const placed=slots.filter(x=>x.player),natural=placed.filter(x=>x.fit===1).length,cover=placed.filter(x=>x.fit===0.5).length,wrong=placed.length-natural-cover;
+ // Only the goalkeeper and the count are decided here. Whether players out of position are acceptable is the server's decision,
+ // and so is the lineup the club already has: unchanged, it is sent as it is.
+ const keepers=players.filter(p=>p.position==='GK').length,saved=state.lineup||{},unchanged=def.id===saved.formation&&players.length===11&&players.every(p=>(saved.starters||[]).includes(p.id));
+ let problem='';
+ if(players.length!==11)problem='Select exactly 11 starters ('+players.length+' selected).';
+ else if(keepers<1)problem='Your Starting XI must include a goalkeeper.';
+ else if(keepers>1&&!unchanged)problem='A Starting XI needs exactly one goalkeeper.';
+ return {slots,natural,cover,wrong,fit:natural+cover/2,problem};
+}
+const draftPlayers=()=>state.lineupDraft.map(id=>state.squad.find(p=>p.id===id)).filter(Boolean);
+const signed=n=>(n>=0?'+':'')+Number(n).toFixed(2);
+// The 12 formations as a grid of numbers. Under each: the strength of the best XI this squad can field in it and its formation fit.
+function formationPicker(){
+ return '<div class="formations" role="listbox" aria-label="Formation">'+state.formations.map(f=>{
+  const active=f.id===state.formationDraft,saved=f.id===state.lineup?.formation;
+  return '<button type="button" role="option" aria-selected="'+active+'" class="formation'+(active?' active':'')+(saved?' saved':'')+(f.best.valid?'':' unfit')+'" data-action="pick-formation" data-formation="'+esc(f.id)+'"><strong>'+esc(f.id)+'</strong><small class="f-strength">Best XI '+esc(Number(f.best.strength).toFixed(1))+'</small><small class="f-fit">'+(f.best.valid?'Fit '+signed(f.best.fitBonus):f.best.outOfPosition+' out of position')+'</small>'+(saved?'<em>SAVED</em>':'')+'</button>';
+ }).join('')+'</div>';
+}
+function roleList(arranged){
+ const label={1:'Natural',0.5:'Cover',0:'Out of position'},kind={1:'natural',0.5:'cover',0:'wrong'};
+ return '<ol class="roles">'+arranged.slots.map(x=>{const p=x.player;
+  return '<li class="role '+(p?kind[x.fit]:'empty')+'"><b>'+esc(x.slot.id)+'</b><span>'+(p?esc(p.full_name):'Empty')+'</span><em>'+(p?esc(p.position)+' '+esc(p.overall):esc(x.slot.natural.join('/')))+'</em><i>'+(p?label[x.fit]:'—')+'</i></li>';
+ }).join('')+'</ol>';
+}
+function lineupPanel(){
+ const def=formationDef(state.formationDraft);
+ if(!def)return '<section class="panel"><h2>Lineup</h2><p>Formations could not be loaded.</p></section>';
+ const saved=state.lineup||{},arranged=arrangeXI(def,draftPlayers()),rule=state.formationInfo?.fitRule||{max:4,perPlayer:1.5};
+ const sameXI=state.lineupDraft.length===(saved.starters||[]).length&&state.lineupDraft.every(id=>saved.starters.includes(id));
+ const unsaved=def.id!==saved.formation||!sameXI,current=state.formationInfo?.current;
+ const bonus=Math.max(-rule.max,Math.min(rule.max,rule.max-rule.perPlayer*(11-arranged.fit)));
+ const status=arranged.problem?'<p class="fit-line bad" id="lineup-problem">'+esc(arranged.problem)+'</p>':'<p class="fit-line'+(arranged.wrong?' bad':'')+'" id="lineup-fit">Natural '+arranged.natural+' · Cover '+arranged.cover+' · Out of position '+arranged.wrong+' · Formation fit '+signed(bonus)+(!unsaved&&current?' · XI strength '+esc(current.strength.toFixed(1)):'')+'</p>';
+ return '<section class="panel lineup"><div class="row"><div><h2>Lineup · '+state.lineupDraft.length+'/11 selected</h2><p>Choose your Starting XI and formation.</p></div><span class="pill '+(unsaved?'unsaved':'')+'" id="lineup-state">'+(unsaved?'Not saved':'Saved · '+esc(saved.formation))+'</span></div>'+
+  '<div class="field"><label>FORMATION · '+esc(def.id)+'</label>'+formationPicker()+'</div>'+
+  '<p class="sub" id="formation-note">'+esc(def.note)+'</p>'+status+roleList(arranged)+
+  '<div class="actions"><button class="btn secondary" data-action="save-formation">Save formation</button><button class="btn" data-action="auto-lineup">Auto-pick XI</button></div>'+
+  '<p class="sub">Formation fit runs from −'+rule.max+' to +'+rule.max+' and is added to your XI strength: +'+rule.max+' with eleven natural roles, less for cover roles and players out of position. Tap a formation to preview it, then Save formation or Auto-pick XI. Add to XI or Remove XI on player cards; an XI of 11 saves automatically.</p></section>';
+}
+async function saveLineup(formation,starters,substitutes,message){
+ await api('/api/clubs/'+state.club.id+'/lineup',{method:'POST',body:{formation,starters,substitutes}});toast(message);await loadAll();
+}
+const draftBench=()=>state.squad.filter(p=>!state.lineupDraft.includes(p.id)).sort((a,b)=>b.overall-a.overall).slice(0,7).map(p=>p.id);
 function squadPage(){
  const c=state.club;
  const players=state.squad;
  const starterIds=state.lineupDraft;
  const cards=players.map(p=>'<article class="player"><div class="player-top"><span class="pill">'+tier(p)+'</span><span class="rating">'+esc(p.overall)+'</span></div><h3>'+esc(p.full_name)+'</h3><div class="meta">'+esc(p.position)+' · '+esc(p.age)+' yrs · Potential '+esc(p.potential)+'</div><div class="bars">'+['pace','shooting','passing','defending','physical','dribbling'].map(k=>'<div><div class="attr">'+k.slice(0,3).toUpperCase()+' '+esc(p.attributes[k])+'</div><div class="bar"><i style="width:'+Math.min(100,Number(p.attributes[k]))+'%"></i></div></div>').join('')+'</div><div class="meta">'+(starterIds.includes(p.id)?'STARTING XI':'SQUAD')+' · Value '+money(p.market_value_uzs)+'</div><div class="meta">'+(resaleRate(p)===50?'ACADEMY PRODUCT · first sale pays 50%':'Sale pays 80%')+'</div><div class="actions"><button class="btn '+(starterIds.includes(p.id)?'gold':'secondary')+'" data-action="toggle-starter" data-player="'+p.id+'">'+(starterIds.includes(p.id)?'Remove XI':'Add to XI')+'</button>'+['pace','shooting','passing','dribbling','defending','physical'].map(k=>'<button class="btn secondary" data-action="upgrade" data-player="'+p.id+'" data-attr="'+k+'">+'+k.slice(0,3)+'</button>').join('')+'<button class="btn danger" data-action="sell" data-player="'+p.id+'" data-rate="'+resaleRate(p)+'">Sell</button></div></article>').join('');
  return pageHead('THE SQUAD','Build your team','Upgrade attributes with Development Points. Potential limits each attribute.')+
- '<section class="panel"><div class="row"><div><h2>Lineup · '+starterIds.length+'/11 selected</h2><p>Choose your Starting XI and formation.</p></div><div class="actions"><button class="btn secondary" data-action="save-formation">Save formation</button><button class="btn" data-action="auto-lineup">Auto-pick XI</button></div></div><div class="field"><label>FORMATION</label><select id="formation-select">'+['4-3-3','4-4-2','4-2-3-1','3-5-2','4-1-4-1'].map(x=>'<option '+((state.lineup?.formation||'4-3-3')===x?'selected':'')+'>'+x+'</option>').join('')+'</select></div><p class="sub">Tap Add to XI or Remove XI on player cards. The lineup saves automatically when 11 players are selected.</p></section>'+
+ lineupPanel()+
  '<div class="row" style="margin:18px 0 10px"><div class="eyebrow">REGISTERED PLAYERS · '+players.length+' · MIN '+state.squadLimits.min+' · MAX '+state.squadLimits.max+'</div><div class="meta">Upgrade cost increases with attribute level</div></div><div class="players">'+(cards||'<div class="empty">No players in the squad yet.</div>')+'</div>';
 }
 function marketPage(){
@@ -125,9 +181,9 @@ async function loadAll(){
  state.club=state.club?state.clubs.find(x=>x.id===state.club.id)||state.clubs[0]:state.clubs[0];
  const id=state.club.id;
  const results=await Promise.all([
-  api('/api/clubs/'+id+'/squad'),api('/api/clubs/'+id+'/lineup'),api('/api/clubs/'+id+'/missions'),api('/api/clubs/'+id+'/fixtures'),api('/api/clubs/'+id+'/league'),api('/api/market'+(state.affordableOnly?'?maxValue='+encodeURIComponent(state.club.budget_uzs):'')),api('/api/clubs/'+id+'/ledger'),api('/api/clubs/'+id+'/development-ledger'),api('/api/clubs/'+id+'/results?limit=30'),api('/api/clubs/'+id+'/friendlies'),api('/api/clubs/'+id+'/opponents')
+  api('/api/clubs/'+id+'/squad'),api('/api/clubs/'+id+'/lineup'),api('/api/clubs/'+id+'/missions'),api('/api/clubs/'+id+'/fixtures'),api('/api/clubs/'+id+'/league'),api('/api/market'+(state.affordableOnly?'?maxValue='+encodeURIComponent(state.club.budget_uzs):'')),api('/api/clubs/'+id+'/ledger'),api('/api/clubs/'+id+'/development-ledger'),api('/api/clubs/'+id+'/results?limit=30'),api('/api/clubs/'+id+'/friendlies'),api('/api/clubs/'+id+'/opponents'),api('/api/clubs/'+id+'/formations')
  ]);
- state.squad=results[0].players||[];state.lineup=results[1].lineup;state.lineupDraft=state.lineup?.starters?.slice()||[];state.missions=results[2].missions||[];state.fixtures=results[3].fixtures||[];state.table=results[4].table||[];state.leagueExists=Boolean(results[4].leagueExists);state.season=results[4].season||null;state.previousSeason=results[4].previous||null;state.market=results[5].players||[];state.youth=results[5].youth||[];state.squadLimits=results[5].squadLimits||state.squadLimits;state.ledger=results[6].transactions||[];state.dpLedger=results[7].transactions||[];state.results=results[8].results||[];state.newResults=results[8].unviewedCount||0;state.friendlies=results[9].requests||[];state.opponents=results[10].clubs||[];
+ state.squad=results[0].players||[];state.lineup=results[1].lineup;state.lineupDraft=state.lineup?.starters?.slice()||[];state.missions=results[2].missions||[];state.fixtures=results[3].fixtures||[];state.table=results[4].table||[];state.leagueExists=Boolean(results[4].leagueExists);state.season=results[4].season||null;state.previousSeason=results[4].previous||null;state.market=results[5].players||[];state.youth=results[5].youth||[];state.squadLimits=results[5].squadLimits||state.squadLimits;state.ledger=results[6].transactions||[];state.dpLedger=results[7].transactions||[];state.results=results[8].results||[];state.newResults=results[8].unviewedCount||0;state.friendlies=results[9].requests||[];state.opponents=results[10].clubs||[];state.formations=results[11].formations||[];state.formationInfo=results[11];state.formationDraft=state.lineup?.formation||'4-3-3';
  render();
 }
 async function uploadCrest(file){
@@ -135,15 +191,6 @@ async function uploadCrest(file){
  if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>2*1024*1024)throw new Error('Choose a PNG, JPG or WEBP image under 2 MB.');
  const dataUrl=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Could not read crest image'));reader.readAsDataURL(file);});
  return (await api('/api/uploads/crest',{method:'POST',body:{dataUrl}})).crestUrl;
-}
-function bestXI(formation='4-3-3'){
- const remaining=state.squad.slice(),chosen=[];
- const layouts={'4-3-3':[['GK',1],['CB',2],['LB',1],['RB',1],['DM',1],['CM',2],['LW',1],['RW',1],['ST',1]],'4-4-2':[['GK',1],['CB',2],['LB',1],['RB',1],['CM',2],['LW',1],['RW',1],['ST',2]],'4-2-3-1':[['GK',1],['CB',2],['LB',1],['RB',1],['DM',2],['AM',1],['LW',1],['RW',1],['ST',1]],'3-5-2':[['GK',1],['CB',3],['DM',1],['CM',2],['LW',1],['RW',1],['ST',2]],'4-1-4-1':[['GK',1],['CB',2],['LB',1],['RB',1],['DM',1],['CM',2],['LW',1],['RW',1],['ST',1]]};
- const requirements=layouts[formation]||layouts['4-3-3'];
- for(const [position,count] of requirements)for(let i=0;i<count;i++){remaining.sort((a,b)=>b.overall-a.overall);const ix=remaining.findIndex(p=>p.position===position);if(ix>=0)chosen.push(remaining.splice(ix,1)[0]);}
- remaining.sort((a,b)=>b.overall-a.overall);
- while(chosen.length<11&&remaining.length)chosen.push(remaining.shift());
- return {starters:chosen.map(p=>p.id),substitutes:remaining.slice(0,7).map(p=>p.id),formation};
 }
 root.addEventListener('click',async e=>{
  const tab=e.target.closest('[data-tab]');if(tab){state.tab=tab.dataset.tab;render();return;}
@@ -154,9 +201,17 @@ root.addEventListener('click',async e=>{
   if(action==='cancel-create'){state.club=state.clubs[0]||null;state.tab='overview';render();return;}
   if(action==='edit-identity'){state.tab='identity';render();return;}
   if(action==='copy-prompt'){const prompt=$('#crest-prompt')?.value||'';if(!prompt)throw new Error('Prompt is empty');if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(prompt);else{const area=$('#crest-prompt');area.select();document.execCommand('copy');}toast('Crest prompt copied');return;}
-  if(action==='toggle-starter'){const id=b.dataset.player,draft=state.lineupDraft.slice(),index=draft.indexOf(id);if(index>=0)draft.splice(index,1);else{if(draft.length>=11)throw new Error('Your Starting XI already has 11 players. Remove one first.');draft.push(id);}state.lineupDraft=draft;if(draft.length===11){const subs=state.squad.filter(p=>!draft.includes(p.id)).sort((a,b)=>b.overall-a.overall).slice(0,7).map(p=>p.id);await api('/api/clubs/'+state.club.id+'/lineup',{method:'POST',body:{formation:$('#formation-select')?.value||state.lineup?.formation||'4-3-3',starters:draft,substitutes:subs}});toast('Starting XI saved');await loadAll();}else{render();toast(draft.length+' / 11 selected');}return;}
-  if(action==='save-formation'){if(state.lineupDraft.length!==11)throw new Error('Select exactly 11 starters first');const subs=state.squad.filter(p=>!state.lineupDraft.includes(p.id)).sort((a,b)=>b.overall-a.overall).slice(0,7).map(p=>p.id);await api('/api/clubs/'+state.club.id+'/lineup',{method:'POST',body:{formation:$('#formation-select')?.value||'4-3-3',starters:state.lineupDraft,substitutes:subs}});toast('Formation saved');await loadAll();return;}
-  if(action==='auto-lineup'){const lineup=bestXI($('#formation-select')?.value||'4-3-3');await api('/api/clubs/'+state.club.id+'/lineup',{method:'POST',body:lineup});toast('Starting XI saved');await loadAll();return;}
+  if(action==='pick-formation'){state.formationDraft=b.dataset.formation;render();return;}
+  if(action==='toggle-starter'){
+   const id=b.dataset.player,draft=state.lineupDraft.slice(),index=draft.indexOf(id);
+   if(index>=0)draft.splice(index,1);else{if(draft.length>=11)throw new Error('Your Starting XI already has 11 players. Remove one first.');draft.push(id);}
+   state.lineupDraft=draft;
+   if(draft.length===11){const problem=arrangeXI(formationDef(state.formationDraft),draftPlayers()).problem;if(problem){render();toast('Not saved. '+problem);return;}try{await saveLineup(state.formationDraft,draft,draftBench(),'Starting XI saved');}catch(error){render();toast('Not saved. '+error.message);}}
+   else{render();toast(draft.length+' / 11 selected');}
+   return;
+  }
+  if(action==='save-formation'){const problem=arrangeXI(formationDef(state.formationDraft),draftPlayers()).problem;if(problem)throw new Error(problem);await saveLineup(state.formationDraft,state.lineupDraft,draftBench(),'Formation saved');return;}
+  if(action==='auto-lineup'){const def=formationDef(state.formationDraft);if(def.best.starters.length!==11)throw new Error('Your squad cannot field eleven players.');await saveLineup(def.id,def.best.starters,def.best.substitutes,'Starting XI saved');return;}
   if(action==='upgrade'){await api('/api/clubs/'+state.club.id+'/players/upgrade',{method:'POST',body:{playerId:b.dataset.player,attribute:b.dataset.attr,levels:1}});toast('Player upgraded');await loadAll();return;}
   if(action==='sell'){if(!confirm('Sell this player for '+(b.dataset.rate||'80')+'% of market value?'))return;const sold=await api('/api/clubs/'+state.club.id+'/players/sell',{method:'POST',body:{playerId:b.dataset.player}});toast('Player sold for '+money(sold.feeUzs)+(sold.promoted?.length?' · '+sold.promoted.map(x=>x.full_name).join(', ')+' promoted to the XI':''));await loadAll();return;}
   if(action==='toggle-affordable'){state.affordableOnly=!state.affordableOnly;await loadAll();return;}

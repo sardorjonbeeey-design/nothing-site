@@ -11,7 +11,9 @@ import {LEAGUE_TIMEZONE,MATCH_DURATION_SECONDS} from './league.js';
 import {ensureLeague,LEAGUE_LOCK} from './seasons.js';
 import {insertPlayer,ensureYouthSupply} from './players.js';
 import {generateAcademySquad,YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL} from './catalog.js';
-import {repairClubLineup} from './lineup.js';
+import {repairClubLineup,lineupProblem} from './lineup.js';
+import {formations,FORMATION_IDS,isFormation,bestLineup,FIT_BONUS_MAX,FIT_BONUS_PER_PLAYER} from './formations.js';
+import {lineupStrength} from './simulation.js';
 import {awardDevelopmentPoints,startScheduler} from './matches.js';
 import {ratingProfileFor,assertValidRating} from './ratings.js';
 import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValueUzs,overallFromAttributes,STARTING_BUDGET_UZS,MIN_SQUAD_SIZE,MAX_SQUAD_SIZE} from './economy.js';
@@ -21,7 +23,11 @@ const clientRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../.
 const staticFiles={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/styles.css':'styles.css','/config.js':'config.js'};
 const staticTypes={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8'};
 const pathModule=path;
-const formationPattern=/^(4-3-3|4-4-2|4-2-3-1|3-5-2|4-1-4-1)$/;
+// What the client may know about an XI in a formation. Always computed here, never read from a request.
+function lineupReport(formation,xi){
+ const r=lineupStrength(xi,formation),a=r.analysis;
+ return {formation,valid:Boolean(a?.valid),fit:a?a.fit:0,natural:a?a.natural:0,cover:a?a.cover:0,outOfPosition:a?a.outOfPosition:xi.length,fitBonus:a?Number(a.fitBonus.toFixed(2)):0,strength:Number(r.strength.toFixed(1)),slots:a?a.slots.map(s=>({slot:s.slot,playerId:s.playerId,fit:s.fit})):[]};
+}
 const rateBuckets=new Map();
 function clientIp(req){const forwarded=req.headers['x-forwarded-for'];return (typeof forwarded==='string'?forwarded.split(',')[0].trim():'')||req.socket.remoteAddress||'unknown';}
 function rateLimit(key,limit=60,windowMs=60000){
@@ -147,18 +153,38 @@ async function handle(req,res){
    const r=await db().query('SELECT m.*,cm.progress,cm.completed_at,cm.claimed_at FROM club_missions cm JOIN missions m ON m.id=cm.mission_id WHERE cm.club_id=$1 ORDER BY m.id',[clubId]);
    return json(res,200,{missions:r.rows});
   }
+  if(req.method==='GET'&&parts[3]==='formations'){
+   // The 12 formations, how the saved XI suits the saved one, and the best XI this squad can field in each.
+   const players=(await db().query('SELECT id,position,overall FROM players WHERE club_id=$1',[clubId])).rows,byId=new Map(players.map(p=>[p.id,p]));
+   const lineup=(await db().query('SELECT formation,starters FROM lineups WHERE club_id=$1',[clubId])).rows[0];
+   const saved=lineup?lineupReport(lineup.formation,lineup.starters.map(id=>byId.get(id)).filter(Boolean)):null;
+   return json(res,200,{current:saved,fitRule:{max:FIT_BONUS_MAX,perPlayer:FIT_BONUS_PER_PLAYER},formations:FORMATION_IDS.map(id=>{
+    const f=formations[id],best=bestLineup(players,id);
+    return {id,note:f.note,slots:f.slots,best:{...lineupReport(id,best.starters.map(x=>byId.get(x))),valid:best.valid,starters:best.starters,substitutes:best.substitutes}};
+   })});
+  }
   if(req.method==='POST'&&parts[3]==='lineup'){
-   const body=await readJson(req),formation=safeString(body.formation,8,'Formation');
-   if(!formationPattern.test(formation))throw new HttpError(400,'Unsupported formation');
-   if(!Array.isArray(body.starters)||body.starters.length!==11||new Set(body.starters).size!==11)throw new HttpError(400,'Select exactly 11 unique starters');
-   const subs=body.substitutes===undefined?[]:body.substitutes;
-   if(!Array.isArray(subs)||subs.length>7||new Set(subs).size!==subs.length)throw new HttpError(400,'Invalid substitutes');
-   const all=body.starters.concat(subs).map(id=>uuid(id,'Player ID'));
-   const owned=await db().query('SELECT id,position FROM players WHERE club_id=$1 AND id=ANY($2::uuid[])',[clubId,all]);
-   if(owned.rowCount!==all.length)throw new HttpError(400,'Lineup contains a player outside this club');
-   if(!owned.rows.some(p=>p.position==='GK'&&body.starters.includes(p.id)))throw new HttpError(400,'Your Starting XI must include a goalkeeper');
-   await db().query('INSERT INTO lineups(club_id,formation,starters,substitutes,updated_at) VALUES($1,$2,$3,$4,NOW()) ON CONFLICT(club_id) DO UPDATE SET formation=EXCLUDED.formation,starters=EXCLUDED.starters,substitutes=EXCLUDED.substitutes,updated_at=NOW()',[clubId,formation,body.starters,subs]);
-   return json(res,200,{ok:true});
+   // Only formation, starters and substitutes are read. Fit, strength or slot data sent by a client is ignored.
+   const body=await readJson(req);
+   if(typeof body.formation!=='string'||!isFormation(body.formation))throw new HttpError(400,'Unsupported formation');
+   const formation=body.formation,subs=body.substitutes===undefined?[]:body.substitutes;
+   if(!Array.isArray(body.starters)||body.starters.length!==11)throw new HttpError(400,'Select exactly 11 unique starters');
+   if(!Array.isArray(subs)||subs.length>7)throw new HttpError(400,'Invalid substitutes');
+   const starters=body.starters.map(id=>uuid(id,'Player ID').toLowerCase()),bench=subs.map(id=>uuid(id,'Player ID').toLowerCase());
+   if(new Set(starters).size!==11)throw new HttpError(400,'Select exactly 11 unique starters');
+   if(new Set(bench).size!==bench.length||bench.some(id=>starters.includes(id)))throw new HttpError(400,'A player can be named only once in a lineup');
+   const report=await inTransaction(async client=>{
+    // The club row is locked, as it is for a sale, so a lineup can never be saved around a transfer in progress.
+    await ownedClub(client,clubId,user.id,true);
+    const squad=(await client.query('SELECT id,position,overall FROM players WHERE club_id=$1',[clubId])).rows,owned=new Map(squad.map(p=>[p.id,p]));
+    if(starters.concat(bench).some(id=>!owned.has(id)))throw new HttpError(400,'Lineup contains a player outside this club');
+    const saved=(await client.query('SELECT formation,starters FROM lineups WHERE club_id=$1 FOR UPDATE',[clubId])).rows[0]||null;
+    const problem=lineupProblem(formation,starters,squad,saved);
+    if(problem)throw new HttpError(400,problem);
+    await client.query('INSERT INTO lineups(club_id,formation,starters,substitutes,updated_at) VALUES($1,$2,$3,$4,NOW()) ON CONFLICT(club_id) DO UPDATE SET formation=EXCLUDED.formation,starters=EXCLUDED.starters,substitutes=EXCLUDED.substitutes,updated_at=NOW()',[clubId,formation,starters,bench]);
+    return lineupReport(formation,starters.map(id=>owned.get(id)));
+   });
+   return json(res,200,{ok:true,lineup:{formation,starters,substitutes:bench},analysis:report});
   }
   if(req.method==='POST'&&parts[3]==='players'&&parts[4]==='sign'){
    const body=await readJson(req),playerId=uuid(body.playerId,'Player ID');

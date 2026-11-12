@@ -16,7 +16,9 @@ import {fileURLToPath} from 'node:url';
 import pg from 'pg';
 import {upgradeCost,saleValueUzs,marketValueUzs,qualityForOverall} from '../../src/economy.js';
 import {academySquadTemplate,youthSlots} from '../../src/catalog.js';
-import {isValidLineup} from '../../src/lineup.js';
+import {isValidLineup,lineupProblem} from '../../src/lineup.js';
+import {FORMATION_IDS,analyseLineup} from '../../src/formations.js';
+import {squadStrength} from '../../src/simulation.js';
 import {UZBEK_LEAGUE} from '../../src/ratings.js';
 
 const DB_URL=process.env.INTEGRATION_DATABASE_URL||'';
@@ -226,9 +228,94 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal((await call(users[0],'POST',route,{formation:'4-3-3',starters:outfield})).status,400);
   const foreign=(await ok(users[0],'GET','/api/market')).players[0].id;
   assert.equal((await call(users[0],'POST',route,{formation:'4-3-3',starters:lineup.starters.slice(0,10).concat(foreign)})).status,400);
+  // Position mapping: an eleven with six attackers cannot play 5-4-1 (one striker's place), and the saved lineup is left alone.
+  const pick=(position,n)=>squad.filter(p=>p.position===position).slice(0,n).map(p=>p.id);
+  const attacking=[...pick('GK',1),...pick('CB',3),...pick('CM',1),...pick('AM',1),...pick('LW',1),...pick('RW',1),...pick('ST',3)];assert.equal(attacking.length,11);
+  const wrongShape=await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking});
+  assert.equal(wrongShape.status,400);assert.match(wrongShape.data.error,/5-4-1 cannot be filled.*ST.*out of position/);
+  assert.deepEqual((await ok(users[0],'GET',route)).lineup,lineup);
+  // The very same eleven is a legitimate, if poorly suited, 4-3-3: wingers cover at full-back, strikers on the wings.
+  const asFront=await ok(users[0],'POST',route,{formation:'4-3-3',starters:attacking});
+  assert.equal(asFront.analysis.valid,true);assert.ok(asFront.analysis.cover>=5);assert.ok(asFront.analysis.fitBonus<1&&asFront.analysis.fitBonus>=-4);
   await ok(users[0],'POST',route,{formation:'4-4-2',starters:lineup.starters,substitutes:lineup.substitutes});
   assert.equal((await ok(users[0],'GET',route)).lineup.formation,'4-4-2');
   await ok(users[0],'POST',route,{formation:'4-3-3',starters:lineup.starters,substitutes:lineup.substitutes});
+ });
+
+ await t.test('all 12 formations: the server validates every lineup itself and a refused request changes nothing',async()=>{
+  const id=clubs[0].id,route='/api/clubs/'+id+'/lineup',squad=(await ok(users[0],'GET','/api/clubs/'+id+'/squad')).players,byId=new Map(squad.map(p=>[p.id,p]));
+  const original=(await ok(users[0],'GET',route)).lineup;
+  const stored=async()=>JSON.stringify(await one('SELECT formation,starters,substitutes,updated_at FROM lineups WHERE club_id=$1',[id]));
+  const info=await ok(users[0],'GET','/api/clubs/'+id+'/formations');
+  assert.deepEqual(info.formations.map(f=>f.id),FORMATION_IDS);assert.equal(info.formations.length,12);
+  assert.equal(info.current.formation,'4-3-3');assert.equal(info.current.valid,true);assert.equal(info.current.fit,11);assert.equal(info.current.fitBonus,4);
+  assert.equal(info.current.strength,squadStrength(original.starters.map(x=>byId.get(x)),'4-3-3'));
+  assert.equal((await call(users[1]||{dev:99},'GET','/api/clubs/'+id+'/formations')).status,404,'another user cannot read this club');
+  // Every formation: the suggested XI is accepted, stored and read back, and the report is computed by the server.
+  for(const f of info.formations){
+   assert.equal(f.slots.length,11);assert.equal(f.best.valid,true,f.id);assert.equal(new Set(f.best.starters).size,11);
+   const saved=await ok(users[0],'POST',route,{formation:f.id,starters:f.best.starters,substitutes:f.best.substitutes,fitBonus:99,strength:999,analysis:{valid:true,fit:11},slots:[]});
+   const xi=f.best.starters.map(x=>byId.get(x)),expected=analyseLineup(xi,f.id);
+   assert.equal(saved.analysis.fit,expected.fit,f.id);assert.equal(saved.analysis.fitBonus,Number(expected.fitBonus.toFixed(2)));assert.ok(saved.analysis.fitBonus<=4);
+   assert.equal(saved.analysis.strength,Number(squadStrength(xi,f.id).toFixed(1)),f.id+' strength is the server\'s own');
+   assert.equal(f.best.strength,saved.analysis.strength);
+   assert.equal(new Set(saved.analysis.slots.map(x=>x.playerId)).size,11,f.id+' no player in two slots');
+   const read=(await ok(users[0],'GET',route)).lineup;
+   assert.equal(read.formation,f.id);assert.deepEqual(read.starters,f.best.starters);assert.deepEqual(read.substitutes,f.best.substitutes);
+   assert.equal((await ok(users[0],'GET','/api/clubs/'+id+'/formations')).current.formation,f.id);
+   await assertLineupValid(0);
+  }
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM players WHERE club_id=$1',[id])).n),18,'changing formation never adds or drops a player');
+  await ok(users[0],'POST',route,{formation:'4-3-3',starters:original.starters,substitutes:original.substitutes});
+  // Direct requests that try to get around the rules. None may change the stored lineup.
+  const before=await stored(),xi=original.starters,subs=original.substitutes;
+  const keeper=xi.find(x=>byId.get(x).position==='GK'),spareKeeper=squad.find(p=>p.position==='GK'&&p.id!==keeper).id,outfield=xi.filter(x=>x!==keeper);
+  const otherClub=(await db.query('SELECT id FROM players WHERE club_id IS NOT NULL AND club_id<>$1 LIMIT 1',[id])).rows[0]?.id;
+  const freeAgent=(await ok(users[0],'GET','/api/market')).players[0].id;
+  const pick=(position,n)=>squad.filter(p=>p.position===position).slice(0,n).map(p=>p.id);
+  const attacking=[...pick('GK',1),...pick('CB',3),...pick('CM',1),...pick('AM',1),...pick('LW',1),...pick('RW',1),...pick('ST',3)];
+  const attempts={
+   'unknown formation':{formation:'4-5-1',starters:xi},'formation with spaces':{formation:' 4-3-3',starters:xi},'formation as array':{formation:['4-3-3'],starters:xi},
+   'formation as object':{formation:{id:'4-3-3'},starters:xi},'prototype key':{formation:'constructor',starters:xi},'missing formation':{starters:xi},'SQL in formation':{formation:"4-3-3'--",starters:xi},
+   'ten starters':{formation:'4-3-3',starters:xi.slice(0,10)},'twelve starters':{formation:'4-3-3',starters:xi.concat(subs[0])},'starters not an array':{formation:'4-3-3',starters:{length:11}},
+   'duplicate starter':{formation:'4-3-3',starters:xi.slice(0,10).concat(xi[0])},'duplicate in another letter case':{formation:'4-3-3',starters:xi.slice(0,10).concat(xi[0].toUpperCase())},
+   'not a UUID':{formation:'4-3-3',starters:xi.slice(0,10).concat('1')},'free agent':{formation:'4-3-3',starters:xi.slice(0,10).concat(freeAgent)},
+   'no goalkeeper':{formation:'4-3-3',starters:outfield.concat(subs.find(x=>byId.get(x).position!=='GK'))},'two goalkeepers':{formation:'4-3-3',starters:xi.slice(0,10).concat(spareKeeper)},
+   'six attackers in a back five':{formation:'5-4-1',starters:attacking},'six attackers in 4-1-4-1':{formation:'4-1-4-1',starters:attacking},
+   'starter repeated on the bench':{formation:'4-3-3',starters:xi,substitutes:[xi[3]]},'duplicate substitute':{formation:'4-3-3',starters:xi,substitutes:[subs[0],subs[0]]},
+   'eight substitutes':{formation:'4-3-3',starters:xi,substitutes:subs.concat(subs[0])},'foreign substitute':{formation:'4-3-3',starters:xi,substitutes:[freeAgent]}
+  };
+  if(otherClub)attempts['player of another club']={formation:'4-3-3',starters:xi.slice(0,10).concat(otherClub)};
+  for(const [label,body] of Object.entries(attempts)){
+   const r=await call(users[0],'POST',route,{...body,fitBonus:4,valid:true});
+   assert.equal(r.status,400,label+' -> '+r.status+' '+JSON.stringify(r.data));
+   assert.equal(await stored(),before,label+' left the stored lineup untouched');
+  }
+  assert.match(lineupProblem('5-4-1',attacking,squad),/cannot be filled/);assert.match(lineupProblem('4-1-4-1',attacking,squad),/cannot be filled/);
+  assert.equal((await call(users[1]||{dev:99},'POST',route,{formation:'4-3-3',starters:xi})).status,404,'another user cannot save this lineup');
+  assert.equal(await stored(),before);
+  // Backward compatibility: a lineup stored before roles were validated (the old rules took any eleven with a goalkeeper).
+  // The club must be able to save it again unchanged and to improve it, but not to make it worse.
+  await db.query("UPDATE lineups SET formation='4-1-4-1',starters=$2 WHERE club_id=$1",[id,attacking]);
+  const legacy={formation:'4-1-4-1',starters:attacking},team=ids=>ids.map(x=>byId.get(x)),wrongBefore=analyseLineup(team(attacking),'4-1-4-1');
+  assert.equal(wrongBefore.valid,false);
+  const legacyInfo=await ok(users[0],'GET','/api/clubs/'+id+'/formations');
+  assert.equal(legacyInfo.current.valid,false);assert.equal(legacyInfo.current.outOfPosition,wrongBefore.outOfPosition);
+  assert.equal((await call(users[0],'POST',route,legacy)).status,200,'the legacy lineup can be saved again unchanged');
+  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:attacking.slice().reverse()})).status,200,'in any order');
+  assert.equal((await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking})).status,400,'the allowance does not carry to another formation');
+  // Improving it: the first XI with a spare striker for a centre-back has fewer players out of position, though still not none.
+  const firstCb=xi.find(x=>byId.get(x).position==='CB'),spareStriker=squad.find(p=>p.position==='ST'&&!xi.includes(p.id)).id,mild=xi.map(x=>x===firstCb?spareStriker:x);
+  const mildWrong=analyseLineup(team(mild),'4-1-4-1').outOfPosition;
+  assert.ok(mildWrong>0&&mildWrong<wrongBefore.outOfPosition);
+  assert.match(lineupProblem('4-1-4-1',mild,squad),/cannot be filled/,'not acceptable for a club without the legacy lineup');
+  assert.equal(lineupProblem('4-1-4-1',mild,squad,legacy),null);
+  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:mild})).status,200,'the legacy lineup can be improved step by step');
+  // Making it worse again is refused, and the stored lineup stays as it was.
+  const kept=await stored(),refused=await call(users[0],'POST',route,legacy);
+  assert.equal(refused.status,400);assert.match(refused.data.error,/cannot be filled/);assert.equal(await stored(),kept);
+  await ok(users[0],'POST',route,{formation:'4-3-3',starters:original.starters,substitutes:original.substitutes});
+  const restored=(await ok(users[0],'GET',route)).lineup;assert.equal(restored.formation,original.formation);assert.deepEqual(restored.starters,original.starters);assert.deepEqual(restored.substitutes,original.substitutes);
  });
 
  await t.test('transfer market: rebalanced price curve, classification, 80-rated signing affordability, youth supply',async()=>{
@@ -542,6 +629,12 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
 
  await t.test('a friendly is settled by the scheduler without touching standings, DP or missions; stale requests expire',async()=>{
   const stale=await ok(users[8],'POST',clubPath(8)+'/friendlies',{opponentClubId:clubs[9].id,kickoffAt:inMinutes(30)});
+  // Both sides save a formation other than the default; settlement must use what is stored for each club.
+  const sides=[[friendlyB.home_club_id,'5-4-1'],[friendlyB.away_club_id,'3-4-3']];
+  for(const [clubId,formation] of sides){
+   const i=clubs.findIndex(c=>c.id===clubId),best=(await ok(users[i],'GET',clubPath(i)+'/formations')).formations.find(f=>f.id===formation).best;
+   await ok(users[i],'POST',clubPath(i)+'/lineup',{formation,starters:best.starters,substitutes:best.substitutes});
+  }
   const before=await snapshot();
   await db.query("UPDATE friendly_requests SET proposed_kickoff_at=NOW()-interval '1 minute' WHERE id=$1",[stale.request.id]);
   await db.query("UPDATE fixtures SET kickoff_at=NOW()-interval '61 seconds' WHERE id=$1",[friendlyB.id]);
@@ -551,6 +644,8 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(await snapshot(),before);
   const f=await one('SELECT * FROM fixtures WHERE id=$1',[friendlyB.id]);
   assert.equal(f.league_id,null);assert.equal(f.events.filter(e=>e.type==='goal').length,f.home_goals+f.away_goals);
+  assert.equal(f.events.filter(e=>e.type==='kickoff').length,0,'no extra kickoff event');
+  for(const [clubId,formation] of sides)assert.equal((await one('SELECT formation FROM lineups WHERE club_id=$1',[clubId])).formation,formation,'settlement does not reset the formation');
   assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM development_ledger WHERE reference_id=$1",[friendlyB.id])).n),0);
  });
 

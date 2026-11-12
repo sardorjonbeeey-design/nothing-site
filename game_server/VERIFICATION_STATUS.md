@@ -1,7 +1,36 @@
 # Verification status — isolated management candidate
 
-Updated: 2026-11-12 (rating profiles, Uzbek League 40–90, on top of 4d78e78)
+Updated: 2026-11-12 (Phase B, 12 formations, uncommitted work on top of c934cef)
 Branch: zamin-fk-management
+
+## Phase B — 12 formations — implemented, not committed
+
+Same environment as below (Node v22.23.4, PostgreSQL 16 on localhost, disposable `zamin_game`, dev authentication, headless Chromium). Nothing external was contacted. No migration was needed: `lineups.formation` already holds the identifier.
+
+| Command | Result |
+|---|---|
+| `npm test` | 74 tests: 73 passed, 0 failed, 1 skipped (integration, no database URL) |
+| `INTEGRATION_DATABASE_URL=postgresql://postgres:<pw>@localhost:5432/zamin_game npm run test:integration` | 35 subtests passed, 0 failed on a clean run; after Phase 1: 6 runs, 5 clean, 1 with the intermittent market-listing failure described below |
+| `node scripts/mobile-smoke.cjs http://127.0.0.1:18181 postgresql://postgres:<pw>@localhost:5432/zamin_game` | 147 checks passed, 0 failed (Pixel 7 and 360 px, fresh migrated and seeded database) |
+
+### What was verified
+- **Definitions (`src/formations.js`):** exactly the 12 approved formations; 11 distinct slots each, one goalkeeper slot, lines matching the name; only the ten existing position codes; slots carry roles only (no pitch coordinates).
+- **Validation:** for every formation the intended XI is accepted; 10 or 12 players, a duplicate, a missing or second goalkeeper, a player outside the club and an XI that cannot fill the slots are refused. Through the API, 22 direct bypass attempts (unknown or malformed formation, duplicate in another letter case, free agent, bench duplicates, client-sent fit and strength) return 400 and leave the stored row byte-identical.
+- **Repair:** a vacancy is filled by a natural player, then cover, then the same line, an outfield player before a second goalkeeper; 20,000 random squads and thin or unusual squads always end with eleven unique players and one goalkeeper.
+- **Fit:** +4 for the intended XI of every formation (60-rated XI = 64 in all 12), falling monotonically to −4, never outside ±4.
+- **Match engine (Phase 1):** formations affect a match only through formation fit. The tactical matchup shift, the tempo modifier and the extra kick-off event were removed; with natural XIs every pairing of formations plays identically to a mirror match for the same seed. Points per match against the whole field 1.371–1.386 (reference 1.38), goals 2.94–2.96 (reference 2.95).
+- **Backward compatibility (Phase 1):** every XI that was a perfect shape under the five original formations is still eleven natural roles; a stored lineup with players out of position or a second goalkeeper is accepted again unchanged and can be improved but not made worse; a squad that cannot fill a formation can still save its best possible XI.
+- **Squad quality still decides:** at +6 and −6 overall every formation stays within 0.09 points of the approved curve; the gap in rating decides the result.
+- **Settlement:** a friendly between clubs saved as 5-4-1 and 3-4-3 is settled with those formations and leaves them stored; no kick-off event is added.
+- **Mobile:** all 12 formations listed as a grid of numbered cards with best-XI strength and formation fit, no pitch drawing anywhere; each previews without saving, auto-picks 11 unique players in valid roles, saves, survives a reload; the role list stays inside its panel and nothing overflows at 360 px; a second goalkeeper is refused in the client and by the server.
+
+### Intermittent integration failures (not caused by this work)
+- `resale rates…` — the sold centre-back is occasionally missing from `GET /api/market?maxValue=1000000`, which returns the top 100 by overall and depends on randomly generated youth ratings. Also seen on the untouched baseline (1 of 20 runs).
+- `no request or scheduler run produced a server error` — "Cannot use a pool after calling end on the pool": a scheduler tick fires while the test is shutting a server down. Seen in 2 of 42 runs (the other one in 3); not reproduced on the baseline in 20 runs, but the code path (`startScheduler`, `shutdown`) is unchanged.
+
+### Not tested
+- A real device or the Telegram in-app browser.
+- Formation balance with real league squads over a full season; the figures above are simulated pairings.
 
 ## Rating profiles — Uzbek League 40–90 (migration 006) — all checks passed
 
@@ -92,4 +121,4 @@ Headless Chromium, Pixel 7 emulation and a 360 px viewport. Newly covered: 20,00
 - Formation fit still moves strength by up to ±4, which under the new model is worth about as much as 4 overall.
 
 ## Release status
-Price rebalance and the 40–90 Uzbek League rating profile are verified on the isolated branch; all suites pass. The 12-formation work has not started. Not production-tested, not deployed, not connected to the existing Mini App or any live database.
+Price rebalance and the 40–90 Uzbek League rating profile are verified on the isolated branch; all suites pass. The 12 formations are implemented and verified locally but not committed. Not production-tested, not deployed, not connected to the existing Mini App or any live database.
