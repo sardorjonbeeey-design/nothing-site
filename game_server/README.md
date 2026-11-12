@@ -23,6 +23,15 @@ Independent Node.js API and PostgreSQL schema for the management-game candidate.
 
 Users cannot start matches, so both the integration test and the smoke script move kick-off times into the past directly in the local database and then wait for the server's own scheduler. There is no API or setting that accelerates a match.
 
+## Economy
+Values are fixed in `src/economy.js`, not in the environment. See BALANCING_DEFAULTS.md for the full table.
+- Each user manages one club. A new club gets 20,000,000 UZS and an identical generated academy squad of 18 (`src/catalog.js`).
+- Players have an `origin`: `market` (seeded catalogue), `academy` (starter squads) or `generated` (youth supply). All are fictional.
+- Price is 30,000,000 × 1.10^(overall − 80). Academy players sell for 50% the first time, everything else for 80%. Squads hold 13 to 26 players.
+- League clubs earn 750,000 UZS per completed league match. Clubs outside the league receive the same amount per completed league matchday (`stipend_runs` and `stipend_payments` make each payment once-only).
+- When a season completes, the scheduler creates the next one for the same ten clubs, starting two rest days after day 19. A unique index on the season number makes this once-only.
+- The match model and its verification are in `src/simulation.js` and `test/simulation.test.js`.
+
 ## League schedule and scheduler
 - The league is created when the 10th club exists: 18 rounds, 90 fixtures, every opponent home and away.
 - One round per day at 20:00 Asia/Tashkent (computed in PostgreSQL with that IANA zone, never from the server's local timezone). Matchdays 1–9, a rest day on day 10, matchdays 11–19.

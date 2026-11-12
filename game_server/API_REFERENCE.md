@@ -77,6 +77,14 @@ Money, transfers, upgrade costs and DP balances are recalculated server-side. Th
 
 There is no route that starts, delays, accelerates, replays or settles a match. `POST /api/fixtures/:fixtureId/play` has been removed. Matches are settled only by the server's scheduler (see README, "League schedule and scheduler").
 
+## Economy rules enforced by the server
+- POST /api/clubs — one club per user (409 otherwise). The club receives 20,000,000 UZS and a generated 18-player academy squad.
+- GET /api/market?maxValue=N — up to 100 free agents by overall (optionally at most N UZS), plus `youth` (the generated 45–50 players) and `squadLimits`.
+- POST /api/clubs/:clubId/players/sign — refused at 26 players or with insufficient budget. Price is the player's market value.
+- POST /api/clubs/:clubId/players/sell — refused at 13 players or for the last goalkeeper. Pays 50% for an academy player's first sale and 80% otherwise; the response has `feeUzs`, `resaleRatePercent` and `promoted` (players moved into the XI automatically).
+- GET /api/clubs/:clubId/league — `leagueExists`, `season`, `table`, and `previous` (the season before, with its final table).
+- League income (750,000 UZS per completed league match) and the waiting-list stipend are paid only by the scheduler. There is no route to claim either.
+
 ## Results
 - GET /api/clubs/:clubId/results?limit=20 — completed matches of the club, newest first, each with `outcome` (`win`, `draw`, `loss`) and `viewed`; also `unviewedCount`. Reading does not change the viewed state.
 - GET /api/clubs/:clubId/results/:fixtureId — one completed match including its `events` (the match report).

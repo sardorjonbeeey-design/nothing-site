@@ -3,8 +3,6 @@
 Everything here is OPEN unless explicitly approved. Do not implement a proposed value as a final rule without owner approval.
 
 ## Rules and balance
-- Starting club budget in UZS.
-- Initial squad size and reserve count.
 - Player pool size and generation method.
 - Quality category names and rating distribution.
 - Player attributes and overall-rating formula.

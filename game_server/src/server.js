@@ -7,9 +7,13 @@ import {requireDb,inTransaction,assertIsolatedDatabase,assertGameSchema,pool} fr
 import {authenticate,telegramLogin} from './auth.js';
 import {json,readJson,HttpError,safeString,colour,uuid} from './http.js';
 import {saveCrest,readCrest} from './uploads.js';
-import {leagueSchedule,LEAGUE_TIMEZONE,LEAGUE_KICKOFF_TIME,MATCH_DURATION_SECONDS} from './league.js';
+import {LEAGUE_TIMEZONE,MATCH_DURATION_SECONDS} from './league.js';
+import {ensureLeague,LEAGUE_LOCK} from './seasons.js';
+import {insertPlayer,ensureYouthSupply} from './players.js';
+import {generateAcademySquad,YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL} from './catalog.js';
+import {repairClubLineup} from './lineup.js';
 import {awardDevelopmentPoints,startScheduler} from './matches.js';
-import {saleValueUzs,upgradeCost,qualityForOverall,marketValueUzs} from './economy.js';
+import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValueUzs,overallFromAttributes,STARTING_BUDGET_UZS,MIN_SQUAD_SIZE,MAX_SQUAD_SIZE} from './economy.js';
 
 const db=()=>requireDb();
 const clientRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../game_client');
@@ -42,51 +46,26 @@ async function makeClub(userId,input){
  const secondary=colour(input.secondaryColour||'#F0C75E','Secondary colour');
  const crest=input.crestUrl||null;
  if(crest&&!/^\/uploads\/[0-9a-f-]{36}\.(png|jpg|webp)$/.test(crest))throw new HttpError(400,'Crest must be uploaded through the game server');
- return inTransaction(async client=>{
-  const c=await client.query('INSERT INTO clubs(owner_user_id,name,short_name,primary_colour,secondary_colour,crest_url,budget_uzs) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',[userId,name,shortName,primary,secondary,crest,config.startingBudgetUzs.toString()]);
-  const club=c.rows[0];
-  const pool=await client.query('SELECT * FROM players WHERE club_id IS NULL ORDER BY overall DESC,full_name ASC LIMIT 200 FOR UPDATE SKIP LOCKED');
-  const counts={GK:1,CB:2,LB:1,RB:1,DM:1,CM:2,LW:1,RW:1,ST:1};
-  const selected=[];
-  for(const [pos,count] of Object.entries(counts)){
-   for(let i=0;i<count;i++){const idx=pool.rows.findIndex(p=>p.position===pos);if(idx>=0)selected.push(pool.rows.splice(idx,1)[0]);}
-  }
-  if(config.startingSquadSize>11){const backupKeeper=pool.rows.findIndex(p=>p.position==='GK');if(backupKeeper>=0)selected.push(pool.rows.splice(backupKeeper,1)[0]);}
-  for(const p of pool.rows){if(selected.length>=config.startingSquadSize)break;selected.push(p);}
-  if(selected.length<11)throw new HttpError(503,'Not enough free-agent players are available to create a squad');
-  const ids=selected.slice(0,config.startingSquadSize).map(p=>p.id);
-  await client.query('UPDATE players SET club_id=$1 WHERE id=ANY($2::uuid[])',[club.id,ids]);
-  const actualStarters=selected.slice(0,11).map(p=>p.id);
-  const substitutes=selected.slice(11).map(p=>p.id);
-  await client.query('INSERT INTO lineups(club_id,formation,starters,substitutes) VALUES($1,$2,$3,$4)',[club.id,'4-3-3',actualStarters,substitutes]);
-  await client.query('INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason) VALUES($1,$2,$2,$3)',[club.id,config.startingBudgetUzs.toString(),'club_created']);
-  await client.query('INSERT INTO club_missions(club_id,mission_id) SELECT $1,id FROM missions WHERE active=true ON CONFLICT DO NOTHING',[club.id]);
-  await ensureLeague(client);
-  return {club,players:selected};
- });
-}
-const LEAGUE_LOCK=8111001;
-// Creates the single league season once 10 clubs exist. Day 1 is the next calendar day in Asia/Tashkent;
-// every fixture gets its fixed 20:00 Tashkent kick-off here and is later settled only by the scheduler.
-async function ensureLeague(client){
- await client.query('SELECT pg_advisory_xact_lock($1)',[LEAGUE_LOCK]);
- const existing=await client.query('SELECT id FROM leagues WHERE starts_on IS NOT NULL ORDER BY created_at DESC LIMIT 1');
- if(existing.rowCount)return existing.rows[0].id;
- const clubs=await client.query('SELECT id FROM clubs ORDER BY created_at ASC,id ASC LIMIT 10');
- const total=await client.query('SELECT COUNT(*)::int AS count FROM clubs');
- if(Number(total.rows[0].count)<10)return null;
- const league=(await client.query("INSERT INTO leagues(name,season_number,status,starts_on) VALUES('ZAMIN FK League',1,'active',(NOW() AT TIME ZONE $1)::date+1) RETURNING id,starts_on::text AS starts_on",[LEAGUE_TIMEZONE])).rows[0];
- const ids=clubs.rows.map(r=>r.id);
- for(const id of ids)await client.query('INSERT INTO league_members(league_id,club_id) VALUES($1,$2)',[league.id,id]);
- for(const fixture of leagueSchedule(ids)){
-  await client.query("INSERT INTO fixtures(league_id,kind,round_number,day_number,home_club_id,away_club_id,kickoff_at) VALUES($1,'league',$2,$3::int,$4,$5,(($6::date+($3::int-1))+$7::time) AT TIME ZONE $8)",
-   [league.id,fixture.roundNumber,fixture.dayNumber,fixture.homeClubId,fixture.awayClubId,league.starts_on,LEAGUE_KICKOFF_TIME,LEAGUE_TIMEZONE]);
+ try{
+  return await inTransaction(async client=>{
+   // One club per user. The unique index on clubs(owner_user_id) is the final guard against concurrent requests.
+   if((await client.query('SELECT 1 FROM clubs WHERE owner_user_id=$1',[userId])).rowCount)throw new HttpError(409,'You already manage a club');
+   const c=await client.query('INSERT INTO clubs(owner_user_id,name,short_name,primary_colour,secondary_colour,crest_url,budget_uzs) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',[userId,name,shortName,primary,secondary,crest,STARTING_BUDGET_UZS.toString()]);
+   const club=c.rows[0];
+   // Every club starts with the same generated academy squad; nothing is taken from the transfer market.
+   const players=[];for(const p of generateAcademySquad())players.push(await insertPlayer(client,p,club.id));
+   await client.query('INSERT INTO lineups(club_id,formation,starters,substitutes) VALUES($1,$2,$3,$4)',[club.id,'4-3-3',players.slice(0,11).map(p=>p.id),players.slice(11).map(p=>p.id)]);
+   await client.query('INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason) VALUES($1,$2,$2,$3)',[club.id,STARTING_BUDGET_UZS.toString(),'club_created']);
+   await client.query('INSERT INTO club_missions(club_id,mission_id) SELECT $1,id FROM missions WHERE active=true ON CONFLICT DO NOTHING',[club.id]);
+   await ensureLeague(client);
+   return {club,players};
+  });
+ }catch(error){
+  if(error.code==='23505'&&error.constraint==='clubs_one_per_owner')throw new HttpError(409,'You already manage a club');
+  throw error;
  }
- // A friendly accepted before the league existed gives way to a league match in the same slot.
- await client.query("WITH c AS (UPDATE fixtures fr SET status='cancelled' WHERE fr.kind='friendly' AND fr.status='scheduled' AND EXISTS(SELECT 1 FROM fixtures l WHERE l.league_id=$1 AND (l.home_club_id IN (fr.home_club_id,fr.away_club_id) OR l.away_club_id IN (fr.home_club_id,fr.away_club_id)) AND l.kickoff_at>fr.kickoff_at-make_interval(secs=>$2) AND l.kickoff_at<fr.kickoff_at+make_interval(secs=>$2)) RETURNING fr.id) UPDATE friendly_requests SET status='cancelled',responded_at=NOW() WHERE fixture_id IN (SELECT id FROM c)",[league.id,MATCH_DURATION_SECONDS]);
- return league.id;
 }
-const fixtureColumns="f.id,f.kind,f.league_id,f.round_number,f.day_number,f.kickoff_at,f.status,f.home_club_id,f.away_club_id,f.home_goals,f.away_goals,f.played_at,CASE WHEN f.status='scheduled' AND f.kickoff_at<=NOW() THEN 'live' WHEN f.status='scheduled' THEN 'upcoming' ELSE f.status END AS phase,h.name AS home_name,h.short_name AS home_short_name,h.crest_url AS home_crest_url,h.primary_colour AS home_colour,a.name AS away_name,a.short_name AS away_short_name,a.crest_url AS away_crest_url,a.primary_colour AS away_colour";
+const fixtureColumns="f.id,f.kind,f.league_id,f.round_number,f.day_number,f.kickoff_at,f.status,f.home_club_id,f.away_club_id,f.home_goals,f.away_goals,f.played_at,(SELECT season_number FROM leagues WHERE id=f.league_id) AS season_number,CASE WHEN f.status='scheduled' AND f.kickoff_at<=NOW() THEN 'live' WHEN f.status='scheduled' THEN 'upcoming' ELSE f.status END AS phase,h.name AS home_name,h.short_name AS home_short_name,h.crest_url AS home_crest_url,h.primary_colour AS home_colour,a.name AS away_name,a.short_name AS away_short_name,a.crest_url AS away_crest_url,a.primary_colour AS away_colour";
 const fixtureJoins=' FROM fixtures f JOIN clubs h ON h.id=f.home_club_id JOIN clubs a ON a.id=f.away_club_id';
 // Completed matches of one club, newest first, with the result from that club's side and its server-side viewed flag.
 function resultsSql(withEvents,filter){
@@ -121,8 +100,13 @@ async function handle(req,res){
  const user=await authenticate(req);
  if(req.method==='POST'&&path==='/api/uploads/crest'){if(!rateLimit(clientIp(req)+':crest',10))throw new HttpError(429,'Too many crest uploads');const body=await readJson(req,3_100_000);const crestUrl=await saveCrest(body.dataUrl);return json(res,201,{crestUrl});}
  if(req.method==='GET'&&path==='/api/market'){
-  const r=await db().query('SELECT id,full_name,nationality,age,position,quality,overall,potential,market_value_uzs,attributes FROM players WHERE club_id IS NULL ORDER BY overall DESC LIMIT 100');
-  return json(res,200,{players:r.rows});
+  const columns='id,full_name,nationality,age,position,quality,overall,potential,market_value_uzs,attributes,origin';
+  const maxValue=url.searchParams.get('maxValue');
+  if(maxValue!==null&&!/^\d{1,15}$/.test(maxValue))throw new HttpError(400,'maxValue is invalid');
+  const r=await db().query('SELECT '+columns+' FROM players WHERE club_id IS NULL AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 100',[maxValue]);
+  // The generated 45–50 players are listed separately so they are never pushed out by the 100-row limit.
+  const youth=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND origin='generated' AND overall BETWEEN $1 AND $2 ORDER BY position,overall DESC,id LIMIT 60",[YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL]);
+  return json(res,200,{players:r.rows,youth:youth.rows,squadLimits:{min:MIN_SQUAD_SIZE,max:MAX_SQUAD_SIZE}});
  }
  if(req.method==='GET'&&path==='/api/clubs'){
   const r=await db().query('SELECT * FROM clubs WHERE owner_user_id=$1 ORDER BY created_at',[user.id]);return json(res,200,{clubs:r.rows});
@@ -147,7 +131,15 @@ async function handle(req,res){
   }
   if(req.method==='GET'&&parts[3]==='squad')return json(res,200,{players:await clubSquad(clubId)});
   if(req.method==='GET'&&parts[3]==='lineup'){const r=await db().query('SELECT * FROM lineups WHERE club_id=$1',[clubId]);return json(res,200,{lineup:r.rows[0]||null});}
-  if(req.method==='GET'&&parts[3]==='league'){const r=await db().query('SELECT lm.*,c.name,c.short_name,c.primary_colour,c.crest_url FROM league_members lm JOIN clubs c ON c.id=lm.club_id WHERE lm.league_id=(SELECT league_id FROM league_members WHERE club_id=$1 ORDER BY league_id DESC LIMIT 1) ORDER BY lm.points DESC,(lm.goals_for-lm.goals_against) DESC,lm.goals_for DESC',[clubId]);return json(res,200,{table:r.rows});}
+  if(req.method==='GET'&&parts[3]==='league'){
+   // The club's latest season, plus the final table of the season before it (shown until the new season gets going).
+   const seasons=await db().query('SELECT l.id,l.season_number,l.status,l.starts_on::text AS starts_on FROM leagues l JOIN league_members lm ON lm.league_id=l.id WHERE lm.club_id=$1 AND l.starts_on IS NOT NULL ORDER BY l.season_number DESC LIMIT 2',[clubId]);
+   const table=async league=>(await db().query('SELECT lm.*,c.name,c.short_name,c.primary_colour,c.crest_url FROM league_members lm JOIN clubs c ON c.id=lm.club_id WHERE lm.league_id=$1 ORDER BY lm.points DESC,(lm.goals_for-lm.goals_against) DESC,lm.goals_for DESC,c.name,c.id',[league.id])).rows;
+   const [current,previous]=seasons.rows;
+   const leagueExists=(await db().query('SELECT 1 FROM leagues WHERE starts_on IS NOT NULL LIMIT 1')).rowCount>0;
+   return json(res,200,{leagueExists,table:current?await table(current):[],season:current?{number:current.season_number,status:current.status,startsOn:current.starts_on}:null,
+    previous:previous?{season:{number:previous.season_number,status:previous.status,startsOn:previous.starts_on},table:await table(previous)}:null});
+  }
   if(req.method==='GET'&&parts[3]==='development-ledger'){const r=await db().query('SELECT amount_dp,balance_after_dp,reason,created_at FROM development_ledger WHERE club_id=$1 ORDER BY created_at DESC LIMIT 30',[clubId]);return json(res,200,{transactions:r.rows});}
   if(req.method==='GET'&&parts[3]==='ledger'){const r=await db().query('SELECT amount_uzs,balance_after_uzs,reason,created_at FROM money_ledger WHERE club_id=$1 ORDER BY created_at DESC LIMIT 30',[clubId]);return json(res,200,{transactions:r.rows});}
   if(req.method==='GET'&&parts[3]==='missions'){
@@ -173,12 +165,15 @@ async function handle(req,res){
     const c=await ownedClub(client,clubId,user.id,true);
     const p=(await client.query('SELECT * FROM players WHERE id=$1 AND club_id IS NULL FOR UPDATE',[playerId])).rows[0];
     if(!p)throw new HttpError(404,'Free agent not found');
+    const size=Number((await client.query('SELECT COUNT(*)::int AS count FROM players WHERE club_id=$1',[clubId])).rows[0].count);
+    if(size>=MAX_SQUAD_SIZE)throw new HttpError(400,'A club can register at most '+MAX_SQUAD_SIZE+' players');
     const fee=BigInt(p.market_value_uzs);
     if(BigInt(c.budget_uzs)<fee)throw new HttpError(400,'Insufficient club budget');
     await client.query('UPDATE clubs SET budget_uzs=budget_uzs-$2 WHERE id=$1',[clubId,fee.toString()]);
     await client.query('UPDATE players SET club_id=$2 WHERE id=$1',[playerId,clubId]);
     const bal=(BigInt(c.budget_uzs)-fee).toString();
     await client.query('INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,$4,$5)',[clubId,(-fee).toString(),bal,'player_signing',playerId]);
+    if(p.origin==='generated')await ensureYouthSupply(client);
     return {player:p,budgetUzs:bal};
    });
    return json(res,200,result);
@@ -190,14 +185,15 @@ async function handle(req,res){
     const p=(await client.query('SELECT * FROM players WHERE id=$1 AND club_id=$2 FOR UPDATE',[playerId,clubId])).rows[0];
     if(!p)throw new HttpError(404,'Player not found');
     const count=await client.query('SELECT COUNT(*)::int AS count FROM players WHERE club_id=$1',[clubId]);
-    if(Number(count.rows[0].count)<=11)throw new HttpError(400,'A club must keep at least 11 players');
+    if(Number(count.rows[0].count)<=MIN_SQUAD_SIZE)throw new HttpError(400,'A club must keep at least '+MIN_SQUAD_SIZE+' players');
     if(p.position==='GK'){const keepers=await client.query("SELECT COUNT(*)::int AS count FROM players WHERE club_id=$1 AND position='GK'",[clubId]);if(Number(keepers.rows[0].count)<=1)throw new HttpError(400,'A club must keep at least one goalkeeper');}
-    const fee=saleValueUzs(p.market_value_uzs),bal=(BigInt(c.budget_uzs)+fee).toString();
-    await client.query('UPDATE players SET club_id=NULL WHERE id=$1',[playerId]);
+    const rate=resaleRatePercent(p),fee=saleValueUzs(p.market_value_uzs,rate),bal=(BigInt(c.budget_uzs)+fee).toString();
+    await client.query('UPDATE players SET club_id=NULL,first_sale_done=TRUE WHERE id=$1',[playerId]);
     await client.query('UPDATE clubs SET budget_uzs=budget_uzs+$2 WHERE id=$1',[clubId,fee.toString()]);
-    await client.query('UPDATE lineups SET starters=array_remove(starters,$2::uuid),substitutes=array_remove(substitutes,$2::uuid) WHERE club_id=$1',[clubId,playerId]);
+    // The sold player leaves the lineup; a sold starter is replaced automatically from the remaining squad.
+    const lineup=await repairClubLineup(client,clubId);
     await client.query('INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,$4,$5)',[clubId,fee.toString(),bal,'player_sale',playerId]);
-    return {player:p,budgetUzs:bal};
+    return {player:p,budgetUzs:bal,feeUzs:fee.toString(),resaleRatePercent:rate,promoted:lineup.promotedPlayers.map(x=>({id:x.id,full_name:x.full_name,position:x.position,overall:x.overall}))};
    });
    return json(res,200,result);
   }
@@ -214,8 +210,7 @@ async function handle(req,res){
     const cost=upgradeCost(start,actual);
     if(Number(c.development_points)<cost)throw new HttpError(400,'Not enough development points');
     attrs[attribute]=end;
-    const avg=Object.values(attrs).reduce((a,b)=>a+Number(b),0)/6;
-    const overall=Math.min(Number(p.potential),Math.max(Number(p.overall),Math.round(avg)));
+    const overall=overallFromAttributes(attrs,p.overall,p.potential);
     const quality=qualityForOverall(overall);
     const marketValue=marketValueUzs(overall);
     await client.query('UPDATE players SET attributes=$2::jsonb,overall=$3,quality=$4,market_value_uzs=$5 WHERE id=$1',[playerId,JSON.stringify(attrs),overall,quality,marketValue]);

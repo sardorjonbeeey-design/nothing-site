@@ -34,7 +34,7 @@ Open the .env file in a terminal editor and set:
 - WEB_ORIGIN — https:// followed by that hostname.
 - SESSION_SECRET — generate a private random value with: openssl rand -hex 32
 - TELEGRAM_BOT_TOKEN — leave empty until the owner approves the isolated Telegram authentication connection.
-- STARTING_BUDGET_UZS — keep 0 until the opening budget is approved.
+- The opening budget (20,000,000 UZS) is fixed in code; STARTING_BUDGET_UZS is no longer read.
 - ALLOW_DEV_AUTH=false.
 
 Never paste credentials into ChatGPT, GitHub commits, screenshots or public messages.

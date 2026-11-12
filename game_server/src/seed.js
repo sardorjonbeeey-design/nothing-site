@@ -1,12 +1,21 @@
 import {requireDb,assertIsolatedDatabase} from './db.js';
 import {starterPlayers} from './catalog.js';
+import {insertPlayer,ensureYouthSupply} from './players.js';
 const db=requireDb();
 try{
  await assertIsolatedDatabase(db);
- for(const p of starterPlayers){
-  await db.query('INSERT INTO players(club_id,full_name,nationality,age,position,quality,overall,potential,attributes,market_value_uzs) SELECT NULL,$1::varchar,$2,$3,$4,$5,$6,$7,$8::jsonb,$9 WHERE NOT EXISTS(SELECT 1 FROM players WHERE full_name=$1::varchar)',
-  [p.fullName,p.nationality,p.age,p.position,p.quality,p.overall,p.potential,JSON.stringify(p.attributes),p.marketValueUzs]);
- }
+ const client=await db.connect();
+ try{
+  await client.query('BEGIN');
+  for(const p of starterPlayers){
+   // A catalogue row created before catalogue keys existed is adopted, not duplicated.
+   await client.query("UPDATE players SET catalog_key=$1 WHERE catalog_key IS NULL AND origin='market' AND id=(SELECT id FROM players WHERE full_name=$2 AND catalog_key IS NULL AND origin='market' ORDER BY created_at LIMIT 1) AND NOT EXISTS(SELECT 1 FROM players WHERE catalog_key=$1)",[p.catalogKey,p.fullName]);
+   await insertPlayer(client,p);
+  }
+  await ensureYouthSupply(client);
+  await client.query('COMMIT');
+ }catch(error){await client.query('ROLLBACK');throw error;}
+ finally{client.release();}
  const missions=[
   ['play_1','First appearance','Complete one match','matches_played',1,5,'season'],
   ['win_2','Two wins','Win two matches','wins',2,12,'season'],

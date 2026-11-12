@@ -51,7 +51,8 @@ function tashkentInput(hour){const d=new Date(Date.now()+5*3600000+2*86400000);r
   await page.click('#club-form button[type=submit]');
   await page.waitForSelector('.club-card');
   check(label+': club created and overview shown',(await page.textContent('.club-card')).includes('Mobile Test '+dev));
-  check(label+': budget shown in UZS',(await page.textContent('.stats')).includes('UZS'));
+  check(label+': opening budget is 20,000,000 UZS',(await page.textContent('.stats')).includes('20,000,000 UZS'));
+  check(label+': a second club cannot be started',(await page.locator('[data-action="new-club"]').count())===0);
   check(label+': squad size 18 shown',(await page.textContent('.stats')).includes('18'));
   check(label+': overview fits the viewport',await noOverflow());
   const club=(await api(dev,'GET','/api/clubs')).clubs[0];
@@ -59,6 +60,7 @@ function tashkentInput(hour){const d=new Date(Date.now()+5*3600000+2*86400000);r
   await tab('squad');await page.waitForSelector('.player');
   check(label+': squad lists 18 players',(await page.locator('.player').count())===18);
   check(label+': lineup shows 11/11',(await content()).includes('11/11 selected'));
+  check(label+': squad limits and academy resale are shown',(await content()).includes('MIN 13 · MAX 26')&&(await page.locator('.player:has-text("ACADEMY PRODUCT · first sale pays 50%")').count())===18);
   check(label+': squad fits the viewport',await noOverflow());
   await page.selectOption('#formation-select','4-4-2');
   await page.click('[data-action="auto-lineup"]');await toast('Starting XI saved');
@@ -69,7 +71,19 @@ function tashkentInput(hour){const d=new Date(Date.now()+5*3600000+2*86400000);r
 
   await tab('market');await page.waitForSelector('.player');
   check(label+': market lists free agents',(await page.locator('.player').count())>0);
-  check(label+': sign buttons disabled at 0 UZS',(await page.locator('[data-action="sign"]:not([disabled])').count())===0);
+  check(label+': youth intake lists at least 12 players rated 45-50',(await page.locator('#youth-list .player').count())>=12&&(await page.locator('#youth-list .rating').allTextContents()).every(x=>Number(x)>=45&&Number(x)<=50));
+  await page.click('[data-action="toggle-affordable"]');await page.waitForSelector('text=AFFORDABLE PLAYERS');
+  check(label+': affordable filter leaves only signable players',(await page.locator('#market-list [data-action="sign"][disabled]').count())===0&&(await page.locator('#market-list .player').count())>0);
+  await page.click('[data-action="toggle-affordable"]');await page.waitForSelector('text=TOP AVAILABLE PLAYERS');
+  const budgetBefore=BigInt((await api(dev,'GET','/api/clubs')).clubs[0].budget_uzs);
+  await page.locator('#youth-list [data-action="sign"]').first().click();await toast('Player signed');
+  const budgetAfter=BigInt((await api(dev,'GET','/api/clubs')).clubs[0].budget_uzs);
+  check(label+': signing a youth player costs its listed price',budgetBefore-budgetAfter>=1070000n&&budgetBefore-budgetAfter<=1720000n);
+  await tab('squad');await page.waitForSelector('.player');
+  await page.locator('.player:has-text("STARTING XI") [data-action="sell"]').first().click();await toast('promoted to the XI');
+  await page.waitForFunction(()=>document.querySelectorAll('.player').length===18,null,{timeout:8000});
+  check(label+': selling a starter promotes a replacement and keeps 11/11',(await content()).includes('11/11 selected'));
+  await tab('market');await page.waitForSelector('.player');
   check(label+': market fits the viewport',await noOverflow());
   await tab('missions');await page.waitForSelector('.mission');
   check(label+': 5 missions listed',(await page.locator('.mission').count())===5);
@@ -97,6 +111,8 @@ function tashkentInput(hour){const d=new Date(Date.now()+5*3600000+2*86400000);r
   }else{
    await tab('fixtures');
    check(label+': an 11th club has no league fixtures',(await page.locator('.fixture').count())===0);
+   await tab('league');
+   check(label+': a waiting club is told about its matchday income',(await content()).includes('not in a league yet'));
   }
 
   // Friendlies: send a challenge through the form, then let a local filler club answer through the API.
@@ -139,7 +155,7 @@ function tashkentInput(hour){const d=new Date(Date.now()+5*3600000+2*86400000);r
   check(label+': final score is shown',/^\d+ — \d+$/.test((await page.textContent('.result-goals')).trim()));
   check(label+': win, draw or loss is shown',/^(WIN|DRAW|LOSS)$/.test((await page.textContent('.result-card .outcome')).trim()));
   check(label+': match date and time are shown in Tashkent time',/\d{2} \w{3} \d{4}, \d{2}:\d{2} · Tashkent time/.test(await page.textContent('.result-when')));
-  check(label+': competition is labelled',(await page.textContent('.result-when')).includes(inLeague?'LEAGUE · MATCHDAY 3':'FRIENDLY'));
+  check(label+': competition is labelled',(await page.textContent('.result-when')).includes(inLeague?'LEAGUE · SEASON 1 · MATCHDAY 3':'FRIENDLY'));
   check(label+': result counter shown',(await opening()).includes('Result 1 of '+expected));
   check(label+': opening result screen fits the viewport',await noOverflow());
   await shot('3-opening-result');
@@ -191,7 +207,9 @@ function tashkentInput(hour){const d=new Date(Date.now()+5*3600000+2*86400000);r
    if(await affordable.count()){await affordable.first().click();await toast('Player signed');check(label+': signing an affordable player',true);}
    else check(label+': signing an affordable player',false,'no affordable free agent in the first 100 listed');
    await tab('overview');
-   check(label+': finance and DP history shown',/player sale/.test(await content())&&/match reward/.test(await content()));
+   check(label+': finance and DP history shown',/player sale/.test(await content())&&/league match income/.test(await content())&&/match reward/.test(await content()));
+   await tab('league');await page.waitForSelector('table');
+   check(label+': league page names the season',(await content()).includes('Season 1'));
   }
 
   await tab('overview');

@@ -24,7 +24,7 @@ This guide is for the owner to complete after the source and tests are ready. No
 6. Set SESSION_SECRET to a random secret of at least 32 characters.
 7. Set TELEGRAM_BOT_TOKEN only after the owner explicitly approves connecting this isolated app to a bot.
 8. Keep ALLOW_DEV_AUTH=false in production.
-9. Set STARTING_BUDGET_UZS only after the opening budget has been approved. It currently defaults to zero.
+9. The opening budget (20,000,000 UZS) is fixed in code; STARTING_BUDGET_UZS is no longer read.
 
 ## Launch
 From the game_server directory:

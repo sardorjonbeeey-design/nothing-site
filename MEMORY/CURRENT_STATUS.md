@@ -1,9 +1,9 @@
 # Current Status
 
-Last updated: 2026-11-11
+Last updated: 2026-11-12
 Repository: sardorjonbeeey-design/nothing-site
 Branch: zamin-fk-management
-Phase: isolated server + client with scheduled league, locally verified
+Phase: isolated server + client with scheduled league, seasons and economy, locally verified
 Production connection: NONE
 Integration approval: NOT GRANTED
 
@@ -13,25 +13,35 @@ Integration approval: NOT GRANTED
 - game_client/ — mobile-first single-page client served by the game server.
 - game_server/deploy/ — Docker, Caddy and cloud guides. NOT EXECUTED.
 
-## Verification (2026-11-11, local only)
+## Verification (2026-11-12, local only)
 VERIFIED locally against a throwaway local PostgreSQL, with mock/dev authentication:
-- Unit tests: 22 passed.
-- Integration tests: 29 subtests passed.
-- Emulated mobile browser smoke test (Pixel 7 and 360 px): 111 checks passed.
-Details, untested areas and known issues: game_server/VERIFICATION_STATUS.md.
+- Unit tests: 44 passed.
+- Integration tests: 32 subtests passed.
+- Emulated mobile browser smoke test (Pixel 7 and 360 px): 123 checks passed.
+Details, untested areas and limitations: game_server/VERIFICATION_STATUS.md.
 
-NOT verified: a real-time 20:00 kick-off and 19-day season, real phone, real Telegram, Docker/Caddy, hosted database, load and security.
+NOT verified: real-time kick-offs and seasons, real phone, real Telegram, Docker/Caddy, hosted database, load and security.
 
 ## League and matches (IMPLEMENTED, owner-approved rules)
 - 10-club double round-robin: 18 rounds on matchdays 1–9 and 11–19, rest day on day 10, 19 calendar days.
 - All five fixtures of a matchday kick off at 20:00 Asia/Tashkent, last 60 seconds and are settled by the server's own scheduler at 20:01. Users cannot start, delay, accelerate, replay or settle matches.
 - Friendlies: challenge with a proposed time, accept or decline; one-minute slots; never affect the league.
 - Opening the game shows the latest completed match first; result history and viewed state are stored server-side.
+- Next season starts automatically two rest days after day 19 with the same ten clubs; everything a club owns is kept.
+- Match model: rating difference on an Elo-style curve, scale 40, home advantage +2.
+
+## Economy (IMPLEMENTED, owner-approved rules)
+- One club per user. 20,000,000 UZS and an identical 18-player generated academy squad.
+- Price 30,000,000 × 1.10^(OVR − 80). Academy first sale 50%, otherwise 80%. Squad 13–26.
+- 750,000 UZS per completed league match; the same stipend per league matchday for clubs outside the league.
+- The market always offers generated 45–50 players. Sold starters are replaced in the XI automatically.
+- All players are fictional. The real-player database is NOT implemented.
 
 ## Next steps (PROPOSED, awaiting owner)
-1. Confirm the provisional choices in game_server/OPEN_DECISIONS.md (season start day, friendly rewards, same-owner friendlies, lineup freeze, pitch view).
-2. Decide what happens after a season ends and how later clubs join.
-3. Balance decisions: opening budget, starter-squad fairness, UZS income, one club per user.
+1. Real-player database: resolve data rights and source access first.
+2. How waiting clubs enter a league (second league or promotion).
+3. A running cost such as wages before cash piles up over several seasons.
+4. Remaining provisional items in game_server/OPEN_DECISIONS.md.
 
 ## Boundaries
 Do not connect the live Telegram Mini App, live bot, existing backend, production or Neon database, supporter economy or existing community systems. No merge, deployment or integration without explicit owner approval.

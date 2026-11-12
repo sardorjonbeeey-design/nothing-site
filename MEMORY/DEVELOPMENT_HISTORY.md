@@ -41,3 +41,10 @@ Chronological record. Append entries; do not erase earlier history.
 - The single round-robin with a Play button (45 fixtures) is replaced.
 - Results: unit 22 passed; integration 29 subtests passed; mobile smoke 111 checks passed. See game_server/VERIFICATION_STATUS.md.
 - Provisional choices made during implementation are listed in game_server/OPEN_DECISIONS.md for owner confirmation.
+
+## 2026-11-12 — Economy, seasons and match model
+- Owner reviewed three proposals (real-player research, economy simulation, income and match-engine sensitivity) and approved: 20M budget; price 30M × 1.10^(OVR − 80); academy 50% first sale, market 80%; 750,000 UZS per league match and the same waiting-list stipend; automatic season 2 after two rest days with the same ten clubs; generated 45–50 youth supply; one club per user; automatic lineup replacement; zero-sum attribute offsets; match model S = 40 with home +2.
+- Implemented: migration 004, src/economy.js, catalog.js, players.js, seasons.js, lineup.js, new match model, market and league endpoints, client changes.
+- Starter squads are now generated academy players, identical for every club; nothing is taken from the market.
+- Results: unit 44 passed; integration 32 subtests passed; mobile smoke 123 checks passed. Local only.
+- Not done: real-player database. Research found FotMob ratings for the league, but sources could not be opened from this environment and data and name rights are unresolved.

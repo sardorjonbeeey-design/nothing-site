@@ -1,60 +1,60 @@
 # Verification status — isolated management candidate
 
-Updated: 2026-11-11 (league scheduling, friendlies and opening result screen)
+Updated: 2026-11-12 (economy, seasons and match model)
 Branch: zamin-fk-management
 
-Everything below was run in an isolated development container against a throwaway local PostgreSQL 16 cluster (database `zamin_game` on localhost). No Neon, live database, Telegram service, Mini App or deployment was involved.
+Everything below was run in an isolated development container against a throwaway local PostgreSQL 16 cluster (database `zamin_game` on localhost) with dev/mock authentication. No Neon, live database, Telegram service, Mini App or deployment was involved. No real device and no production system was used.
 
-Time was never accelerated through the application. Tests moved `kickoff_at` into the past directly in the local database and then waited for the server's own scheduler.
+Time was never accelerated through the application. Tests moved `kickoff_at` into the past directly in the local database and waited for the server's own scheduler.
 
 ## Executed and passed
-### Unit tests — `npm test` — 22 passed, 0 failed (integration test skipped without a database)
-Auth signature checks, economy helpers, HTTP validators, match simulation, crest upload validation, single and double round-robin generators (18 rounds, 90 fixtures, every pairing home and away, one match per club per round), matchday mapping 1–9 and 11–19, timing constants.
+### Unit tests — `npm test` — 44 passed, 0 failed (integration test skipped without a database)
+- **Economy:** constants; the price table (80 = 30,000,000; 85 = 48,320,000; 90 = 77,810,000) and monotonic curve; a 75 fits the opening budget and a 76 does not; selling the five best academy players leaves 27,415,000, below the price of an 80; 50% and 80% resale; a buy-and-resell never profits; overall formula.
+- **Catalogue:** approved offsets sum to zero; templates average exactly to overall for every position and rating 1–99; 360 market players consistent; the academy squad matches the approved distribution in 20 generated squads; youth players are 45–50.
+- **Lineup repair:** same position, same line, goalkeeper rules, cleaning of invalid entries, and 20,000 random squads and lineups that all end with a valid XI.
+- **Match model (40,000 seeded matches per pairing):** win rate and points at gaps 0, 3, 6, 10, 15, 20, 26 within 2 points / 0.05 of the approved table; same gap worth the same at ratings 46 to 80; home win about 40% between equal sides; about 2.95 goals per match; all five formations fair when their own shape is fielded; a wrong shape costs strength, bounded at 8 points in the worst case.
+- Auth, HTTP validators, uploads, schedule generators as before.
 
-### Integration tests — `npm run test:integration` — 29 subtests passed, 0 failed (run three times)
-Run with `INTEGRATION_DATABASE_URL=postgresql://postgres@localhost:<port>/zamin_game`. The server processes run with `TZ=America/New_York` to prove kick-offs do not depend on the server's timezone. Covered, in addition to the earlier auth, club, lineup, transfer and upgrade checks:
-- Migration 003 applies on a clean database and is skipped on a repeat run.
-- League creation with the 10th club: 90 fixtures, 18 per club (9 home), days 1–9 and 11–19, five fixtures per day sharing one kick-off, every kick-off exactly 20:00:00 Asia/Tashkent (15:00 UTC), first to last kick-off 18 days apart, day 1 is the next Tashkent calendar day.
-- No user route can start, settle, replay or reschedule a fixture (all return 404); reading every screen settles nothing.
-- A matchday that kicked off 57 seconds ago is reported as `live`, is not settled before 60 seconds, and all five fixtures are settled between 60 and 63 seconds after kick-off with no request in between; standings and rewards update for all ten clubs.
-- Two server instances on one database settle each fixture exactly once.
-- Matchdays missed while no server was running are settled in kick-off order at start-up.
-- Full season: 90 fixtures settled automatically in order, every club played 18, points = 3W + D, wins = losses, goals for = goals against, league marked completed, no second league created.
-- Development Points: 2 per league match plus mission rewards, ledger sums to the balance.
-- Friendlies: validation (own club, unknown club, past, too soon, too far, not owner), duplicate refused, a request alone creates no fixture, only the receiver can accept or decline, only the sender can cancel, the same minute is refused for either club while the minute before and after are free, of two pending requests for one slot only the first acceptance succeeds.
-- League creation cancels an accepted friendly in a league slot; afterwards requests and acceptances in [20:00, 20:01) are refused and 20:01 is free.
-- A friendly is settled by the scheduler and leaves standings, Development Points and missions unchanged; a pending request past its time expires.
-- Results: newest first, correct win/draw/loss, report with events, another user and unrelated fixtures get 404, reading does not mark as viewed, viewed state is stored per club, idempotent, `all:true` clears the count, a newly settled match arrives unviewed and first.
-- No server-side error logged by any server instance.
+### Integration tests — `npm run test:integration` — 32 subtests passed, 0 failed (run four times)
+Server processes run with `TZ=America/New_York`. Newly covered:
+- Migration 004 on a clean database; seeding twice gives 360 market and 12 generated players; the migration's SQL price formula equals the server formula for every rating.
+- Club creation: 20,000,000 UZS, the exact 18-player distribution, all `academy`, attributes averaging to overall, squad value 38,510,000, XI of the eleven strongest.
+- One club per user: second request 409; three simultaneous requests create one club; a direct database insert is refused by the unique index.
+- Market: prices follow the curve; an 80-rated player is refused at the opening budget; `maxValue` filter; youth stock covers all 12 slots; buying one creates exactly one replacement; selling it back creates none.
+- Resale: academy first sale 50%, bought back at full price and resold at 80%; youth and catalogue players 80%.
+- Lineup: selling a starting striker promotes a striker; selling the starting goalkeeper promotes the other; the last goalkeeper cannot be sold; the XI is valid after every sale.
+- Squad limits: selling refused at 13; signing refused at 26, including youth players, with no money moved.
+- Income: 750,000 per league club per match, once per fixture, also with two schedulers racing; 13,500,000 over the season; an untouched league club ends on 33,500,000.
+- Stipend: waiting clubs receive 750,000 per completed matchday, once; league clubs never; a club registered after matchday 2 is paid for 16 matchdays, not 18; no route exists to claim it.
+- Every club's budget equals the sum of its ledger at each checkpoint.
+- Rollover: season 2 created once, 21 days after season 1's start, same ten clubs, zeroed table, 90 fixtures at 20:00 Tashkent; two schedulers, a restart and the ensure route create nothing more; a duplicate season is refused by the database; squads, attributes, lineups, cash, Development Points and result history unchanged; waiting clubs still waiting.
+- Season 2 matchday 1 pays and counts on its own; the season 1 table stays final; every club still has a valid XI.
+- Six attribute points raise overall by exactly one and reprice the player.
+- Earlier coverage (auth, schedule, 60-second settlement, catch-up, friendlies, results and viewed state) still passes.
 
-### Mobile browser smoke test — `node scripts/mobile-smoke.cjs <local-url> <local-db-url>` — 111 checks passed, 0 failed (run three times)
-Headless Chromium with Pixel 7 emulation and a 360 px wide viewport, dev authentication injected, Telegram script blocked. Covered: club creation, overview, squad and lineup, market, missions, empty states, 18 fixtures with 20:00 Tashkent kick-offs and no play control, a live match shown without a score, friendly challenge form with sent, incoming, accepted and declined requests, the opening result screen (new and already-seen, both clubs and crests, score, win/draw/loss, date and time, report, previous and newer result, continue to dashboard, viewed state confirmed on the server), results history with report, league table, upgrade, sell, sign, identity edit, no layout overflow and no console errors. A club that has never played opens on the normal dashboard. The 360 px run uses an 11th club, so its result screen was checked with a friendly.
+### Mobile browser smoke test — `node scripts/mobile-smoke.cjs <local-url> <local-db-url>` — 123 checks passed, 0 failed (run twice)
+Headless Chromium, Pixel 7 emulation and a 360 px viewport. Newly covered: 20,000,000 UZS budget shown, no second-club control, squad limits and academy resale label, youth intake list, affordable filter, signing a youth player at its listed price, selling a starter with automatic promotion, league income in the finance history, season label, waiting-club message. No layout overflow, no console errors.
 
 ## Not executed
-- A real 20:00 Asia/Tashkent kick-off in real time, and a real 19-day season; the schedule was verified from stored timestamps and by moving kick-offs in the local database.
-- A real Android/iOS device and the real Telegram in-app browser (only emulated Chromium was used).
-- Real Telegram login with a real bot token.
-- Crest upload through the browser file picker (tested through the API only).
-- Multi-club switcher in the client UI.
-- Docker image build, docker-compose, Caddy and HTTPS.
-- Neon or any hosted PostgreSQL; a hosted database that suspends when idle may delay the scheduler and has not been tried.
-- Rate-limit behaviour, load, abuse and security testing.
-- Persistent upload volume on a VM.
+- Any real device, the real Telegram in-app browser, real Telegram login.
+- A real-time 20:00 kick-off, a real 19-day season or a real two-day break; season timing was verified from stored dates.
+- More than two seasons, and long-run money supply over many seasons (calculated only, see the economy proposal).
+- Migration 004 on a database that already holds data from before it (legacy rows are repriced; their attributes are not re-templated; the migration stops if a user owns more than one club).
+- More than one league, or more than 13 clubs.
+- Docker, Caddy, HTTPS, Neon or any hosted database, load, rate-limit and security testing.
+- Crest upload through the browser file picker.
 
-## Behaviour to be aware of
-- If the server process is not running at 20:01, the matches are settled when it next starts, not at 20:01.
-- The lineup used is the one saved when the match is settled (kick-off + 60 s); lineups are not frozen at kick-off.
-- The client does not refresh by itself; a result appears on the next opening or after "Refresh".
-- The decorative pitch with moving dots was part of the removed Play button and is no longer shown (see OPEN_DECISIONS.md).
-- The away team's saved formation is now used in the simulation; before, the away side was always treated as 4-3-3.
-- Leagues created by the earlier manual-play prototype are closed by migration 003.
-
-## Known issues observed, deliberately NOT changed (design/balance decisions pending)
-- Starter squads take the best remaining free agents, so earlier clubs are stronger; the pool supports about 20 clubs.
-- Opening budget is 0 UZS and matches pay no UZS, so signing is only possible after selling.
-- Selling a starter leaves fewer than 11 starters; the match engine then uses a low fallback strength.
-- Upgrades rarely change `overall`, which is the only input to match strength.
-- Only one league season is ever created; clubs after the 10th get no league fixtures; nothing happens after the season completes; one user may own several clubs.
+## Remaining limitations
+- All players are fictional. The real-player database is not implemented (data rights and source access are unresolved).
+- The seeded market tops out at overall 74, so nothing rated 75+ can be bought yet; elite pricing was tested with a player inserted by the test.
+- Waiting clubs never enter a league; they only receive the stipend.
+- No running costs: cash accumulates season after season.
+- Missions are one-off and do not reset in season 2.
+- Lineups are not frozen at kick-off; the lineup saved at settlement is used.
+- If the server is down at 20:01, matches, income, stipends and the rollover happen when it next starts.
+- The client does not refresh by itself.
+- The pitch with moving dots is not shown.
+- Formation fit still moves strength by up to ±4, which under the new model is worth about as much as 4 overall.
 
 ## Release status
 Locally verified development candidate. Not production-tested, not deployed, not connected to the existing Mini App or any live database.

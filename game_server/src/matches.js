@@ -3,6 +3,10 @@
 import {requireDb,inTransaction,assertIsolatedDatabase} from './db.js';
 import {simulateMatch} from './simulation.js';
 import {MATCH_DURATION_SECONDS} from './league.js';
+import {LEAGUE_MATCH_INCOME_UZS} from './economy.js';
+import {repairClubLineup} from './lineup.js';
+import {ensureNextSeasons,payWaitingStipends} from './seasons.js';
+import {ensureYouthSupply} from './players.js';
 
 export async function awardDevelopmentPoints(client,clubId,amount,reason,referenceId=null){
  const r=await client.query('UPDATE clubs SET development_points=development_points+$2 WHERE id=$1 RETURNING development_points',[clubId,amount]);
@@ -22,16 +26,20 @@ const lineupSql='SELECT p.*,l.formation FROM lineups l CROSS JOIN LATERAL unnest
 // The caller holds a row lock on the fixture and has verified that it is scheduled and due.
 async function settleFixture(client,f){
  await client.query('SELECT id FROM clubs WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE',[[f.home_club_id,f.away_club_id]]);
+ // Backstop: an incomplete or invalid Starting XI is repaired from the squad before the match is simulated.
+ await repairClubLineup(client,f.home_club_id);await repairClubLineup(client,f.away_club_id);
  const hl=await client.query(lineupSql,[f.home_club_id]),al=await client.query(lineupSql,[f.away_club_id]);
  const result=simulateMatch(hl.rows,al.rows,{homeFormation:hl.rows[0]?.formation||'4-3-3',awayFormation:al.rows[0]?.formation||'4-3-3'});
  const played=await client.query("UPDATE fixtures SET status='played',home_goals=$2,away_goals=$3,events=$4::jsonb,played_at=NOW() WHERE id=$1 AND status='scheduled'",[f.id,result.homeGoals,result.awayGoals,JSON.stringify(result.events)]);
  if(!played.rowCount)return;
- // Friendlies never touch standings, league progression, Development Points or missions.
+ // Friendlies never touch standings, league progression, money, Development Points or missions.
  if(f.kind!=='league')return;
  for(const [clubId,gf,ga] of [[f.home_club_id,result.homeGoals,result.awayGoals],[f.away_club_id,result.awayGoals,result.homeGoals]]){
   const win=gf>ga,draw=gf===ga,loss=gf<ga;
   await client.query('UPDATE league_members SET played=played+1,wins=wins+$3,draws=draws+$4,losses=losses+$5,goals_for=goals_for+$6,goals_against=goals_against+$7,points=points+$8 WHERE league_id=$1 AND club_id=$2',
    [f.league_id,clubId,win?1:0,draw?1:0,loss?1:0,gf,ga,win?3:draw?1:0]);
+  const balance=(await client.query('UPDATE clubs SET budget_uzs=budget_uzs+$2 WHERE id=$1 RETURNING budget_uzs',[clubId,LEAGUE_MATCH_INCOME_UZS.toString()])).rows[0].budget_uzs;
+  await client.query("INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,'league_match_income',$4)",[clubId,LEAGUE_MATCH_INCOME_UZS.toString(),balance,f.id]);
   await awardDevelopmentPoints(client,clubId,2,'match_reward',f.id);
   await progressMission(client,clubId,'matches_played',1);
   await progressMission(client,clubId,'wins',win?1:0);
@@ -53,6 +61,9 @@ export async function settleDueFixtures(){
   if(!done)break;
   settled++;
  }
+ // Season housekeeping, each idempotent: stipends for finished matchdays, then the next season after a completed one.
+ await inTransaction(client=>payWaitingStipends(client));
+ await inTransaction(client=>ensureNextSeasons(client));
  await requireDb().query("UPDATE friendly_requests SET status='expired',responded_at=NOW() WHERE status='pending' AND proposed_kickoff_at<=NOW()");
  return settled;
 }
@@ -64,7 +75,7 @@ export function startScheduler({maxIdleMs=15000,log=console}={}){
   if(stopped)return;
   let delay=maxIdleMs;
   try{
-   if(!checked){await assertIsolatedDatabase(requireDb());checked=true;}
+   if(!checked){await assertIsolatedDatabase(requireDb());await inTransaction(client=>ensureYouthSupply(client));checked=true;}
    const settled=await settleDueFixtures();
    if(settled)log.log('Scheduler settled '+settled+' fixture(s)');
    const next=await requireDb().query("SELECT EXTRACT(EPOCH FROM (MIN(kickoff_at)+make_interval(secs=>$1)-NOW()))*1000 AS ms FROM fixtures WHERE status='scheduled' AND kickoff_at IS NOT NULL",[MATCH_DURATION_SECONDS]);

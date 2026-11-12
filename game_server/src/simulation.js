@@ -1,13 +1,14 @@
-import { config } from './config.js';
+import {formationShapes} from './lineup.js';
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const average=(xs)=>xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:45;
-const shapes={
- '4-3-3':{GK:1,CB:2,LB:1,RB:1,DM:1,CM:2,LW:1,RW:1,ST:1},
- '4-4-2':{GK:1,CB:2,LB:1,RB:1,CM:2,LW:1,RW:1,ST:2},
- '4-2-3-1':{GK:1,CB:2,LB:1,RB:1,DM:2,AM:1,LW:1,RW:1,ST:1},
- '3-5-2':{GK:1,CB:3,DM:1,CM:2,LW:1,RW:1,ST:2},
- '4-1-4-1':{GK:1,CB:2,LB:1,RB:1,DM:1,CM:2,LW:1,RW:1,ST:1}
-};
+const shapes=formationShapes;
+// Owner-approved match model (2026-11-12): the goal share depends on the rating DIFFERENCE on an Elo-style
+// curve with scale 40, and the home side plays as if it were 2 rating points stronger.
+export const MATCH_RATING_SCALE=40;
+export const MATCH_HOME_ADVANTAGE_POINTS=2;
+export function goalShare(homeStrength,awayStrength){
+ return 1/(1+Math.pow(10,-((homeStrength+MATCH_HOME_ADVANTAGE_POINTS)-awayStrength)/MATCH_RATING_SCALE));
+}
 export function squadStrength(players,formation='4-3-3') {
  if (!Array.isArray(players)||players.length<11) return 35;
  const starters=players.slice(0,11);
@@ -27,9 +28,9 @@ function poisson(lambda,rng) {
 }
 export function simulateMatch(homePlayers,awayPlayers,options={}) {
  const rng=options.random||Math.random;
- const homeStrength=squadStrength(homePlayers,options.homeFormation||'4-3-3')*(1+config.matchHomeAdvantage);
+ const homeStrength=squadStrength(homePlayers,options.homeFormation||'4-3-3');
  const awayStrength=squadStrength(awayPlayers,options.awayFormation||'4-3-3');
- const share=homeStrength/(homeStrength+awayStrength);
+ const share=goalShare(homeStrength,awayStrength);
  const homeGoals=poisson(0.55+share*1.85,rng);
  const awayGoals=poisson(0.55+(1-share)*1.85,rng);
  const events=[];

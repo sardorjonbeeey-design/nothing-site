@@ -9,7 +9,7 @@
 - [ ] WEB_ORIGIN set to the exact HTTPS origin.
 - [ ] SESSION_SECRET generated privately (32+ random characters).
 - [ ] Telegram bot token supplied only after explicit integration approval.
-- [ ] STARTING_BUDGET_UZS approved and configured.
+- [x] Opening budget approved (20,000,000 UZS, fixed in code; no environment variable).
 - [ ] ALLOW_DEV_AUTH=false.
 - [ ] Database migration completed.
 - [ ] Player and mission seed completed.

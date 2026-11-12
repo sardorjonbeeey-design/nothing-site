@@ -14,7 +14,9 @@ import path from 'node:path';
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import pg from 'pg';
-import {upgradeCost,saleValueUzs} from '../../src/economy.js';
+import {upgradeCost,saleValueUzs,marketValueUzs,qualityForOverall} from '../../src/economy.js';
+import {academySquadTemplate,youthSlots} from '../../src/catalog.js';
+import {isValidLineup} from '../../src/lineup.js';
 
 const DB_URL=process.env.INTEGRATION_DATABASE_URL||'';
 const serverRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
@@ -70,7 +72,7 @@ function signedInitData(telegramId){
  params.set('hash',crypto.createHmac('sha256',key).update(data).digest('hex'));
  return params.toString();
 }
-const users=Array.from({length:12},(_,i)=>({dev:i+1}));
+const users=Array.from({length:14},(_,i)=>({dev:i+1}));
 const clubs=[];
 const uploaded=[];
 let server,server2,db,friendlyB,leagueSlot;
@@ -81,6 +83,20 @@ const one=async(sql,params=[])=>(await db.query(sql,params)).rows[0];
 const iso=v=>new Date(v).toISOString();
 const inMinutes=n=>new Date(Math.floor(Date.now()/60000)*60000+n*60000).toISOString();
 const clubPath=i=>'/api/clubs/'+clubs[i].id;
+const budgetOf=async i=>BigInt((await one('SELECT budget_uzs FROM clubs WHERE id=$1',[clubs[i].id])).budget_uzs);
+const ledgerRows=async(i,reason)=>(await db.query('SELECT amount_uzs,reference_id FROM money_ledger WHERE club_id=$1 AND reason=$2',[clubs[i].id,reason])).rows;
+// Every club's budget must equal the sum of its ledger, and the last ledger balance must equal the budget.
+async function assertLedgersConsistent(){
+ const rows=(await db.query('SELECT c.id,c.budget_uzs,(SELECT COALESCE(SUM(amount_uzs),0) FROM money_ledger m WHERE m.club_id=c.id) AS total FROM clubs c')).rows;
+ for(const r of rows)assert.equal(r.total,r.budget_uzs,'ledger sum equals budget for club '+r.id);
+}
+async function assertLineupValid(i){
+ const players=(await db.query('SELECT id,position,overall FROM players WHERE club_id=$1',[clubs[i].id])).rows;
+ const lineup=await one('SELECT starters,substitutes FROM lineups WHERE club_id=$1',[clubs[i].id]);
+ assert.ok(isValidLineup(lineup.starters,players),'club '+i+' has a valid XI');
+ assert.ok(lineup.substitutes.every(id=>players.some(p=>p.id===id)&&!lineup.starters.includes(id)));
+ return {players,lineup};
+}
 
 test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'INTEGRATION_DATABASE_URL is not set'},async t=>{
  assertLocalDatabase();
@@ -98,8 +114,13 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const second=await run('src/migrate.js');
   assert.match(second,/Skipped migration 001_initial/);assert.match(second,/Skipped migration 002_development_ledger/);
   await run('src/seed.js');await run('src/seed.js');
-  const counts=(await db.query('SELECT (SELECT COUNT(*)::int FROM players) AS players,(SELECT COUNT(*)::int FROM missions) AS missions')).rows[0];
-  assert.deepEqual(counts,{players:360,missions:5});
+  assert.match(first,/Applied migration 003_league_schedule/);assert.match(first,/Applied migration 004_economy/);assert.match(second,/Skipped migration 004_economy/);
+  const counts=(await db.query("SELECT (SELECT COUNT(*)::int FROM players WHERE origin='market') AS market,(SELECT COUNT(*)::int FROM players WHERE origin='generated') AS generated,(SELECT COUNT(*)::int FROM players WHERE origin='academy') AS academy,(SELECT COUNT(DISTINCT catalog_key)::int FROM players) AS keys,(SELECT COUNT(*)::int FROM missions) AS missions")).rows[0];
+  assert.deepEqual(counts,{market:360,generated:12,academy:0,keys:360,missions:5},'seeding twice creates nothing twice');
+  // The migration's SQL price formula and the server's JavaScript formula agree for every rating.
+  const sqlPrices=(await db.query("SELECT o::int AS overall,(ROUND(30000000*POWER(1.10::numeric,o-80)/10000)*10000)::bigint AS price FROM generate_series(1,100) o")).rows;
+  for(const r of sqlPrices)assert.equal(Number(r.price),marketValueUzs(r.overall),'overall '+r.overall);
+  assert.equal((await db.query("SELECT 1 FROM players WHERE market_value_uzs<>(ROUND(30000000*POWER(1.10::numeric,overall-80)/10000)*10000)::bigint")).rowCount,0);
  });
 
  await t.test('database isolation guard refuses a differently named database',async()=>{
@@ -153,15 +174,30 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal((await call(users[0],'POST','/api/clubs',{name:'Bad Crest',shortName:'BCR',crestUrl:'https://example.com/x.png'})).status,400);
   const created=await ok(users[0],'POST','/api/clubs',{name:'Integration One',shortName:'INT1',primaryColour:'#167a55',secondaryColour:'#f0c75e',crestUrl:up.crestUrl});
   clubs[0]=created.club;
-  assert.equal(created.club.crest_url,up.crestUrl);assert.equal(created.club.budget_uzs,'0');assert.equal(created.club.development_points,0);
+  assert.equal(created.club.crest_url,up.crestUrl);assert.equal(created.club.budget_uzs,'20000000');assert.equal(created.club.development_points,0);
   const crest=await fetch(BASE+up.crestUrl);assert.equal(crest.status,200);assert.equal(crest.headers.get('content-type'),'image/png');
   const squad=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/squad')).players;
   assert.equal(squad.length,18);
+  // Player classification and the approved distribution: every starter-squad player is an academy product.
+  const key=p=>p.position+':'+p.overall;
+  assert.deepEqual(squad.map(key).sort(),academySquadTemplate.map(([position,overall])=>position+':'+overall).sort());
+  for(const p of squad){
+   assert.equal(p.origin,'academy');assert.equal(p.first_sale_done,false);assert.equal(p.catalog_key,null);
+   assert.equal(Number(p.market_value_uzs),marketValueUzs(p.overall));assert.equal(p.quality,qualityForOverall(p.overall));
+   assert.equal(Object.values(p.attributes).reduce((a,b)=>a+b,0),p.overall*6,'attributes average exactly to overall');
+  }
+  assert.equal(squad.reduce((n,p)=>n+Number(p.market_value_uzs),0),38510000);
   const lineup=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/lineup')).lineup;
   assert.equal(lineup.formation,'4-3-3');assert.equal(lineup.starters.length,11);assert.equal(lineup.substitutes.length,7);
   assert.ok(squad.some(p=>p.position==='GK'&&lineup.starters.includes(p.id)));
   const ledger=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/ledger')).transactions;
-  assert.equal(ledger.length,1);assert.equal(ledger[0].reason,'club_created');
+  assert.equal(ledger.length,1);assert.equal(ledger[0].reason,'club_created');assert.equal(ledger[0].amount_uzs,'20000000');assert.equal(ledger[0].balance_after_uzs,'20000000');
+  const starters=squad.filter(p=>lineup.starters.includes(p.id)).map(p=>p.overall).sort((a,b)=>b-a);
+  assert.deepEqual(starters,[58,56,56,54,54,54,54,52,52,52,52],'the XI holds the eleven strongest players');
+  // One club per user.
+  const second=await call(users[0],'POST','/api/clubs',{name:'Second Club',shortName:'SEC',primaryColour:'#111111',secondaryColour:'#ffffff'});
+  assert.equal(second.status,409);assert.match(second.data.error,/already manage a club/);
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM players WHERE club_id IS NOT NULL')).n),18,'the refused request created no players');
   assert.equal((await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/missions')).missions.length,5);
   assert.equal((await ok(users[0],'GET','/api/clubs')).clubs.length,1);
  });
@@ -194,16 +230,40 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   await ok(users[0],'POST',route,{formation:'4-3-3',starters:lineup.starters,substitutes:lineup.substitutes});
  });
 
- await t.test('signing is refused with the provisional 0 UZS opening budget',async()=>{
-  const target=(await ok(users[0],'GET','/api/market')).players[0];
-  const r=await call(users[0],'POST','/api/clubs/'+clubs[0].id+'/players/sign',{playerId:target.id});
-  assert.equal(r.status,400);assert.match(r.data.error,/Insufficient club budget/);
+ await t.test('transfer market: price curve, classification, elite players out of reach, youth supply',async()=>{
+  const market=await ok(users[0],'GET','/api/market');
+  assert.deepEqual(market.squadLimits,{min:13,max:26});
+  assert.ok(market.players.length>0&&market.players.length<=100);
+  for(const p of market.players.concat(market.youth))assert.equal(Number(p.market_value_uzs),marketValueUzs(p.overall),'price follows the curve');
+  assert.ok(market.players.every(p=>p.origin==='market'),'the top of the market is the seeded catalogue');
+  // Generated youth: every slot is covered, all rated 45-50, none of them from the catalogue.
+  const need={};for(const pos of youthSlots)need[pos]=(need[pos]||0)+1;
+  for(const [pos,n] of Object.entries(need))assert.ok(market.youth.filter(p=>p.position===pos).length>=n,'youth stock for '+pos);
+  assert.ok(market.youth.every(p=>p.origin==='generated'&&p.overall>=45&&p.overall<=50));
+  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n),12,'exactly the standing stock exists, no more');
+  const capped=(await ok(users[0],'GET','/api/market?maxValue=3000000')).players;
+  assert.ok(capped.length>0&&capped.every(p=>BigInt(p.market_value_uzs)<=3000000n));
+  assert.equal((await call(users[0],'GET','/api/market?maxValue=abc')).status,400);
+  // An 80-rated player costs 30,000,000 UZS: more than the opening budget.
+  const elite=(await one("INSERT INTO players(full_name,age,position,quality,overall,potential,attributes,market_value_uzs,origin) VALUES('Test Elite',27,'ST','elite',80,84,'{\"pace\":82,\"shooting\":88,\"passing\":76,\"dribbling\":81,\"defending\":70,\"physical\":83}',$1,'market') RETURNING id",[marketValueUzs(80)])).id;
+  const refused=await call(users[0],'POST',clubPath(0)+'/players/sign',{playerId:elite});
+  assert.equal(refused.status,400);assert.match(refused.data.error,/Insufficient club budget/);
+  assert.equal(await budgetOf(0),20000000n);
+  // Buying a youth player goes through the normal signing rules and is replaced by exactly one new youth player.
+  const youth=market.youth.find(p=>p.position==='CM');
+  const signed=await ok(users[0],'POST',clubPath(0)+'/players/sign',{playerId:youth.id});
+  assert.equal(signed.budgetUzs,(20000000n-BigInt(youth.market_value_uzs)).toString());
+  const after=(await ok(users[0],'GET','/api/market')).youth;
+  assert.ok(!after.some(p=>p.id===youth.id));assert.ok(after.filter(p=>p.position==='CM').length>=need.CM,'the slot is filled again');
+  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n),13);
+  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated' AND club_id IS NULL")).n),12);
+  assert.equal((await call(users[0],'POST',clubPath(0)+'/players/sign',{playerId:youth.id})).status,404,'a signed player cannot be signed twice');
+  clubs[0].youthId=youth.id;clubs[0].eliteId=elite;
  });
-
 
  await t.test('no league exists below 10 clubs',async()=>{
   for(let i=1;i<9;i++)clubs[i]=(await ok(users[i],'POST','/api/clubs',{name:'Integration Club '+(i+1),shortName:'IC'+(i+1),primaryColour:'#225588',secondaryColour:'#ffffff'})).club;
-  assert.deepEqual((await ok(users[0],'GET',clubPath(0)+'/league')).table,[]);
+  assert.deepEqual(await ok(users[0],'GET',clubPath(0)+'/league'),{leagueExists:false,table:[],season:null,previous:null});
   assert.deepEqual((await ok(users[0],'GET',clubPath(0)+'/fixtures')).fixtures,[]);
   assert.deepEqual((await ok(users[0],'GET',clubPath(0)+'/results')).results,[]);
   assert.deepEqual(await ok(users[0],'POST',clubPath(0)+'/leagues/ensure',{}),{leagueId:null,created:false});
@@ -306,37 +366,80 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   await ok(users[0],'POST',clubPath(0)+'/friendlies/'+after.data.request.id+'/cancel',{});
  });
 
- await t.test('an 11th club is created but is not placed in the running league (current behaviour)',async()=>{
+ await t.test('later clubs wait outside the league; concurrent registration creates one club per user',async()=>{
   clubs[10]=(await ok(users[10],'POST','/api/clubs',{name:'Integration Club 11',shortName:'IC11',primaryColour:'#225588',secondaryColour:'#ffffff'})).club;
   assert.deepEqual((await ok(users[10],'GET',clubPath(10)+'/fixtures')).fixtures,[]);
   assert.deepEqual((await ok(users[10],'GET',clubPath(10)+'/results')),{results:[],unviewedCount:0,timezone:'Asia/Tashkent'});
   assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM leagues')).n),1);
+  const body=n=>({name:'Integration Club '+n,shortName:'IC'+n,primaryColour:'#225588',secondaryColour:'#ffffff'});
+  const race=await Promise.all([call(users[11],'POST','/api/clubs',body(12)),call(users[11],'POST','/api/clubs',body(12)),call(users[11],'POST','/api/clubs',body(12))]);
+  assert.deepEqual(race.map(r=>r.status).sort(),[201,409,409],'exactly one of three simultaneous requests creates the club');
+  clubs[11]=race.find(r=>r.status===201).data.club;
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM clubs WHERE owner_user_id=$1',[clubs[11].owner_user_id])).n),1);
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM players WHERE club_id=$1',[clubs[11].id])).n),18);
+  assert.equal((await db.query('SELECT owner_user_id FROM clubs GROUP BY owner_user_id HAVING COUNT(*)>1')).rowCount,0);
+  await assert.rejects(db.query('INSERT INTO clubs(owner_user_id,name,short_name) VALUES($1,$2,$3)',[clubs[11].owner_user_id,'Direct','DIR']),/clubs_one_per_owner/,'the database itself refuses a second club');
  });
 
- await t.test('selling and signing move players and UZS with a consistent ledger',async()=>{
-  const id=clubs[0].id,lineup=(await ok(users[0],'GET','/api/clubs/'+id+'/lineup')).lineup;
-  const squad=(await ok(users[0],'GET','/api/clubs/'+id+'/squad')).players;
-  const sub=squad.find(p=>lineup.substitutes.includes(p.id)&&p.position!=='GK');
-  const sold=await ok(users[0],'POST','/api/clubs/'+id+'/players/sell',{playerId:sub.id});
-  const fee=saleValueUzs(sub.market_value_uzs);
-  assert.equal(sold.budgetUzs,fee.toString());
-  assert.equal((await call(users[0],'POST','/api/clubs/'+id+'/players/sell',{playerId:sub.id})).status,404);
-  const after=(await ok(users[0],'GET','/api/clubs/'+id+'/lineup')).lineup;
-  assert.ok(!after.substitutes.includes(sub.id));assert.equal(after.starters.length,11);
-  assert.equal((await ok(users[0],'GET','/api/clubs/'+id+'/squad')).players.length,17);
-  const market=(await ok(users[0],'GET','/api/market')).players;
-  assert.ok(market.some(p=>p.id===sub.id),'sold player returns to the free-agent market');
-  const target=market.find(p=>p.id!==sub.id&&BigInt(p.market_value_uzs)<=fee);
-  assert.ok(target,'an affordable free agent exists');
-  const signed=await ok(users[0],'POST','/api/clubs/'+id+'/players/sign',{playerId:target.id});
-  assert.equal(signed.budgetUzs,(fee-BigInt(target.market_value_uzs)).toString());
-  assert.equal((await call(users[1],'POST','/api/clubs/'+clubs[1].id+'/players/sign',{playerId:target.id})).status,404);
-  assert.equal((await ok(users[0],'GET','/api/clubs/'+id+'/squad')).players.length,18);
-  const club=(await ok(users[0],'GET','/api/clubs/'+id)).club;
-  const ledger=(await ok(users[0],'GET','/api/clubs/'+id+'/ledger')).transactions;
-  assert.deepEqual(ledger.map(x=>x.reason).sort(),['club_created','player_sale','player_signing']);
-  assert.equal(ledger.reduce((sum,x)=>sum+BigInt(x.amount_uzs),0n).toString(),club.budget_uzs);
-  assert.equal(club.budget_uzs,signed.budgetUzs);
+ await t.test('resale rates, automatic lineup replacement, squad limits and a consistent ledger',async()=>{
+  const id=clubs[0].id,sell=playerId=>call(users[0],'POST',clubPath(0)+'/players/sell',{playerId}),sign=playerId=>call(users[0],'POST',clubPath(0)+'/players/sign',{playerId});
+  const squad=(await ok(users[0],'GET',clubPath(0)+'/squad')).players,lineup=(await ok(users[0],'GET',clubPath(0)+'/lineup')).lineup;
+  assert.equal(squad.length,19);
+  const bench=(pos,overall)=>squad.find(p=>!lineup.starters.includes(p.id)&&p.position===pos&&p.overall===overall&&p.origin==='academy');
+  let budget=await budgetOf(0);
+  // 1. Academy player, first sale: 50%.
+  const cb=bench('CB',50),first=await sell(cb.id);
+  assert.equal(first.status,200);assert.equal(first.data.resaleRatePercent,50);assert.equal(first.data.feeUzs,saleValueUzs(cb.market_value_uzs,50).toString());assert.equal(first.data.feeUzs,'860000');
+  budget+=860000n;assert.equal(first.data.budgetUzs,budget.toString());assert.deepEqual(first.data.promoted,[],'selling a substitute promotes nobody');
+  assert.equal((await sell(cb.id)).status,404);
+  const listed=await one('SELECT club_id,origin,first_sale_done,market_value_uzs FROM players WHERE id=$1',[cb.id]);
+  assert.deepEqual(listed,{club_id:null,origin:'academy',first_sale_done:true,market_value_uzs:String(marketValueUzs(50))},'the sold academy player stays on the market at full price');
+  assert.ok((await ok(users[0],'GET','/api/market?maxValue=1720000')).players.some(p=>p.id===cb.id));
+  // 2. Buying him back costs the full price; selling him again pays 80%: the 50% rate applies once only.
+  assert.equal((await sign(cb.id)).status,200);budget-=1720000n;
+  const again=await sell(cb.id);assert.equal(again.data.resaleRatePercent,80);assert.equal(again.data.feeUzs,'1376000');budget+=1376000n;
+  // 3. A generated youth player is a transfer-market player: 80%.
+  const youth=squad.find(p=>p.id===clubs[0].youthId),soldYouth=await sell(youth.id);
+  assert.equal(soldYouth.data.resaleRatePercent,80);assert.equal(soldYouth.data.feeUzs,saleValueUzs(youth.market_value_uzs,80).toString());budget+=BigInt(soldYouth.data.feeUzs);
+  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n),13,'selling a youth player back creates no new one');
+  // 4. A catalogue player bought and sold: 80%.
+  const target=(await ok(users[0],'GET','/api/market?maxValue=5000000')).players.find(p=>p.origin==='market');
+  assert.equal((await sign(target.id)).status,200);budget-=BigInt(target.market_value_uzs);
+  assert.equal((await call(users[1],'POST',clubPath(1)+'/players/sign',{playerId:target.id})).status,404,'a signed player is no longer a free agent');
+  const soldTarget=await sell(target.id);assert.equal(soldTarget.data.resaleRatePercent,80);assert.equal(soldTarget.data.feeUzs,saleValueUzs(target.market_value_uzs,80).toString());budget+=BigInt(soldTarget.data.feeUzs);
+  assert.equal(await budgetOf(0),budget);
+  // 5. Selling a starter: the best player in the same position is promoted and the XI stays valid.
+  const striker=squad.find(p=>lineup.starters.includes(p.id)&&p.position==='ST');
+  const soldStriker=await sell(striker.id);
+  assert.equal(soldStriker.data.resaleRatePercent,50);assert.equal(soldStriker.data.promoted.length,1);assert.equal(soldStriker.data.promoted[0].position,'ST');
+  let state=await assertLineupValid(0);
+  assert.ok(state.lineup.starters.includes(soldStriker.data.promoted[0].id));assert.ok(!state.lineup.starters.includes(striker.id));assert.ok(!state.lineup.substitutes.includes(soldStriker.data.promoted[0].id));
+  // 6. Selling the starting goalkeeper promotes the other goalkeeper; the last goalkeeper cannot be sold.
+  const keeper=squad.find(p=>lineup.starters.includes(p.id)&&p.position==='GK');
+  const soldKeeper=await sell(keeper.id);
+  assert.equal(soldKeeper.data.promoted[0].position,'GK');state=await assertLineupValid(0);
+  const lastKeeper=await sell(soldKeeper.data.promoted[0].id);
+  assert.equal(lastKeeper.status,400);assert.match(lastKeeper.data.error,/at least one goalkeeper/);
+  // 7. Minimum squad of 13: two more sales are allowed, the next is refused. The XI is valid after every sale.
+  assert.equal(state.players.length,15);
+  for(const p of [bench('CM',50),bench('AM',50)]){assert.equal((await sell(p.id)).status,200);await assertLineupValid(0);}
+  state=await assertLineupValid(0);assert.equal(state.players.length,13);
+  const tooFew=await sell(state.lineup.substitutes[0]||state.lineup.starters[10]);
+  assert.equal(tooFew.status,400);assert.match(tooFew.data.error,/at least 13 players/);
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM players WHERE club_id=$1',[id])).n),13);
+  // 8. Maximum squad of 26, also for generated youth players. Club 1 is filled to 26 directly in the database.
+  await db.query("INSERT INTO players(club_id,full_name,age,position,quality,overall,potential,attributes,market_value_uzs,origin) SELECT $1,'Filler '||g,20,'CM','academy',45,55,'{\"pace\":43,\"shooting\":43,\"passing\":50,\"dribbling\":47,\"defending\":43,\"physical\":44}',$2,'generated' FROM generate_series(1,8) g",[clubs[1].id,marketValueUzs(45)]);
+  const anyYouth=(await ok(users[1],'GET','/api/market')).youth[0],before=await budgetOf(1);
+  const full=await call(users[1],'POST',clubPath(1)+'/players/sign',{playerId:anyYouth.id});
+  assert.equal(full.status,400);assert.match(full.data.error,/at most 26 players/);assert.equal(await budgetOf(1),before);
+  assert.equal((await one('SELECT club_id FROM players WHERE id=$1',[anyYouth.id])).club_id,null);
+  await db.query("DELETE FROM players WHERE club_id=$1 AND full_name LIKE 'Filler %'",[clubs[1].id]);
+  assert.equal((await call(users[1],'POST',clubPath(1)+'/players/sign',{playerId:anyYouth.id})).status,200,'at 18 players the same signing succeeds');
+  // 9. No free money: the ledger explains every som, and the round trips above lost money.
+  await assertLedgersConsistent();
+  const ledger=(await ok(users[0],'GET',clubPath(0)+'/ledger')).transactions;
+  assert.equal(ledger[0].balance_after_uzs,(await budgetOf(0)).toString());
+  assert.ok(ledger.every(x=>BigInt(x.balance_after_uzs)>=0n));
  });
 
  await t.test('upgrades are refused without Development Points',async()=>{
@@ -348,11 +451,11 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
 
 
  const playedCount=async(where="kind='league'")=>Number((await one("SELECT COUNT(*)::int AS n FROM fixtures WHERE status='played' AND "+where)).n);
- const snapshot=async()=>JSON.stringify((await db.query('SELECT lm.*,c.development_points,(SELECT json_agg(m.progress ORDER BY m.mission_id) FROM club_missions m WHERE m.club_id=c.id) AS missions FROM league_members lm JOIN clubs c ON c.id=lm.club_id ORDER BY lm.club_id')).rows);
+ const snapshot=async()=>JSON.stringify((await db.query('SELECT lm.*,c.development_points,c.budget_uzs,(SELECT json_agg(m.progress ORDER BY m.mission_id) FROM club_missions m WHERE m.club_id=c.id) AS missions FROM league_members lm JOIN clubs c ON c.id=lm.club_id ORDER BY lm.club_id')).rows);
 
  await t.test('users cannot start, accelerate, replay or settle a league match',async()=>{
   const first=(await ok(users[0],'GET',clubPath(0)+'/fixtures')).fixtures.find(f=>f.kind==='league');
-  for(const [method,route] of [['POST','/api/fixtures/'+first.id+'/play'],['POST','/api/fixtures/'+first.id+'/settle'],['POST',clubPath(0)+'/fixtures'],['POST',clubPath(0)+'/fixtures/'+first.id+'/play'],['PUT','/api/fixtures/'+first.id],['POST',clubPath(0)+'/results'],['DELETE','/api/fixtures/'+first.id]]){
+  for(const [method,route] of [['POST','/api/fixtures/'+first.id+'/play'],['POST','/api/fixtures/'+first.id+'/settle'],['POST',clubPath(0)+'/fixtures'],['POST',clubPath(0)+'/fixtures/'+first.id+'/play'],['PUT','/api/fixtures/'+first.id],['POST',clubPath(0)+'/results'],['POST',clubPath(0)+'/stipend'],['POST',clubPath(0)+'/income'],['POST','/api/leagues/rollover'],['POST',clubPath(10)+'/stipend'],['DELETE','/api/fixtures/'+first.id]]){
    assert.equal((await call(users[0],method,route,{kickoffAt:inMinutes(0),status:'played'})).status,404,method+' '+route);
   }
   // Reading every screen the client loads on opening settles nothing either.
@@ -376,6 +479,20 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.ok(table.every(r=>r.played===1),'standings updated automatically for all ten clubs');
   const rewards=await one("SELECT COUNT(*)::int AS n,COUNT(DISTINCT club_id)::int AS clubs FROM development_ledger WHERE reason='match_reward'");
   assert.deepEqual(rewards,{n:10,clubs:10});
+  // Income: 750,000 UZS per completed league match for league clubs, the same stipend for waiting clubs.
+  await waitFor(async()=>Number((await one('SELECT COUNT(*)::int AS n FROM stipend_runs')).n)===1,'stipend run for matchday 1',5000);
+  for(let i=0;i<10;i++){
+   const income=await ledgerRows(i,'league_match_income');
+   assert.equal(income.length,1);assert.equal(income[0].amount_uzs,'750000');
+   assert.equal((await ledgerRows(i,'waiting_stipend')).length,0,'a league club never receives the stipend');
+  }
+  for(const i of [10,11]){
+   const stipend=await ledgerRows(i,'waiting_stipend');
+   assert.equal(stipend.length,1);assert.equal(stipend[0].amount_uzs,'750000');assert.equal(await budgetOf(i),20750000n);
+   assert.equal((await ledgerRows(i,'league_match_income')).length,0);
+  }
+  assert.equal(await budgetOf(2),20750000n);
+  await assertLedgersConsistent();
   const done=(await ok(users[0],'GET',clubPath(0)+'/fixtures')).fixtures.find(f=>f.day_number===1);
   assert.equal(done.phase,'played');assert.equal(typeof done.home_goals,'number');
  });
@@ -390,6 +507,19 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const doubles=await db.query("SELECT 1 FROM development_ledger WHERE reason='match_reward' GROUP BY club_id,reference_id HAVING COUNT(*)>1");
   assert.equal(doubles.rowCount,0);
   assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM development_ledger WHERE reason='match_reward'")).n),20);
+  // Neither income nor the stipend can be paid twice, even with two schedulers racing.
+  await waitFor(async()=>Number((await one('SELECT COUNT(*)::int AS n FROM stipend_runs')).n)===2,'stipend run for matchday 2',5000);
+  await sleep(500);
+  assert.equal((await db.query("SELECT 1 FROM money_ledger WHERE reason='league_match_income' GROUP BY club_id,reference_id HAVING COUNT(*)>1")).rowCount,0);
+  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM money_ledger WHERE reason='league_match_income'")).n),20);
+  assert.deepEqual(await one("SELECT COUNT(*)::int AS payments,COUNT(DISTINCT club_id)::int AS clubs,SUM(amount_uzs)::int AS total FROM stipend_payments"),{payments:4,clubs:2,total:3000000});
+  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM money_ledger WHERE reason='waiting_stipend'")).n),4);
+  assert.equal((await db.query('SELECT 1 FROM stipend_payments s JOIN league_members lm ON lm.league_id=s.league_id AND lm.club_id=s.club_id')).rowCount,0,'no league member was ever paid a stipend');
+  await assertLedgersConsistent();
+  // A club registered now is not paid for matchdays that are already over.
+  clubs[12]=(await ok(users[12],'POST','/api/clubs',{name:'Integration Club 13',shortName:'IC13',primaryColour:'#225588',secondaryColour:'#ffffff'})).club;
+  await sleep(700);
+  assert.equal((await ledgerRows(12,'waiting_stipend')).length,0);assert.equal(await budgetOf(12),20000000n);
   server2.child.kill();server2=null;
  });
 
@@ -403,6 +533,9 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const order=(await db.query("SELECT day_number FROM fixtures WHERE kind='league' AND day_number IN (3,4,5) ORDER BY played_at,kickoff_at")).rows.map(r=>r.day_number);
   assert.deepEqual(order,order.slice().sort((a,b)=>a-b));
   assert.ok((await ok(users[0],'GET',clubPath(0)+'/league')).table.every(r=>r.played===5));
+  await waitFor(async()=>Number((await one('SELECT COUNT(*)::int AS n FROM stipend_runs')).n)===5,'stipend runs after catch-up',5000);
+  assert.equal((await ledgerRows(10,'waiting_stipend')).length,5);assert.equal((await ledgerRows(12,'waiting_stipend')).length,3,'the late club is paid only for matchdays completed after it registered');
+  assert.equal((await ledgerRows(3,'league_match_income')).length,5);await assertLedgersConsistent();
  });
 
  await t.test('a friendly is settled by the scheduler without touching standings, DP or missions; stale requests expire',async()=>{
@@ -457,24 +590,82 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(third.unviewedCount,1);assert.equal(third.results[0].viewed,false);assert.equal(third.results[0].day_number,6);assert.ok(third.results.slice(1).every(r=>r.viewed));
  });
 
- await t.test('the whole season is settled automatically, the table is consistent and the league completes',async()=>{
+ const assets=async()=>JSON.stringify((await db.query("SELECT c.id,c.name,c.crest_url,(SELECT json_agg(json_build_array(p.id,p.overall,p.attributes,p.origin,p.first_sale_done) ORDER BY p.id) FROM players p WHERE p.club_id=c.id) AS squad,(SELECT json_build_array(l.formation,l.starters,l.substitutes) FROM lineups l WHERE l.club_id=c.id) AS lineup FROM clubs c ORDER BY c.id")).rows);
+ const wealth=async()=>JSON.stringify((await db.query('SELECT id,budget_uzs,development_points FROM clubs ORDER BY id')).rows);
+
+ await t.test('the whole season is settled automatically, pays 13.5M per club, and the table is consistent',async()=>{
+  const before=await assets();
+  server2=await startServer(childEnv({PORT:String(PORT+1)}));logs.push(server2.log);
   await db.query("UPDATE fixtures SET kickoff_at=kickoff_at-interval '40 days' WHERE kind='league' AND status='scheduled'");
   await waitFor(async()=>await playedCount()===90,'season settlement',40000);
-  const played=await one("SELECT SUM(home_goals)::int AS hg,SUM(away_goals)::int AS ag FROM fixtures WHERE status='played' AND kind='league'");
-  const table=(await ok(users[0],'GET',clubPath(0)+'/league')).table;
+  const s1=await one('SELECT id FROM leagues WHERE season_number=1');
+  const played=await one("SELECT SUM(home_goals)::int AS hg,SUM(away_goals)::int AS ag FROM fixtures WHERE status='played' AND league_id=$1",[s1.id]);
+  const table=(await db.query('SELECT * FROM league_members WHERE league_id=$1 ORDER BY points DESC',[s1.id])).rows;
   assert.equal(table.length,10);
   for(const r of table){assert.equal(r.played,18);assert.equal(r.wins+r.draws+r.losses,18);assert.equal(r.points,r.wins*3+r.draws);}
   const sum=k=>table.reduce((n,r)=>n+r[k],0);
   assert.equal(sum('wins'),sum('losses'));assert.equal(sum('draws')%2,0);
   assert.equal(sum('goals_for'),sum('goals_against'));assert.equal(sum('goals_for'),played.hg+played.ag);
-  assert.deepEqual(table.map(r=>r.points),table.map(r=>r.points).slice().sort((a,b)=>b-a));
-  const order=(await db.query("SELECT day_number FROM fixtures WHERE kind='league' AND day_number>6 ORDER BY played_at,kickoff_at")).rows.map(r=>r.day_number);
+  const order=(await db.query("SELECT day_number FROM fixtures WHERE league_id=$1 AND day_number>6 ORDER BY played_at,kickoff_at",[s1.id])).rows.map(r=>r.day_number);
   assert.deepEqual(order,order.slice().sort((a,b)=>a-b),'matchdays are settled in order');
-  await waitFor(async()=>(await one('SELECT status FROM leagues')).status==='completed','league completion',3000);
-  assert.ok((await one('SELECT completed_at FROM leagues')).completed_at);
-  await ok(users[0],'POST',clubPath(0)+'/leagues/ensure',{});
-  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM leagues')).n),1,'no second season is created (not designed yet)');
-  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM fixtures WHERE kind='league'")).n),90);
+  await waitFor(async()=>(await one('SELECT status FROM leagues WHERE season_number=1')).status==='completed','league completion',3000);
+  assert.ok((await one('SELECT completed_at FROM leagues WHERE season_number=1')).completed_at);
+  // Season income: 18 x 750,000 = 13,500,000 UZS per league club, and the same in stipends for a club that waited all season.
+  await waitFor(async()=>Number((await one('SELECT COUNT(*)::int AS n FROM stipend_runs WHERE league_id=$1',[s1.id])).n)===18,'all 18 stipend runs',5000);
+  await sleep(600);
+  for(let i=0;i<10;i++){
+   const income=await ledgerRows(i,'league_match_income');
+   assert.equal(income.length,18);assert.equal(new Set(income.map(x=>x.reference_id)).size,18);assert.equal(income.reduce((n,x)=>n+BigInt(x.amount_uzs),0n),13500000n);
+   assert.equal((await ledgerRows(i,'waiting_stipend')).length,0);
+  }
+  assert.equal(await budgetOf(3),33500000n,'an untouched league club ends the season with 20M + 13.5M');
+  for(const [i,n] of [[10,18],[11,18],[12,16]]){
+   const stipend=await ledgerRows(i,'waiting_stipend');
+   assert.equal(stipend.length,n);assert.equal(await budgetOf(i),20000000n+750000n*BigInt(n));assert.equal((await ledgerRows(i,'league_match_income')).length,0);
+  }
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM stipend_payments')).n),52);
+  assert.equal((await db.query('SELECT 1 FROM stipend_payments s JOIN league_members lm ON lm.league_id=s.league_id AND lm.club_id=s.club_id')).rowCount,0);
+  await assertLedgersConsistent();
+  assert.equal(await assets(),before,'a season of matches changes no squad, lineup or club identity');
+ });
+
+ await t.test('season 2 is created automatically, exactly once, and clubs keep everything',async()=>{
+  await waitFor(async()=>Number((await one('SELECT COUNT(*)::int AS n FROM leagues')).n)===2,'season 2',5000);
+  const s1=await one('SELECT id,starts_on::text AS starts_on FROM leagues WHERE season_number=1');
+  const s2=await one("SELECT id,status,starts_on::text AS starts_on,GREATEST($1::date+21,(NOW() AT TIME ZONE 'Asia/Tashkent')::date+1)::text AS expected FROM leagues WHERE season_number=2",[s1.starts_on]);
+  assert.equal(s2.status,'active');assert.equal(s2.starts_on,s2.expected,'day 1 follows day 19 after two rest days');
+  assert.equal((await one('SELECT ($2::date-$1::date) AS gap',[s1.starts_on,s2.starts_on])).gap,21);
+  const members=async id=>(await db.query('SELECT club_id FROM league_members WHERE league_id=$1 ORDER BY club_id',[id])).rows.map(r=>r.club_id);
+  assert.deepEqual(await members(s2.id),await members(s1.id),'the same ten clubs keep their places');
+  for(const i of [10,11,12])assert.ok(!(await members(s2.id)).includes(clubs[i].id),'waiting clubs keep waiting');
+  assert.ok((await db.query('SELECT * FROM league_members WHERE league_id=$1',[s2.id])).rows.every(r=>r.played===0&&r.points===0&&r.goals_for===0));
+  const fixtures=(await db.query("SELECT day_number,status,home_club_id,away_club_id,to_char(kickoff_at AT TIME ZONE 'Asia/Tashkent','YYYY-MM-DD HH24:MI:SS') AS local,($2::date+(day_number-1))::text AS expected_date FROM fixtures WHERE league_id=$1",[s2.id,s2.starts_on])).rows;
+  assert.equal(fixtures.length,90);
+  for(const f of fixtures){assert.equal(f.status,'scheduled');assert.equal(f.local,f.expected_date+' 20:00:00');}
+  assert.deepEqual([...new Set(fixtures.map(f=>f.day_number))].sort((a,b)=>a-b),[1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19]);
+  assert.equal(new Set(fixtures.map(f=>f.home_club_id+'>'+f.away_club_id)).size,90);
+  // Idempotent: two running schedulers, a restart, the ensure route and a direct duplicate insert create nothing more.
+  const assetsBefore=await assets(),wealthBefore=await wealth();
+  server.child.kill();await sleep(300);server=await startServer(childEnv());logs.push(server.log);
+  await ok(users[0],'POST',clubPath(0)+'/leagues/ensure',{});await ok(users[10],'POST',clubPath(10)+'/leagues/ensure',{});
+  await sleep(1500);
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM leagues')).n),2);
+  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM fixtures WHERE kind='league'")).n),180);
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM league_members')).n),20);
+  await assert.rejects(db.query("INSERT INTO leagues(name,season_number,status,starts_on) VALUES('Duplicate',2,'active',CURRENT_DATE)"),/leagues_season_unique/);
+  server2.child.kill();server2=null;
+  // Clubs retain cash, Development Points, squads, upgrades, lineups and history.
+  assert.equal(await assets(),assetsBefore);assert.equal(await wealth(),wealthBefore,'the rollover itself moves no money and no points');
+  const league=await ok(users[0],'GET',clubPath(0)+'/league');
+  assert.equal(league.season.number,2);assert.equal(league.season.status,'active');assert.ok(league.table.every(r=>r.played===0));
+  assert.equal(league.previous.season.number,1);assert.equal(league.previous.season.status,'completed');assert.ok(league.previous.table.every(r=>r.played===18));
+  const results=await ok(users[0],'GET',clubPath(0)+'/results?limit=50');
+  assert.equal(results.results.length,19,'18 league results and one friendly are still in the history');
+  assert.equal((await ok(users[0],'GET',clubPath(0)+'/fixtures')).fixtures.filter(f=>f.season_number===2&&f.phase==='upcoming').length,18);
+  assert.ok((await ok(users[0],'GET',clubPath(0)+'/ledger')).transactions.length>0);
+  const waiting=await ok(users[10],'GET',clubPath(10)+'/league');
+  assert.deepEqual(waiting,{leagueExists:true,table:[],season:null,previous:null});
+  await assertLedgersConsistent();
  });
 
  await t.test('matches and missions award Development Points with a consistent ledger',async()=>{
@@ -510,6 +701,38 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(capped.status,400);assert.match(capped.data.error,/upgrade cap/);
  });
 
+
+ await t.test('six attribute points raise overall by exactly one and reprice the player',async()=>{
+  const squad=(await ok(users[5],'GET',clubPath(5)+'/squad')).players,p=squad.find(x=>x.overall===47&&x.position==='ST');
+  assert.equal(Object.values(p.attributes).reduce((a,b)=>a+b,0),47*6);
+  const names=['pace','shooting','passing','dribbling','defending','physical'];
+  for(let i=0;i<6;i++){
+   const r=await ok(users[5],'POST',clubPath(5)+'/players/upgrade',{playerId:p.id,attribute:names[i],levels:1});
+   assert.equal(r.player.overall,i<5?47:48,'after '+(i+1)+' point(s)');
+  }
+  const stored=await one('SELECT overall,market_value_uzs,quality,attributes FROM players WHERE id=$1',[p.id]);
+  assert.equal(stored.overall,48);assert.equal(Number(stored.market_value_uzs),marketValueUzs(48));assert.equal(stored.quality,qualityForOverall(48));
+  assert.equal(Object.values(stored.attributes).reduce((a,b)=>a+b,0),48*6);
+ });
+
+ await t.test('season 2 plays, pays and counts on its own while season 1 stays final',async()=>{
+  const s1=await one('SELECT id FROM leagues WHERE season_number=1'),s2=await one('SELECT id FROM leagues WHERE season_number=2');
+  const finalTable=JSON.stringify((await db.query('SELECT * FROM league_members WHERE league_id=$1 ORDER BY club_id',[s1.id])).rows);
+  const before=await budgetOf(3),waitingBefore=await budgetOf(10);
+  await db.query("UPDATE fixtures SET kickoff_at=NOW()-interval '61 seconds' WHERE league_id=$1 AND day_number=1",[s2.id]);
+  await waitFor(async()=>Number((await one("SELECT COUNT(*)::int AS n FROM fixtures WHERE league_id=$1 AND status='played'",[s2.id])).n)===5,'season 2 matchday 1');
+  await waitFor(async()=>Number((await one('SELECT COUNT(*)::int AS n FROM stipend_runs WHERE league_id=$1',[s2.id])).n)===1,'season 2 stipend run',5000);
+  await sleep(500);
+  assert.ok((await db.query('SELECT played FROM league_members WHERE league_id=$1',[s2.id])).rows.every(r=>r.played===1));
+  assert.equal(JSON.stringify((await db.query('SELECT * FROM league_members WHERE league_id=$1 ORDER BY club_id',[s1.id])).rows),finalTable);
+  assert.equal(await budgetOf(3),before+750000n);assert.equal(await budgetOf(10),waitingBefore+750000n);
+  assert.equal((await ledgerRows(10,'waiting_stipend')).length,19);
+  const newest=(await ok(users[0],'GET',clubPath(0)+'/results?limit=1')).results[0];
+  assert.equal(newest.season_number,2);assert.equal(newest.day_number,1);assert.equal(newest.viewed,false);
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM leagues')).n),2,'an unfinished season creates no successor');
+  await assertLedgersConsistent();
+  for(let i=0;i<13;i++)await assertLineupValid(i);
+ });
 
  await t.test('no request or scheduler run produced a server error',()=>{
   for(const log of logs)assert.doesNotMatch(log(),/Error/);

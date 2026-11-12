@@ -17,6 +17,20 @@ Only decisions explicitly accepted by the owner belong here.
 23. APPROVED — On opening, the game shows the club's latest completed match first, with access to the report and earlier results; history and viewed state are stored server-side; opening never triggers simulation.
 Note: decision 3 (accelerated / speed-up view) is superseded for league matches by the fixed 60-second, server-settled match.
 
+## Economy, seasons and match model (approved 2026-11-12)
+24. APPROVED — 20,000,000 UZS starting budget; 18-player starting squad; squad minimum 13, maximum 26.
+25. APPROVED — Player price 30,000,000 × 1.10^(OVR − 80) UZS.
+26. APPROVED — Academy players sell for 50% on their first sale; transfer-market players for 80%. Sold academy players stay on the market.
+27. APPROVED — 750,000 UZS per completed league match; no win or draw bonus; no friendly income.
+28. APPROVED — Waiting-list stipend: 750,000 UZS per equivalent league matchday, 18 per season.
+29. APPROVED — Season 2 starts automatically after 2 rest days; the ten league clubs keep their places; waiting clubs keep waiting; clubs keep cash, squads, upgrades and history.
+30. APPROVED — Generated 45–50 OVR players are always available on the market.
+31. APPROVED — One club per user.
+32. APPROVED — Automatic lineup replacement after a starter is sold.
+33. APPROVED — Attribute offsets per position that sum to zero; attributes average exactly to OVR.
+34. APPROVED — Match engine: scale S = 40 with home advantage +2 (verified in tests).
+Pending, not approved: real-player database (rights and data source unresolved); real photographs are excluded in any case.
+
 ## Club and players
 6. APPROVED — Club identity includes name and crest/logo upload.
 7. APPROVED — No in-game logo editor; provide an editable external-generation prompt and upload flow.
@@ -37,4 +51,4 @@ Note: decision 3 (accelerated / speed-up view) is superseded for league matches 
 18. APPROVED — Do not connect, integrate, merge or deploy new work to existing Mini App or production without explicit approval.
 
 ## Still unapproved
-Starting budget, squad size, exact player tiers, rating formula, transfer rules, wages, DP rewards/costs, match duration, league format, season length, authentication, hosting and future interface integration.
+Exact player tiers, real-player rating formula and database, wages, DP rewards/costs, how waiting clubs enter a league, authentication, hosting and future interface integration.

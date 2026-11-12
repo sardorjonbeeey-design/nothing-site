@@ -11,12 +11,16 @@ The software foundation is prepared, but these game-design and activation choice
 - DP awarded per match and mission reward values.
 - Whether wages, stadium expenses or other recurring club costs belong in the first release.
 
-- Whether one user may own one club only or multiple clubs. The prototype currently permits multiple clubs, so this must be decided before a public league to prevent one owner filling multiple league places.
+- DECIDED: one club per user.
+- DECIDED (2026-11-12): 20M budget, price curve, 50%/80% resale, 750,000 UZS league income and waiting stipend, squad 13–26, generated youth supply, lineup repair, attribute offsets, match model S=40 with +2 home advantage, automatic next season. See BALANCING_DEFAULTS.md.
+- Open: a running cost (for example wages) for later seasons, when cash would otherwise pile up.
+- Open: how waiting clubs ever enter a league (second league or promotion); today they wait indefinitely and receive the stipend.
+- Open: the real-player database (data rights, source access, unique players versus copies). Not implemented; all players are fictional.
+- Open: whether missions reset each season.
 
 ## Competition
 - DECIDED: 10-club double round-robin, one match per club per day at 20:00 Asia/Tashkent, 60-second matches, rest day on day 10, server-only settlement, friendlies by accepted challenge.
 - Confirm the provisional choices made while implementing this: season starts the next Tashkent day; friendlies give no rewards; no friendlies between clubs of one owner.
-- Decide what happens after the 19-day season ends. No second season is created yet.
 - Decide whether the pitch with moving dots (approved earlier) should return for the 60 seconds a match is live; the old decorative pitch was tied to the removed Play button and is no longer shown.
 - Decide whether lineups are frozen at kick-off. Today the lineup saved at settlement (kick-off + 60 s) is used.
 - Decide how clubs created after the first league begins should join: next season or a later league.
