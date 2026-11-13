@@ -50,7 +50,7 @@ Do not connect the live Telegram Mini App, live bot, existing backend, productio
 - Phase 1 (12 formations) is committed on `claude/gallant-clarke-tqser8` at `6497bf73c80473782910691c525c48d39eaa6e2c`.
 - Phase 2A audit: the server-side match, settlement, result, standings and season loop already exists.
 - Phase 2B: branch `phase-2-core-loop` adds a dashboard next-match panel and visible-page automatic refresh; new unviewed results open after refresh.
-- Static syntax and mocked client-flow checks passed. Full unit, PostgreSQL integration and mobile browser checks after this change are still pending (Phase 2C).
+- Static syntax and mocked client-flow checks passed. Phase 2C was later completed per owner report: 73 passed, 0 failed, 1 skipped; 36/36 integration; 147/147 mobile smoke.
 - No merge, deployment, production connection, database change, match-engine change or economy change.
 
 
@@ -73,11 +73,6 @@ Do not connect the live Telegram Mini App, live bot, existing backend, productio
 - No merge, deployment, production database, live Mini App or bot connection.
 ## Remaining Phase 3 work
 1. Review the proposed tactical coefficients and run a longer full-season formation balance simulation with realistic squads.
-2. Finalize the open inactivity-forfeit edge cases, top-three prize amounts and tie-break policy.
-3. Implement player-to-player transfers.
-4. Implement the sole super-admin backend authorization, audit trail and separate panel.
-5. Implement owner-approved match bonuses and the finalized inactivity/season rewards.
-6. Run adversarial tests for transfers, duplicate rewards, scheduler restarts, inactivity and economy balance.1. Run the full unit and PostgreSQL integration suites; balance the formation model across all 12 shapes and equal/unequal squads.
 2. Finalize the open inactivity-forfeit edge cases, top-three prize amounts and tie-break policy.
 3. Implement player-to-player transfers.
 4. Implement the sole super-admin backend authorization, audit trail and separate panel.
