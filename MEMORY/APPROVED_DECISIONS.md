@@ -30,6 +30,7 @@ Note: decision 3 (accelerated / speed-up view) is superseded for league matches 
 33. APPROVED — Attribute offsets per position that sum to zero; attributes average exactly to OVR.
 34. APPROVED — Match engine: scale S = 40 with home advantage +2 (verified in tests).
 35. APPROVED — Rebalanced player price: 11,000,000 × 1.112^(OVR − 80) UZS, rounded to 10,000 UZS. An 80 OVR player costs 11M and a 60 OVR player costs 1.32M. Reprice existing market values through migration 005.
+36. APPROVED — League match-result bonuses: win 250,000 UZS; draw 100,000 UZS to each club; loss 0. These bonuses are additional to the 750,000 UZS league-match income, paid server-side after official settlement exactly once per fixture, and recorded in the money ledger. Friendly matches receive no income.
 Pending, not approved: real-player database (rights and data source unresolved); real photographs are excluded in any case.
 
 ## Club and players
@@ -54,4 +55,3 @@ Pending, not approved: real-player database (rights and data source unresolved);
 ## Still unapproved
 Exact player tiers, real-player rating formula and database, wages, DP rewards/costs, how waiting clubs enter a league, authentication, hosting and future interface integration.
 
-36. APPROVED — League match-result bonuses: win 250,000 UZS; draw 100,000 UZS to each club; loss 0. These bonuses are additional to the 750,000 UZS league-match income, paid server-side after official settlement exactly once per fixture, and recorded in the money ledger. Friendly matches receive no income.
