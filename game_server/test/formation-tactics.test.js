@@ -20,7 +20,7 @@ test('all 12 formations produce finite, bounded tactical profiles',()=>{
     const p=profile(id);
     for(const key of ['defence','midfield','width','attack','transition']) {
       assert.ok(Number.isFinite(p[key]),id+' '+key+' is finite');
-      assert.ok(p[key]>=0&&p[key]<=100,id+' '+key+' stays within 0–100');
+      assert.ok(p[key]>=-20&&p[key]<=20,id+' '+key+' stays within the positional-surplus range');
     }
   }
 });
