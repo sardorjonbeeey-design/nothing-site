@@ -65,13 +65,19 @@ Do not connect the live Telegram Mini App, live bot, existing backend, productio
 - Created `zamin-management-isolated` from Phase 2 commit `76ac42a53ea142b4f6e743423b926b7996fff6d8`.
 - Added `game_server/src/formation-tactics.js` and integrated its relative matchup adjustment into `game_server/src/simulation.js`.
 - Added `game_server/test/formation-tactics.test.js`; updated formation simulation tests to use actual positional attributes and test all-pairs balance.
-- Model uses role suitability plus attribute surplus/deficit relative to OVR across defence, midfield, width, attack and transitions. It does not double-count raw OVR and has a proposed maximum total matchup swing of 1.5 rating points.
-- The numeric coefficients and 1.5-point cap are PROPOSED implementation values, not separately owner-approved balance decisions.
-- GitHub Actions run `43515953300` passed: `npm test` — 80 tests, 79 passed, 0 failed, 1 skipped; PostgreSQL integration — 36/36 passed. The 12-formation matchup and full-field balance tests passed.\n- A pre-existing scheduler shutdown race was fixed: scheduler stop now waits for an active tick before the database pool closes.\n- The 1.5-point cap and tactical coefficients remain PROPOSED balance values; a full-season real-squad simulation and owner review remain outstanding.
+- Model uses role suitability plus attribute surplus/deficit relative to OVR across defence, midfield, width, attack and transitions. It does not double-count raw OVR.
+- Proposed tactical coefficients and the 1.5-point total matchup cap are not separately owner-approved final balance decisions.
+- GitHub Actions run `43515953300` passed: `npm test` — 80 tests, 79 passed, 0 failed, 1 skipped; PostgreSQL integration — 36/36 passed. The 12-formation matchup and all-pairs balance tests passed.
+- Fixed the pre-existing scheduler shutdown race: scheduler stop waits for an active tick, and server shutdown awaits it before closing the database pool.
+- A full-season simulation with realistic league squads and a mobile smoke run on this Phase 3 branch remain outstanding.
 - No merge, deployment, production database, live Mini App or bot connection.
-
 ## Remaining Phase 3 work
-1. Run the full unit and PostgreSQL integration suites; balance the formation model across all 12 shapes and equal/unequal squads.
+1. Review the proposed tactical coefficients and run a longer full-season formation balance simulation with realistic squads.
+2. Finalize the open inactivity-forfeit edge cases, top-three prize amounts and tie-break policy.
+3. Implement player-to-player transfers.
+4. Implement the sole super-admin backend authorization, audit trail and separate panel.
+5. Implement owner-approved match bonuses and the finalized inactivity/season rewards.
+6. Run adversarial tests for transfers, duplicate rewards, scheduler restarts, inactivity and economy balance.1. Run the full unit and PostgreSQL integration suites; balance the formation model across all 12 shapes and equal/unequal squads.
 2. Finalize the open inactivity-forfeit edge cases, top-three prize amounts and tie-break policy.
 3. Implement player-to-player transfers.
 4. Implement the sole super-admin backend authorization, audit trail and separate panel.
