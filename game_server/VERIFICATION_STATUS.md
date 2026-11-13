@@ -1,3 +1,26 @@
+# Verification status — isolated ZAMIN FK Management
+
+Updated: 2026-11-14
+Active development branch: `zamin-management-isolated`
+Production connection: NONE
+
+## Phase 3A — formation matchup model — implemented, verification pending
+- Added `src/formation-tactics.js`: role-weighted defence, midfield, width, attack and transition profiles using positional attribute surplus/deficit relative to OVR.
+- Integrated a symmetric matchup adjustment into `src/simulation.js`; the total relative rating swing is capped at 1.5 points.
+- Added `test/formation-tactics.test.js` and updated `test/formations.test.js` to cover positional attributes, all-pairs balance, antisymmetry, self-match neutrality, and stronger-squad preservation.
+- A scratch Node check of the pure matchup function passed syntax, self-match neutrality, antisymmetry and cap assertions.
+- NOT RUN in this session: `npm test`, PostgreSQL integration suite, full all-formation simulation balance run.
+- GitHub Actions workflow added at `.github/workflows/phase3-isolated-tests.yml`; no run was observed.
+- Numeric tactical weights and 1.5-point cap are proposed, not final balance approval.
+
+## Phase 2C — completion checkpoint supplied by owner
+- Main test suite: 73 passed, 0 failed, 1 skipped.
+- PostgreSQL integration suite: 36/36 passed.
+- Mobile smoke: 147/147 passed.
+- These results are recorded as owner-reported; they were not independently rerun in this Phase 3 session.
+
+---
+
 # Phase 2 progress — core game loop
 
 Updated: 2026-11-13
