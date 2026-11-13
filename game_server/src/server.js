@@ -343,7 +343,17 @@ const server=http.createServer(async(req,res)=>{
 });
 server.listen(config.port,'0.0.0.0',()=>console.log('ZAMIN FK isolated game server listening on '+config.port));
 // League and friendly matches are settled here, by the server alone, whether or not anyone is online.
-if(pool)startScheduler({maxIdleMs:config.schedulerMaxIdleMs});
-async function shutdown(){server.close(async()=>{try{await pool?.end();process.exit(0);}catch(error){console.error(error);process.exit(1);}});}
+const scheduler=pool?startScheduler({maxIdleMs:config.schedulerMaxIdleMs}):null;
+let shuttingDown=false;
+async function shutdown(){
+ if(shuttingDown)return;
+ shuttingDown=true;
+ let failed=false;
+ try{await scheduler?.stop();}catch(error){console.error(error);failed=true;}
+ server.close(async()=>{
+  try{await pool?.end();process.exit(failed?1:0);}
+  catch(error){console.error(error);process.exit(1);}
+ });
+}
 process.on('SIGTERM',shutdown);
 process.on('SIGINT',shutdown);
