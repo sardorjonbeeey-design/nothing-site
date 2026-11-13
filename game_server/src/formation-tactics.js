@@ -45,10 +45,10 @@ export function formationTacticalProfile(analysis,players) {
       fallback.get(player.position).push(player);
     }
   }
-  const usedFallback = new Set();
   const profile = {};
   for (const dimension of DIMENSIONS) {
     const roles = ROLE_WEIGHTS[dimension],attributes = ATTRIBUTE_WEIGHTS[dimension];
+    const usedFallback = new Set();
     let weightedSkill = 0,roleWeightTotal = 0;
     for (const slot of analysis.slots) {
       const roleWeight = roles[slot.role] || 0;
