@@ -74,3 +74,12 @@ Chronological record. Append entries; do not erase earlier history.
 - The proposed tactical coefficients and 1.5-point maximum relative swing remain unverified balance values. Full repository tests have not been run; only a scratch Node check of the pure matchup function passed.
 - Inactivity edge cases and exact season top-three prizes/tie-breaks remain OPEN. Earlier assistant suggestions (double-forfeit and 5M/3M/1.5M UZS prizes) were not owner approvals and are not implemented.
 - No merge, deployment, production database, live Mini App or bot connection.
+
+
+## 2026-11-14 — Phase 3A verification and scheduler shutdown fix
+- Initial CI run confirmed the unit suite passed but exposed two environment/test issues: the workflow used a 127.0.0.1 PostgreSQL URL that enabled SSL in the app's DB config, and the known scheduler shutdown race.
+- Changed the disposable CI database URL to `localhost`, which uses the app's existing local-PostgreSQL SSL-off path.
+- Fixed scheduler lifecycle: `startScheduler().stop()` now awaits an in-flight tick; server shutdown awaits scheduler stop before closing the pool.
+- Final GitHub Actions run `43515953300` completed successfully: main suite 80 tests (79 passed, 0 failed, 1 skipped); PostgreSQL integration 36/36 passed.
+- New 12-formation profile tests and all-pairs balance tests passed. This does not replace a longer full-season simulation with realistic squads.
+- No merge, deployment, production database, live Mini App or bot connection.
