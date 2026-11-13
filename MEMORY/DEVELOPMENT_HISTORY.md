@@ -63,3 +63,14 @@ Chronological record. Append entries; do not erase earlier history.
 - Updated `game_client/app.js`: dashboard next-match panel; refresh every 30 seconds only while visible; refresh on focus/visibility return; automatically show a newly arrived unviewed result.
 - JavaScript syntax and mocked client-flow checks passed. Full unit, PostgreSQL integration and mobile browser tests remain pending.
 - No server, schema, economy, schedule, match engine, production or deployment changes.
+
+
+## 2026-11-14 — Phase 3 kickoff and formation matchup prototype
+- Created `zamin-management-isolated` from the verified Phase 2 branch head `76ac42a53ea142b4f6e743423b926b7996fff6d8`. The source Phase 2 and original management branches were left untouched.
+- Owner supplied the Phase 2C completion checkpoint: 73 passed / 0 failed / 1 skipped in the main suite, 36/36 integration tests, and 147/147 mobile smoke checks. Recorded as owner-reported; not independently rerun in this session.
+- Added a separate formation tactical profile module and integrated a symmetric, capped matchup adjustment into match simulation. The model uses position-role fit and player attribute surplus/deficit relative to OVR, so it does not add raw squad quality a second time or award a fixed bonus for a formation name.
+- Added tests for all 12 formation profiles, self-match neutrality, antisymmetry, total-field neutrality, bounded effects and preservation of a large squad-quality gap. Updated formation simulation tests for tactical matchups.
+- Added an isolated unit/integration GitHub Actions workflow. No workflow run was returned/observed.
+- The proposed tactical coefficients and 1.5-point maximum relative swing remain unverified balance values. Full repository tests have not been run; only a scratch Node check of the pure matchup function passed.
+- Inactivity edge cases and exact season top-three prizes/tie-breaks remain OPEN. Earlier assistant suggestions (double-forfeit and 5M/3M/1.5M UZS prizes) were not owner approvals and are not implemented.
+- No merge, deployment, production database, live Mini App or bot connection.
