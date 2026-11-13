@@ -44,5 +44,5 @@ jobs:
       - name: PostgreSQL integration suite
         working-directory: game_server
         env:
-          INTEGRATION_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/zamin_game
+          INTEGRATION_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/zamin_game
         run: npm run test:integration
