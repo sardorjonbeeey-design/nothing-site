@@ -1,6 +1,6 @@
 # Owner-approved next phase — competition, transfers and administration
 
-Status: requirements recorded; implementation not started.
+Status: Phase 3 started on `zamin-management-isolated`; formation matchup implementation added, verification pending. Other Phase 3 systems are not implemented.
 Scope: isolated ZAMIN FK Management game only. Do not connect to the live Mini App, production backend, bot, or live database.
 
 ## 1. Competition integrity and match outcomes
@@ -35,7 +35,7 @@ Provide 12 selectable formations:
 11. 4-2-2-2
 12. 4-3-2-1
 
-Formations must alter the actual match simulation, not only the pitch display. Effects should be based on player position suitability and tactical trade-offs (defence, midfield control, width, attacking presence and transitions). Do not grant a large unconditional formation bonus. Rebalance and test all 12 formations across equal and unequal squads before release.
+Formations must alter the actual match simulation, not only the pitch display. Effects should be based on player position suitability and tactical trade-offs (defence, midfield control, width, attacking presence and transitions). Do not grant a large unconditional formation bonus. Rebalance and test all 12 formations across equal and unequal squads before release.\n\n### Phase 3A implementation note (2026-11-14)\n- A first model is implemented in `src/formation-tactics.js` and connected to `src/simulation.js` on `zamin-management-isolated`.\n- It uses role-weighted attribute surplus/deficit relative to OVR and applies an antisymmetric matchup adjustment capped at a proposed 1.5 total rating-point swing.\n- The numeric weights and cap are PROPOSED and remain unverified; do not treat them as final balance approval. Full test suite still needs to run.
 
 ## 4. Player-to-player transfer market
 
@@ -82,4 +82,4 @@ Formations must alter the actual match simulation, not only the pitch display. E
 
 ## Safety boundary
 
-All work stays on the isolated `zamin-fk-management` branch. No merge, deployment, production credentials, live database, bot connection or live Mini App changes without separate explicit approval.
+All work stays on the isolated `zamin-management-isolated` branch. The source Phase 2 and original management branches remain untouched. No merge, deployment, production credentials, live database, bot connection or live Mini App changes without separate explicit approval.
