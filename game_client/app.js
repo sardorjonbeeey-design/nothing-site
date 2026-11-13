@@ -2,6 +2,7 @@
 const root=document.getElementById('app');
 const cfg=window.ZAMIN_GAME_CONFIG||{};
 const state={token:null,user:null,clubs:[],club:null,squad:[],market:[],lineup:null,lineupDraft:[],missions:[],fixtures:[],table:[],ledger:[],dpLedger:[],tab:'overview',crestData:'',results:[],newResults:0,resultIndex:0,opening:false,report:null,friendlies:[],opponents:[],youth:[],affordableOnly:false,season:null,previousSeason:null,squadLimits:{min:13,max:26},formations:[],formationInfo:null,formationDraft:null};
+let loadInFlight=false,loadAgain=false,initialLoadDone=false,refreshTimer=null;
 const esc=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=(v)=>{try{return new Intl.NumberFormat('en-US').format(BigInt(v||0))+' UZS';}catch{return '0 UZS';}};
 const $=(s)=>root.querySelector(s);
@@ -28,9 +29,15 @@ function crest(club,large){const style='style="--accent:'+esc(club.primary_colou
 function miniCrest(club){return '<span class="mini-crest" style="--accent:'+esc(club.primary_colour||'#167a55')+'">'+(club.crest_url?'<img src="'+esc((cfg.apiBase||'')+club.crest_url)+'" alt="">':esc(club.short_name||'ZFK'))+'</span>';}
 function overview(){
  const c=state.club;
+ // Keep the next scheduled fixture visible from the dashboard; the server remains the source of match timing and status.
+ const nextFixture=state.fixtures.filter(f=>f.phase==='upcoming'||f.phase==='live').sort((a,b)=>Date.parse(a.kickoff_at)-Date.parse(b.kickoff_at))[0];
+ const nextMatchPanel=nextFixture
+  ? '<section class="panel"><div class="eyebrow">NEXT MATCH</div>'+teamsMarkup(nextFixture)+'<p class="meta">'+competition(nextFixture)+' · '+when(nextFixture.kickoff_at)+'</p><div class="actions"><button class="btn secondary" data-tab="fixtures">Open matchday →</button></div></section>'
+  : '<section class="panel"><div class="eyebrow">NEXT MATCH</div><h2>'+(state.leagueExists?'Waiting for the next fixture':'League not started yet')+'</h2><p class="sub">'+(state.leagueExists?'Your club will see its next scheduled match here.':'The league is generated automatically when 10 clubs have been created.')+'</p><button class="btn secondary" data-tab="fixtures">View fixtures →</button></section>';
  return pageHead('CLUB CONTROL CENTRE',esc(c.name),'Your club is ready. Build the squad, develop players and compete.', '<div class="actions"><button class="btn secondary" data-action="edit-identity">Edit identity</button></div>')+
  '<section class="panel club-card">'+crest(c,true)+'<div><div class="eyebrow">CLUB PROFILE</div><h2>'+esc(c.name)+' <span class="muted">· '+esc(c.short_name)+'</span></h2><p>Identity established · '+new Date(c.created_at).toLocaleDateString()+'</p></div></section>'+
  '<div class="stats"><div class="stat"><div class="label">CLUB BUDGET</div><strong>'+money(c.budget_uzs)+'</strong><p>Transfer funds</p></div><div class="stat"><div class="label">DEVELOPMENT POINTS</div><strong>'+esc(c.development_points)+'</strong><p>Player progression</p></div><div class="stat"><div class="label">SQUAD SIZE</div><strong>'+state.squad.length+'</strong><p>Registered players</p></div></div>'+
+ nextMatchPanel+
  '<section class="panel"><div class="row"><div><h2>Club development</h2><p>Choose where to focus next.</p></div></div><div class="grid2"><button class="btn secondary" data-tab="squad">Manage squad →</button><button class="btn secondary" data-tab="market">Explore transfers →</button><button class="btn secondary" data-tab="missions">Complete missions →</button><button class="btn secondary" data-tab="fixtures">View fixtures →</button></div></section>'+
  (state.results[0]?'<section class="panel"><div class="row"><div><div class="eyebrow">LATEST MATCH</div><h2>'+esc(state.results[0].home_name)+' '+state.results[0].home_goals+' — '+state.results[0].away_goals+' '+esc(state.results[0].away_name)+'</h2><p>'+when(state.results[0].kickoff_at)+'</p></div><button class="btn secondary" data-tab="results">All results →</button></div></section>':'')+'<section class="panel"><h2>Recent finances</h2><p>Club money movements in Uzbek so\'m.</p>'+(state.ledger.length?state.ledger.slice(0,6).map(t=>'<div class="fixture"><div><strong>'+esc(t.reason.replaceAll('_',' '))+'</strong><div class="meta">'+new Date(t.created_at).toLocaleDateString()+'</div></div><div class="score">'+(BigInt(t.amount_uzs)>=0n?'+':'')+money(t.amount_uzs)+'</div></div>').join(''):'<div class="empty">No transactions yet.</div>')+'</section>'+'<section class="panel"><h2>Development Points history</h2><p>Match rewards, missions and player upgrades.</p>'+(state.dpLedger.length?state.dpLedger.slice(0,6).map(t=>'<div class="fixture"><div><strong>'+esc(t.reason.replaceAll('_',' '))+'</strong><div class="meta">'+new Date(t.created_at).toLocaleDateString()+'</div></div><div class="score">'+(Number(t.amount_dp)>=0?'+':'')+esc(t.amount_dp)+' DP</div></div>').join(''):'<div class="empty">No Development Point activity yet.</div>')+'</section>';
 }
@@ -176,15 +183,41 @@ function render(){
  shell(body);
 }
 async function loadAll(){
- const c=await api('/api/clubs');state.clubs=c.clubs||[];
- if(!state.clubs.length){state.club=null;render();return;}
- state.club=state.club?state.clubs.find(x=>x.id===state.club.id)||state.clubs[0]:state.clubs[0];
- const id=state.club.id;
- const results=await Promise.all([
-  api('/api/clubs/'+id+'/squad'),api('/api/clubs/'+id+'/lineup'),api('/api/clubs/'+id+'/missions'),api('/api/clubs/'+id+'/fixtures'),api('/api/clubs/'+id+'/league'),api('/api/market'+(state.affordableOnly?'?maxValue='+encodeURIComponent(state.club.budget_uzs):'')),api('/api/clubs/'+id+'/ledger'),api('/api/clubs/'+id+'/development-ledger'),api('/api/clubs/'+id+'/results?limit=30'),api('/api/clubs/'+id+'/friendlies'),api('/api/clubs/'+id+'/opponents'),api('/api/clubs/'+id+'/formations')
- ]);
- state.squad=results[0].players||[];state.lineup=results[1].lineup;state.lineupDraft=state.lineup?.starters?.slice()||[];state.missions=results[2].missions||[];state.fixtures=results[3].fixtures||[];state.table=results[4].table||[];state.leagueExists=Boolean(results[4].leagueExists);state.season=results[4].season||null;state.previousSeason=results[4].previous||null;state.market=results[5].players||[];state.youth=results[5].youth||[];state.squadLimits=results[5].squadLimits||state.squadLimits;state.ledger=results[6].transactions||[];state.dpLedger=results[7].transactions||[];state.results=results[8].results||[];state.newResults=results[8].unviewedCount||0;state.friendlies=results[9].requests||[];state.opponents=results[10].clubs||[];state.formations=results[11].formations||[];state.formationInfo=results[11];state.formationDraft=state.lineup?.formation||'4-3-3';
- render();
+ if(loadInFlight){loadAgain=true;return;}
+ loadInFlight=true;
+ const previousResultIds=new Set(state.results.map(r=>r.id));
+ try{
+  const c=await api('/api/clubs');state.clubs=c.clubs||[];
+  if(!state.clubs.length){state.club=null;render();initialLoadDone=true;return;}
+  state.club=state.club?state.clubs.find(x=>x.id===state.club.id)||state.clubs[0]:state.clubs[0];
+  const id=state.club.id;
+  const results=await Promise.all([
+   api('/api/clubs/'+id+'/squad'),api('/api/clubs/'+id+'/lineup'),api('/api/clubs/'+id+'/missions'),api('/api/clubs/'+id+'/fixtures'),api('/api/clubs/'+id+'/league'),api('/api/market'+(state.affordableOnly?'?maxValue='+encodeURIComponent(state.club.budget_uzs):'')),api('/api/clubs/'+id+'/ledger'),api('/api/clubs/'+id+'/development-ledger'),api('/api/clubs/'+id+'/results?limit=30'),api('/api/clubs/'+id+'/friendlies'),api('/api/clubs/'+id+'/opponents'),api('/api/clubs/'+id+'/formations')
+  ]);
+  state.squad=results[0].players||[];state.lineup=results[1].lineup;state.lineupDraft=state.lineup?.starters?.slice()||[];state.missions=results[2].missions||[];state.fixtures=results[3].fixtures||[];state.table=results[4].table||[];state.leagueExists=Boolean(results[4].leagueExists);state.season=results[4].season||null;state.previousSeason=results[4].previous||null;state.market=results[5].players||[];state.youth=results[5].youth||[];state.squadLimits=results[5].squadLimits||state.squadLimits;state.ledger=results[6].transactions||[];state.dpLedger=results[7].transactions||[];state.results=results[8].results||[];state.newResults=results[8].unviewedCount||0;state.friendlies=results[9].requests||[];state.opponents=results[10].clubs||[];state.formations=results[11].formations||[];state.formationInfo=results[11];state.formationDraft=state.lineup?.formation||'4-3-3';
+  // A result created since the previous refresh is shown once, without treating a page open or polling as match activity.
+  if(initialLoadDone&&!state.opening){
+   const freshIndex=state.results.findIndex(r=>!r.viewed&&!previousResultIds.has(r.id));
+   if(freshIndex>=0){state.opening=true;state.resultIndex=freshIndex;state.report=null;}
+  }
+  initialLoadDone=true;
+  render();
+ }finally{
+  loadInFlight=false;
+  if(loadAgain){loadAgain=false;void loadAll().catch(()=>{});}
+ }
+}
+function startAutoRefresh(){
+ if(refreshTimer)clearInterval(refreshTimer);
+ // Refresh only while the app is visible and the manager is not editing a form. Hidden/background polling is avoided.
+ const refresh=()=>{
+  if(document.visibilityState!=='visible'||state.opening)return;
+  if(document.activeElement?.closest?.('form'))return;
+  void loadAll().catch(()=>{});
+ };
+ refreshTimer=setInterval(refresh,30000);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh();});
+ window.addEventListener('focus',refresh);
 }
 async function uploadCrest(file){
  if(!file)return null;
@@ -258,6 +291,7 @@ async function boot(){
   if(tg&&tg.initData){tg.ready();tg.expand();const login=await api('/api/auth/telegram',{method:'POST',body:{initData:tg.initData}});state.token=login.token;state.user=login.user;}
   else if(!cfg.devUserId){root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><span class="tag">ISOLATED BUILD</span></header><section class="panel create"><h1>Game client ready</h1><p class="sub">Open this client inside the configured Telegram Mini App, or set a local development user ID in config.js and enable development authentication on the isolated server.</p><div class="notice">This client is not connected to the live ZAMIN FK Mini App or production database.</div></section></div>';return;}
   await loadAll();
+  startAutoRefresh();
   // Opening the game only reads stored results; it never starts or settles a match.
   if(state.club&&state.results.length){const firstNew=state.results.findIndex(r=>!r.viewed);state.resultIndex=firstNew>=0?firstNew:0;state.opening=true;render();}
  }catch(err){root.innerHTML='<div class="shell"><section class="panel create"><h1>Connection unavailable</h1><p class="sub">'+esc(err.message)+'</p><p class="sub">Check the isolated game server URL, database migration and authentication settings.</p></section></div>';}
