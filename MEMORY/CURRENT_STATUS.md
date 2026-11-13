@@ -71,9 +71,9 @@ Do not connect the live Telegram Mini App, live bot, existing backend, productio
 - No merge, deployment, production database, live Mini App or bot connection.
 
 ## Remaining Phase 3 work
-1. Verify and balance formation matchups across all 12 shapes and equal/unequal squads.
-2. Implement player-to-player transfers.
-3. Implement the sole super-admin backend authorization, audit trail and separate panel.
-4. Finalize the open inactivity-forfeit edge cases before implementing forfeits.
-5. Implement owner-approved match bonuses and season rewards; exact top-three prize amounts and tie-break rules remain OPEN.
+1. Run the full unit and PostgreSQL integration suites; balance the formation model across all 12 shapes and equal/unequal squads.
+2. Finalize the open inactivity-forfeit edge cases, top-three prize amounts and tie-break policy.
+3. Implement player-to-player transfers.
+4. Implement the sole super-admin backend authorization, audit trail and separate panel.
+5. Implement owner-approved match bonuses and the finalized inactivity/season rewards.
 6. Run adversarial tests for transfers, duplicate rewards, scheduler restarts, inactivity and economy balance.
