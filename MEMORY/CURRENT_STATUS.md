@@ -3,7 +3,7 @@
 Last updated: 2026-11-14
 Repository: sardorjonbeeey-design/nothing-site
 Branch: zamin-management-isolated
-Phase: Phase 3 started; formation matchup model implemented in the isolated branch, verification pending
+Phase: Phase 3A formation matchup model implemented and CI verified; balance review remains
 Production connection: NONE
 Integration approval: NOT GRANTED
 
@@ -67,7 +67,7 @@ Do not connect the live Telegram Mini App, live bot, existing backend, productio
 - Added `game_server/test/formation-tactics.test.js`; updated formation simulation tests to use actual positional attributes and test all-pairs balance.
 - Model uses role suitability plus attribute surplus/deficit relative to OVR across defence, midfield, width, attack and transitions. It does not double-count raw OVR and has a proposed maximum total matchup swing of 1.5 rating points.
 - The numeric coefficients and 1.5-point cap are PROPOSED implementation values, not separately owner-approved balance decisions.
-- Full repository unit/integration tests have NOT been run in this session. A scratch Node check of the pure matchup function passed self-match, antisymmetry and cap assertions. GitHub Actions workflow was added, but no workflow run was observed.
+- GitHub Actions run `43515953300` passed: `npm test` — 80 tests, 79 passed, 0 failed, 1 skipped; PostgreSQL integration — 36/36 passed. The 12-formation matchup and full-field balance tests passed.\n- A pre-existing scheduler shutdown race was fixed: scheduler stop now waits for an active tick before the database pool closes.\n- The 1.5-point cap and tactical coefficients remain PROPOSED balance values; a full-season real-squad simulation and owner review remain outstanding.
 - No merge, deployment, production database, live Mini App or bot connection.
 
 ## Remaining Phase 3 work
