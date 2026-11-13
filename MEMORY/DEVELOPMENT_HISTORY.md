@@ -83,3 +83,12 @@ Chronological record. Append entries; do not erase earlier history.
 - Final GitHub Actions run `43515953300` completed successfully: main suite 80 tests (79 passed, 0 failed, 1 skipped); PostgreSQL integration 36/36 passed.
 - New 12-formation profile tests and all-pairs balance tests passed. This does not replace a longer full-season simulation with realistic squads.
 - No merge, deployment, production database, live Mini App or bot connection.
+
+
+## 2026-11-14 — Phase 3A CI verification and scheduler shutdown fix
+- Initial CI exposed a PostgreSQL SSL-mode mismatch in the workflow URL and the pre-existing scheduler shutdown race. The disposable CI URL now uses `localhost`, matching the app's local-PostgreSQL SSL-off rule.
+- Fixed scheduler lifecycle: `startScheduler().stop()` awaits an in-flight tick; server shutdown awaits scheduler stop before closing the database pool.
+- Final GitHub Actions run `43515953300` completed successfully: `npm test` — 80 tests, 79 passed, 0 failed, 1 skipped; PostgreSQL integration — 36/36 passed.
+- The new 12-formation profile, matchup, antisymmetry and all-pairs balance tests passed.
+- Full-season balance with realistic league squads and mobile smoke on this Phase 3 branch remain outstanding. Proposed tactical coefficients and the 1.5-point cap are not final owner-approved values.
+- No merge, deployment, production database, live Mini App or bot connection.
