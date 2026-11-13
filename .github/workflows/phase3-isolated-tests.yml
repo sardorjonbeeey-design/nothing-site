@@ -1,0 +1,48 @@
+name: Isolated Phase 3 verification
+
+on:
+  push:
+    branches:
+      - zamin-management-isolated
+  pull_request:
+    branches:
+      - zamin-management-isolated
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: zamin_game
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d zamin_game"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: game_server/package-lock.json
+      - name: Install dependencies
+        working-directory: game_server
+        run: npm ci
+      - name: Unit and default test suite
+        working-directory: game_server
+        run: npm test
+      - name: PostgreSQL integration suite
+        working-directory: game_server
+        env:
+          INTEGRATION_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/zamin_game
+        run: npm run test:integration
