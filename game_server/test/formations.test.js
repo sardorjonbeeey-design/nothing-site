@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import {formations,FORMATION_IDS,POSITIONS,ROLES,isFormation,analyseLineup,arrange,slotFit,fitBonus,bestLineup,FIT_BONUS_MAX} from '../src/formations.js';
 import {repairLineup,isValidLineup,lineupProblem,formationShapes} from '../src/lineup.js';
 import {simulateMatch,squadStrength,lineupStrength} from '../src/simulation.js';
-import {academySquadTemplate} from '../src/catalog.js';
+import {academySquadTemplate,attributesFor} from '../src/catalog.js';
 
 const APPROVED=['4-3-3','4-2-3-1','4-4-2','4-1-4-1','4-4-1-1','3-5-2','3-4-3','3-4-2-1','5-3-2','5-4-1','4-2-2-2','4-3-2-1'];
 // The intended XI of a formation: one player in the first natural position of every slot.
-const natural=(id,overall=60)=>formations[id].slots.map((s,i)=>({id:id+'-'+i,position:s.natural[0],overall,fitness:100}));
+const natural=(id,overall=60)=>formations[id].slots.map((s,i)=>({id:id+'-'+i,position:s.natural[0],overall,fitness:100,attributes:attributesFor(overall,s.natural[0])}));
 const squad=()=>academySquadTemplate.map(([position,overall],i)=>({id:'p'+String(i).padStart(2,'0'),position,overall}));
 function mulberry32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 // n matches, alternating venue; the record of side A in percent and points per match.
