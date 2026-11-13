@@ -4,7 +4,7 @@ Updated: 2026-11-14
 Active development branch: `zamin-management-isolated`
 Production connection: NONE
 
-## Phase 3A — formation matchup model — implemented, verification pending
+## Phase 3A — formation matchup model — implemented and CI verified
 - Added `src/formation-tactics.js`: role-weighted defence, midfield, width, attack and transition profiles using positional attribute surplus/deficit relative to OVR.
 - Integrated a symmetric matchup adjustment into `src/simulation.js`; the total relative rating swing is capped at 1.5 points.
 - Added `test/formation-tactics.test.js` and updated `test/formations.test.js` to cover positional attributes, all-pairs balance, antisymmetry, self-match neutrality, and stronger-squad preservation.
