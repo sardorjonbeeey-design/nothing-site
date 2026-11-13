@@ -70,7 +70,11 @@ export async function settleDueFixtures(){
 // Runs inside the server process, independent of any request or user session. It sleeps until the next
 // fixture is due (re-checking at least every maxIdleMs) and settles everything overdue at start-up.
 export function startScheduler({maxIdleMs=15000,log=console}={}){
- let timer=null,stopped=false,checked=false;
+ let timer=null,stopped=false,checked=false,inFlight=null;
+ function schedule(delay){
+  if(stopped)return;
+  timer=setTimeout(runTick,delay);timer.unref?.();
+ }
  async function tick(){
   if(stopped)return;
   let delay=maxIdleMs;
@@ -81,8 +85,18 @@ export function startScheduler({maxIdleMs=15000,log=console}={}){
    const next=await requireDb().query("SELECT EXTRACT(EPOCH FROM (MIN(kickoff_at)+make_interval(secs=>$1)-NOW()))*1000 AS ms FROM fixtures WHERE status='scheduled' AND kickoff_at IS NOT NULL",[MATCH_DURATION_SECONDS]);
    if(next.rows[0].ms!==null)delay=Math.max(200,Math.min(maxIdleMs,Number(next.rows[0].ms)+25));
   }catch(error){log.error('Scheduler error',error);delay=5000;}
-  if(!stopped){timer=setTimeout(tick,delay);timer.unref?.();}
+  if(!stopped)schedule(delay);
  }
- tick();
- return {stop(){stopped=true;clearTimeout(timer);}};
+ function runTick(){
+  if(stopped)return Promise.resolve();
+  if(inFlight)return inFlight;
+  inFlight=tick().finally(()=>{inFlight=null;});
+  return inFlight;
+ }
+ runTick();
+ // Shutdown is awaited by the server before its database pool is closed.
+ return {async stop(){
+  stopped=true;clearTimeout(timer);timer=null;
+  if(inFlight)await inFlight;
+ }};
 }
