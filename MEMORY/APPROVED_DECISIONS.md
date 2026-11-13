@@ -21,7 +21,7 @@ Note: decision 3 (accelerated / speed-up view) is superseded for league matches 
 24. APPROVED — 20,000,000 UZS starting budget; 18-player starting squad; squad minimum 13, maximum 26.
 25. SUPERSEDED — Initial player price 30,000,000 × 1.10^(OVR − 80) UZS (replaced by decision 35).
 26. APPROVED — Academy players sell for 50% on their first sale; transfer-market players for 80%. Sold academy players stay on the market.
-27. APPROVED — 750,000 UZS per completed league match; no win or draw bonus; no friendly income.
+27. SUPERSEDED — 750,000 UZS per completed league match; no win or draw bonus; no friendly income. Later decision 36 adds official league result bonuses; friendly income remains zero.
 28. APPROVED — Waiting-list stipend: 750,000 UZS per equivalent league matchday, 18 per season.
 29. APPROVED — Season 2 starts automatically after 2 rest days; the ten league clubs keep their places; waiting clubs keep waiting; clubs keep cash, squads, upgrades and history.
 30. APPROVED — Generated 45–50 OVR players are always available on the market.
@@ -53,3 +53,5 @@ Pending, not approved: real-player database (rights and data source unresolved);
 
 ## Still unapproved
 Exact player tiers, real-player rating formula and database, wages, DP rewards/costs, how waiting clubs enter a league, authentication, hosting and future interface integration.
+
+36. APPROVED — League match-result bonuses: win 250,000 UZS; draw 100,000 UZS to each club; loss 0. These bonuses are additional to the 750,000 UZS league-match income, paid server-side after official settlement exactly once per fixture, and recorded in the money ledger. Friendly matches receive no income.
