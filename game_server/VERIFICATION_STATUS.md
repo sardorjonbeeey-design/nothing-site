@@ -1,3 +1,34 @@
+# Phase 2 progress — core game loop
+
+Updated: 2026-11-13
+Branch: phase-2-core-loop (based on Phase 1 commit 6497bf73c80473782910691c525c48d39eaa6e2c)
+
+## Phase 2A — audit
+- The server already provides the scheduled match loop, automatic settlement, result history, viewed-state handling, league standings and season progression.
+- The existing integration suite covers match settlement, result history, standings, league completion and automatic next-season creation.
+- The client previously loaded game state only on boot or manual refresh; the dashboard did not surface the next scheduled fixture.
+
+## Phase 2B — coherent client loop
+- Added a dashboard next-match panel using the server-provided fixture status and Tashkent kick-off time.
+- Added automatic refresh every 30 seconds while the page is visible, plus refresh on return to the app.
+- Refresh is skipped while the page is hidden, while a form is being edited, or while the result-opening screen is active.
+- A newly settled, unviewed result is opened automatically after a refresh.
+- No server, database, match schedule, settlement, economy or match-engine rules were changed.
+
+### Checks run for this change
+- JavaScript syntax parse: passed.
+- Mock-client flow check: passed — next fixture appears on dashboard; hidden page does not poll; visible refresh detects a new result and opens its result screen.
+
+### Still required — Phase 2C
+- Re-run `npm test`.
+- Re-run the complete integration suite against a disposable local PostgreSQL database.
+- Re-run the mobile browser smoke suite at Pixel 7 and 360 px widths.
+- Confirm the dashboard panel does not overflow and the automatic refresh/result transition works in a real browser.
+
+The checks above do not constitute a real-browser, mobile-device, hosted-database or production test.
+
+---
+
 # Verification status — isolated management candidate
 
 Updated: 2026-11-12 (Phase B, 12 formations, uncommitted work on top of c934cef)

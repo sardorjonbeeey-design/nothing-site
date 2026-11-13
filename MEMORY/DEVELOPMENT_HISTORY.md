@@ -55,3 +55,11 @@ Chronological record. Append entries; do not erase earlier history.
 - New price anchor: 11M UZS at OVR 80, with 1.112× per rating point, rounded to 10,000 UZS. Examples: OVR 60 = 1.32M, 70 = 3.8M, 80 = 11M, 90 = 31.8M.
 - Added migration 005 to reprice existing database rows; updated server formula, unit/integration assertions, mobile smoke price range, balancing and status docs.
 - Tests must be rerun after this change; this edit workflow did not execute the test suite.
+
+
+## 2026-11-13 — Phase 2 core game loop
+- Audited the Phase 1 branch. The server already connected scheduled fixtures, automatic settlement, results, standings and season progression; the client had no automatic refresh and the dashboard did not surface the next fixture.
+- Created isolated branch `phase-2-core-loop` from Phase 1 commit `6497bf73c80473782910691c525c48d39eaa6e2c`.
+- Updated `game_client/app.js`: dashboard next-match panel; refresh every 30 seconds only while visible; refresh on focus/visibility return; automatically show a newly arrived unviewed result.
+- JavaScript syntax and mocked client-flow checks passed. Full unit, PostgreSQL integration and mobile browser tests remain pending.
+- No server, schema, economy, schedule, match engine, production or deployment changes.

@@ -1,6 +1,6 @@
 # Current Status
 
-Last updated: 2026-11-12
+Last updated: 2026-11-13
 Repository: sardorjonbeeey-design/nothing-site
 Branch: zamin-fk-management
 Phase: isolated server + client with scheduled league, seasons and economy; price curve rebalanced on branch, tests pending rerun
@@ -44,3 +44,11 @@ NOT verified: real-time kick-offs and seasons, real phone, real Telegram, Docker
 
 ## Boundaries
 Do not connect the live Telegram Mini App, live bot, existing backend, production or Neon database, supporter economy or existing community systems. No merge, deployment or integration without explicit owner approval.
+
+
+## Phase 2 — Core Game Loop (2026-11-13)
+- Phase 1 (12 formations) is committed on `claude/gallant-clarke-tqser8` at `6497bf73c80473782910691c525c48d39eaa6e2c`.
+- Phase 2A audit: the server-side match, settlement, result, standings and season loop already exists.
+- Phase 2B: branch `phase-2-core-loop` adds a dashboard next-match panel and visible-page automatic refresh; new unviewed results open after refresh.
+- Static syntax and mocked client-flow checks passed. Full unit, PostgreSQL integration and mobile browser checks after this change are still pending (Phase 2C).
+- No merge, deployment, production connection, database change, match-engine change or economy change.
