@@ -6,12 +6,15 @@ Production connection: NONE
 
 ## Phase 3A — formation matchup model — implemented and CI verified
 - Added `src/formation-tactics.js`: role-weighted defence, midfield, width, attack and transition profiles using positional attribute surplus/deficit relative to OVR.
-- Integrated a symmetric matchup adjustment into `src/simulation.js`; the total relative rating swing is capped at 1.5 points.
-- Added `test/formation-tactics.test.js` and updated `test/formations.test.js` to cover positional attributes, all-pairs balance, antisymmetry, self-match neutrality, and stronger-squad preservation.
-- A scratch Node check of the pure matchup function passed syntax, self-match neutrality, antisymmetry and cap assertions.
-- NOT RUN in this session: `npm test`, PostgreSQL integration suite, full all-formation simulation balance run.
-- GitHub Actions workflow added at `.github/workflows/phase3-isolated-tests.yml`; no run was observed.
-- Numeric tactical weights and 1.5-point cap are proposed, not final balance approval.
+- Integrated a symmetric matchup adjustment into `src/simulation.js`; total relative rating swing capped at 1.5 points.
+- Added `test/formation-tactics.test.js` and updated `test/formations.test.js` for positional attributes, all-pairs balance, antisymmetry, self-match neutrality and stronger-squad preservation.
+- GitHub Actions run `43515953300` completed successfully.
+- `npm test`: 80 tests, 79 passed, 0 failed, 1 skipped (DB-dependent integration test skipped in this default run).
+- `npm run test:integration`: 36 tests, 36 passed, 0 failed against disposable PostgreSQL 16.
+- All 12-formation tactical-profile, matchup and full-field balance tests passed.
+- Fixed a pre-existing scheduler shutdown race: `startScheduler().stop()` awaits an in-flight tick; server shutdown awaits scheduler stop before closing the DB pool.
+- Not run: mobile smoke on this Phase 3 branch; longer full-season formation balance using realistic league squads.
+- Numeric tactical weights and the 1.5-point cap remain PROPOSED, not final balance approval.
 
 ## Phase 2C — completion checkpoint supplied by owner
 - Main test suite: 73 passed, 0 failed, 1 skipped.
