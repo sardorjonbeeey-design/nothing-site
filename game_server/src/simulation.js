@@ -1,4 +1,5 @@
 import {analyseLineup} from './formations.js';
+import {formationTacticalProfile,formationTacticalDelta} from './formation-tactics.js';
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const average=(xs)=>xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:45;
 // Owner-approved match model (2026-11-12): the goal share depends on the rating DIFFERENCE on an Elo-style
@@ -26,8 +27,15 @@ function poisson(lambda,rng) {
 }
 export function simulateMatch(homePlayers,awayPlayers,options={}) {
  const rng=options.random||Math.random;
- const homeStrength=squadStrength(homePlayers,options.homeFormation||'4-3-3');
- const awayStrength=squadStrength(awayPlayers,options.awayFormation||'4-3-3');
+ const homeFormation=options.homeFormation||'4-3-3',awayFormation=options.awayFormation||'4-3-3';
+ const homeLineup=lineupStrength(homePlayers,homeFormation),awayLineup=lineupStrength(awayPlayers,awayFormation);
+ const homeTactics=formationTacticalProfile(homeLineup.analysis,homePlayers);
+ const awayTactics=formationTacticalProfile(awayLineup.analysis,awayPlayers);
+ // The tactical matchup is relative and symmetric: it can shift at most 1.5 rating points
+ // between the teams, and swapping home/away reverses the edge.
+ const tacticalDelta=formationTacticalDelta(homeTactics,awayTactics);
+ const homeStrength=clamp(homeLineup.strength+tacticalDelta/2,25,100);
+ const awayStrength=clamp(awayLineup.strength-tacticalDelta/2,25,100);
  const share=goalShare(homeStrength,awayStrength);
  const homeGoals=poisson(0.55+share*1.85,rng);
  const awayGoals=poisson(0.55+(1-share)*1.85,rng);
