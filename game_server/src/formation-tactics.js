@@ -61,12 +61,14 @@ export function formationTacticalProfile(analysis,players) {
         if (candidate) { player=candidate;usedFallback.add(candidate); }
       }
       if (!player) continue;
-      weightedSkill += attributeScore(player,attributes) * weight;
+      // Player attributes average to overall, so use only the positional surplus/deficit here.
+      // This prevents the tactical layer from counting raw squad quality a second time.
+      weightedSkill += (attributeScore(player,attributes) - number(player.overall,50)) * weight;
       roleWeightTotal += weight;
     }
-    // Role coverage matters as well as player quality: scores remain 0–100 and cannot
-    // reward a formation merely for having an extra player in one tactical line.
-    profile[dimension] = roleWeightTotal ? (weightedSkill / roleWeightTotal) * (roleWeightTotal / 11) : 0;
+    // Divide by the full XI, not only the selected roles: adding more of one role cannot
+    // create a free bonus. The score represents positional attributes above/below OVR.
+    profile[dimension] = roleWeightTotal ? weightedSkill / 11 : 0;
   }
   return Object.freeze(profile);
 }
