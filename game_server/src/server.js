@@ -19,7 +19,7 @@ import {awardDevelopmentPoints,startScheduler} from './matches.js';
 import {createPlayerListing,browsePlayerListings,cancelPlayerListing,purchasePlayerListing} from './player-transfers.js';
 import {ratingProfileFor,assertValidRating} from './ratings.js';
 import {ownerActivity,leagueStandings} from './competition.js';
-import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValueUzs,overallFromAttributes,STARTING_BUDGET_UZS,MIN_SQUAD_SIZE,MAX_SQUAD_SIZE} from './economy.js';
+import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValueUzs,overallFromAttributes,STARTING_BUDGET_UZS,MIN_SQUAD_SIZE,MAX_SQUAD_SIZE,STARTING_SQUAD_SIZE,MINIMUM_GOALKEEPERS} from './economy.js';
 
 const db=()=>requireDb();
 const clientRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../game_client');
@@ -194,7 +194,7 @@ async function handle(req,res){
   const r=await db().query('SELECT '+columns+' FROM players WHERE club_id IS NULL AND real_club_key IS NOT NULL AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 500',[maxValue]);
   // The generated 45–50 players are listed separately so they are never pushed out by the 100-row limit.
   const youth=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND origin='generated' AND overall BETWEEN $1 AND $2 ORDER BY position,overall DESC,id LIMIT 60",[YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL]);
-  return json(res,200,{players:r.rows,youth:youth.rows,squadLimits:{min:MIN_SQUAD_SIZE,max:MAX_SQUAD_SIZE}});
+  return json(res,200,{players:r.rows,youth:youth.rows,squadLimits:{min:MIN_SQUAD_SIZE,max:MAX_SQUAD_SIZE,required:STARTING_SQUAD_SIZE,minimumGoalkeepers:MINIMUM_GOALKEEPERS}});
  }
  if(req.method==='GET'&&path==='/api/transfers'){
   const limit=Math.max(1,Math.min(100,Number(url.searchParams.get('limit'))||50));
@@ -206,7 +206,7 @@ async function handle(req,res){
  }
  if(req.method==='POST'&&path==='/api/clubs'){
   const body=await readJson(req);const result=await makeClub(user.id,body);
-  return json(res,201,{club:result.club,squad:result.players,startingBudgetUzs:STARTING_BUDGET_UZS.toString(),requiredSquadSize:18});
+  return json(res,201,{club:result.club,squad:result.players,startingBudgetUzs:STARTING_BUDGET_UZS.toString(),requiredSquadSize:STARTING_SQUAD_SIZE});
  }
  const parts=path.split('/').filter(Boolean);
  if(parts[0]==='api'&&parts[1]==='clubs'&&parts[2]){
