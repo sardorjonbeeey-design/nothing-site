@@ -3,6 +3,7 @@ export const config = {
  databaseUrl: process.env.DATABASE_URL || '',
   expectedDatabaseName: process.env.EXPECTED_DATABASE_NAME || 'zamin_game', webOrigin: process.env.WEB_ORIGIN || '',
  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
+ webAppUrl: process.env.WEB_APP_URL || process.env.RENDER_EXTERNAL_URL || '',
  sessionSecret: process.env.SESSION_SECRET || '',
  superAdminTelegramId: process.env.SUPER_ADMIN_TELEGRAM_ID || '',
  sessionMaxAgeSeconds: Number(process.env.SESSION_MAX_AGE_SECONDS || 86400),
