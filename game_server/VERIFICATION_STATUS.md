@@ -192,3 +192,11 @@ Price rebalance and the 40–90 Uzbek League rating profile are verified on the 
 - The end-to-end transfer scenario passed: listing, browse, purchase, duplicate refusal, ownership transfer, seller/buyer lineup repair and paired ledger consistency. It restores fixture state after assertions.
 - Adversarial concurrent DB tests (simultaneous purchases against one listing, concurrent buyer spend, and listing/cancel races) remain outstanding.
 
+
+
+## Phase 3C — sole-owner super-admin (2026-11-14) — IMPLEMENTED, INTEGRATION VERIFIED
+- Separate admin page /admin, Telegram session auth and server-side exact owner ID gate.
+- Migration 008: admin audit, Gold/VIP entitlements, competition settings; audit DB trigger blocks update/delete.
+- Verified APIs for club/user/player inspection, funds adjustments and ledger, player gifting and lineup repair, entitlements, settings, and audit.
+- CI run 43587396857: unit/default 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. The production owner-ID validation assertion was added in a later commit and is currently under CI.
+- No live database, deployment, merge or live Mini App integration.
