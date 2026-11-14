@@ -113,6 +113,6 @@ Chronological record. Append entries; do not erase earlier history.
 - Server-side admin APIs implement club/user/player inspection, signed UZS budget adjustment (with money ledger), player gift (squad boundary validation and source/recipient lineup repair), Gold/VIP grant/revoke, active entitlement query for the user, JSON competition setting upsert and audit inspection.
 - Every mutation requires a reason and records actor, target, action, timestamp and before/after. No multi-admin enrollment.
 - Added unit/static checks plus PostgreSQL integration coverage for owner/non-owner authorization, funds ledger, Gold grant/revoke, account entitlement access, settings persistence, player gifting/lineup repair, reason requirement, budget floor and immutable audit.
-- CI run 43587396857 passed: unit/default 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. Production Telegram ID format test is included in a subsequent in-progress run.
+- CI run 43587396857 passed: unit/default 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. CI run 43587550239 passed including production Telegram ID format validation: unit/default 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed.
 - Competition setting values are persisted and audited; a stored key only affects game behavior after the related gameplay system explicitly consumes it.
 - No merge, deployment, production DB, bot or live Mini App connection.
