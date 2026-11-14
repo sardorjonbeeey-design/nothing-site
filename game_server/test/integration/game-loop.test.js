@@ -743,8 +743,8 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.ok(homeIndex>=0&&awayIndex>=0);
   await db.query("UPDATE owner_activity_events SET activity_at=NOW()-interval '49 hours' WHERE user_id=(SELECT owner_user_id FROM clubs WHERE id=$1)",[first.home_club_id]);
   await db.query("UPDATE owner_activity_events SET activity_at=NOW()-interval '24 hours' WHERE user_id=(SELECT owner_user_id FROM clubs WHERE id=$1)",[first.away_club_id]);
-  const warning24=await ok(users[awayIndex],'GET',clubPath(awayIndex)+'/activity');
-  assert.equal(warning24.activity.warningLevel,24,'the first warning appears at 24 hours idle');
+  const firstWarning=await ok(users[awayIndex],'GET',clubPath(awayIndex)+'/activity');
+  assert.equal(firstWarning.activity.warningLevel,24,'the first warning appears at 24 hours idle');
   await db.query("UPDATE owner_activity_events SET activity_at=NOW()-interval '46 hours' WHERE user_id=(SELECT owner_user_id FROM clubs WHERE id=$1)",[first.away_club_id]);
   const warning=await ok(users[awayIndex],'GET',clubPath(awayIndex)+'/activity');
   assert.equal(warning.activity.warningLevel,2,'the final warning appears at 46 hours idle');
