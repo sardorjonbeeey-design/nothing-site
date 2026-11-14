@@ -15,6 +15,7 @@ import {repairClubLineup,lineupProblem} from './lineup.js';
 import {formations,FORMATION_IDS,isFormation,bestLineup,FIT_BONUS_MAX,FIT_BONUS_PER_PLAYER} from './formations.js';
 import {lineupStrength} from './simulation.js';
 import {awardDevelopmentPoints,startScheduler} from './matches.js';
+import {createPlayerListing,browsePlayerListings,cancelPlayerListing,purchasePlayerListing} from './player-transfers.js';
 import {ratingProfileFor,assertValidRating} from './ratings.js';
 import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValueUzs,overallFromAttributes,STARTING_BUDGET_UZS,MIN_SQUAD_SIZE,MAX_SQUAD_SIZE} from './economy.js';
 
@@ -115,6 +116,11 @@ async function handle(req,res){
   const youth=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND origin='generated' AND overall BETWEEN $1 AND $2 ORDER BY position,overall DESC,id LIMIT 60",[YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL]);
   return json(res,200,{players:r.rows,youth:youth.rows,squadLimits:{min:MIN_SQUAD_SIZE,max:MAX_SQUAD_SIZE}});
  }
+ if(req.method==='GET'&&path==='/api/transfers'){
+  const limit=Math.max(1,Math.min(100,Number(url.searchParams.get('limit'))||50));
+  const offset=Math.max(0,Math.min(100000,Number(url.searchParams.get('offset'))||0));
+  return json(res,200,{listings:await browsePlayerListings(db(),{limit,offset})});
+ }
  if(req.method==='GET'&&path==='/api/clubs'){
   const r=await db().query('SELECT * FROM clubs WHERE owner_user_id=$1 ORDER BY created_at',[user.id]);return json(res,200,{clubs:r.rows});
  }
@@ -137,6 +143,24 @@ async function handle(req,res){
    return json(res,200,{club:updated});
   }
   if(req.method==='GET'&&parts[3]==='squad')return json(res,200,{players:await clubSquad(clubId)});
+  if(parts[3]==='transfers'){
+   if(req.method==='GET'&&parts.length===4){
+    const r=await db().query("SELECT l.id AS listing_id,l.player_id,l.asking_price_uzs,l.status,l.listed_at,l.closed_at,l.buyer_club_id,p.full_name,p.position,p.overall,p.market_value_uzs FROM player_transfer_listings l JOIN players p ON p.id=l.player_id WHERE l.seller_club_id=$1 ORDER BY l.listed_at DESC,l.id DESC LIMIT 100",[clubId]);
+    return json(res,200,{listings:r.rows});
+   }
+   if(req.method==='POST'&&parts.length===4){
+    const body=await readJson(req),playerId=uuid(body.playerId,'Player ID');
+    const result=await inTransaction(client=>createPlayerListing(client,{clubId,userId:user.id,playerId,askingPriceUzs:body.askingPriceUzs}));
+    return json(res,201,result);
+   }
+   if(req.method==='POST'&&parts.length===6&&['cancel','buy'].includes(parts[5])){
+    const listingId=uuid(parts[4],'Listing ID'),action=parts[5];
+    const result=await inTransaction(client=>action==='cancel'
+     ?cancelPlayerListing(client,{clubId,userId:user.id,listingId})
+     :purchasePlayerListing(client,{buyerClubId:clubId,userId:user.id,listingId}));
+    return json(res,200,result);
+   }
+  }
   if(req.method==='GET'&&parts[3]==='lineup'){const r=await db().query('SELECT * FROM lineups WHERE club_id=$1',[clubId]);return json(res,200,{lineup:r.rows[0]||null});}
   if(req.method==='GET'&&parts[3]==='league'){
    // The club's latest season, plus the final table of the season before it (shown until the new season gets going).
