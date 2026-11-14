@@ -63,3 +63,32 @@ CREATE TABLE IF NOT EXISTS analytics_events (
 );
 CREATE INDEX IF NOT EXISTS analytics_events_created_idx ON analytics_events(created_at DESC);
 CREATE INDEX IF NOT EXISTS analytics_events_name_idx ON analytics_events(event_name,created_at DESC);
+
+-- Stable invite codes and opt-in notification preferences for Telegram-first growth.
+ALTER TABLE game_users
+  ADD COLUMN IF NOT EXISTS referral_code VARCHAR(12);
+UPDATE game_users
+SET referral_code=UPPER(SUBSTRING(ENCODE(GEN_RANDOM_BYTES(6),'hex') FROM 1 FOR 10))
+WHERE referral_code IS NULL;
+ALTER TABLE game_users
+  ALTER COLUMN referral_code SET DEFAULT UPPER(SUBSTRING(ENCODE(GEN_RANDOM_BYTES(6),'hex') FROM 1 FOR 10)),
+  ALTER COLUMN referral_code SET NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS game_users_referral_code_idx ON game_users(referral_code);
+
+CREATE TABLE IF NOT EXISTS telegram_notification_preferences (
+  telegram_user_id TEXT PRIMARY KEY,
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS pending_referrals (
+  referred_telegram_user_id TEXT PRIMARY KEY,
+  referrer_user_id UUID NOT NULL REFERENCES game_users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS referrals (
+  referred_user_id UUID PRIMARY KEY REFERENCES game_users(id) ON DELETE CASCADE,
+  referrer_user_id UUID NOT NULL REFERENCES game_users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (referred_user_id <> referrer_user_id)
+);
+CREATE INDEX IF NOT EXISTS referrals_referrer_idx ON referrals(referrer_user_id,created_at DESC);
