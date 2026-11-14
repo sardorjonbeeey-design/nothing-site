@@ -30,3 +30,12 @@ CREATE TABLE IF NOT EXISTS competition_settings (
  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
  reason VARCHAR(500) NOT NULL
 );
+
+-- Keep the audit history append-only through the application database role.
+CREATE OR REPLACE FUNCTION prevent_admin_audit_mutation() RETURNS trigger AS $$
+BEGIN
+ RAISE EXCEPTION 'admin_audit_log is append-only';
+END $$ LANGUAGE plpgsql;
+DROP TRIGGER IF EXISTS admin_audit_immutable ON admin_audit_log;
+CREATE TRIGGER admin_audit_immutable BEFORE UPDATE OR DELETE ON admin_audit_log
+ FOR EACH ROW EXECUTE FUNCTION prevent_admin_audit_mutation();
