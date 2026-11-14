@@ -123,6 +123,7 @@ async function handle(req,res){
    return json(res,200,{players:rows});
   }
   if(req.method==='GET'&&path==='/api/admin/settings')return json(res,200,{settings:(await db().query('SELECT setting_key,setting_value,updated_at,reason FROM competition_settings ORDER BY setting_key')).rows});
+  if(req.method==='GET'&&path==='/api/admin/entitlements')return json(res,200,{entitlements:(await db().query('SELECT e.user_id,e.feature,e.granted_at,e.revoked_at,e.reason,e.revoke_reason,u.telegram_user_id,u.username,u.first_name FROM user_entitlements e JOIN game_users u ON u.id=e.user_id ORDER BY e.granted_at DESC')).rows});
   if(req.method==='GET'&&path==='/api/admin/audit'){
    const limit=Math.max(1,Math.min(100,Number(url.searchParams.get('limit'))||50));
    return json(res,200,{entries:(await db().query('SELECT id,actor_telegram_user_id,target_type,target_id,action,before_after,reason,created_at FROM admin_audit_log ORDER BY created_at DESC,id DESC LIMIT $1',[limit])).rows});
@@ -181,6 +182,7 @@ async function handle(req,res){
   }
   throw new HttpError(404,'Admin route not found');
  }
+ if(req.method==='GET'&&path==='/api/account/entitlements')return json(res,200,{entitlements:(await db().query('SELECT feature,granted_at,reason FROM user_entitlements WHERE user_id=$1 AND revoked_at IS NULL ORDER BY feature',[user.id])).rows});
 
  if(req.method==='POST'&&path==='/api/uploads/crest'){if(!rateLimit(clientIp(req)+':crest',10))throw new HttpError(429,'Too many crest uploads');const body=await readJson(req,3_100_000);const crestUrl=await saveCrest(body.dataUrl);return json(res,201,{crestUrl});}
  if(req.method==='GET'&&path==='/api/market'){
