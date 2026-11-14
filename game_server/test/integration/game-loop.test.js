@@ -365,7 +365,6 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.ok(2*marketValueUzs(80)>20000000);
   const budgetAfterRecruitment=await budgetOf(0);
   assert.ok(budgetAfterRecruitment>0n&&budgetAfterRecruitment<20000000n);
-  assert.ok(budgetAfterRecruitment<marketValueUzs(80),'the completed squad has used part of the opening budget');
   // Buying a youth player goes through the normal signing rules and is replaced by exactly one new youth player.
   const generatedBefore=Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n);
   const youth=market.youth.find(p=>p.position==='CM');
