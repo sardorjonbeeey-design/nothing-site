@@ -575,12 +575,21 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
  });
 
  await t.test('concurrent transfer purchases cannot double-sell or overspend a buyer',async()=>{
-  const snapshot=async(indices)=>{
-   const out={budgets:{},lineups:{},players:{}};
+  const roster=(await db.query('SELECT c.id,COUNT(p.id)::int AS squad_size,c.budget_uzs FROM clubs c LEFT JOIN players p ON p.club_id=c.id WHERE c.id=ANY($1::uuid[]) GROUP BY c.id ORDER BY squad_size DESC,c.id',[clubs.slice(0,10).map(c=>c.id)])).rows;
+  const sellers=roster.filter(x=>x.squad_size>13),buyers=roster.filter(x=>x.squad_size<=24&&BigInt(x.budget_uzs)>1000000n);
+  const sellerA=sellers[0],sellerB=sellers.find(x=>x.id!==sellerA.id);
+  const buyerA=buyers.find(x=>x.id!==sellerA.id&&x.id!==sellerB.id);
+  const buyerB=buyers.find(x=>x.id!==sellerA.id&&x.id!==sellerB.id&&x.id!==buyerA.id);
+  assert.ok(sellerA&&sellerB&&buyerA&&buyerB,'test has two eligible sellers and two eligible buyers');
+  const indexFor=id=>clubs.findIndex(c=>c.id===id);
+  const seller1=indexFor(sellerA.id),seller2=indexFor(sellerB.id),buyer1=indexFor(buyerA.id),buyer2=indexFor(buyerB.id);
+  const indices=[seller1,seller2,buyer1,buyer2];
+  const snapshot=async()=>{
+   const out={budgets:{},lineups:{}};
    for(const i of indices){out.budgets[i]=await budgetOf(i);out.lineups[i]=await one('SELECT formation,starters,substitutes FROM lineups WHERE club_id=$1',[clubs[i].id]);}
    return out;
   };
-  const restore=async(indices,snap,playerRows,listings)=>{
+  const restore=async(snap,playerRows,listings)=>{
    for(const p of playerRows)await db.query('UPDATE players SET club_id=$2,first_sale_done=$3 WHERE id=$1',[p.id,p.club_id,p.first_sale_done]);
    for(const i of indices){
     await db.query('UPDATE clubs SET budget_uzs=$2 WHERE id=$1',[clubs[i].id,snap.budgets[i].toString()]);
@@ -595,43 +604,43 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
 
   // Two buyers race for one listing: exactly one transfer may commit.
   {
-   const indices=[0,1,2],snap=await snapshot(indices);
-   const player=(await ok(users[0],'GET',clubPath(0)+'/squad')).players.find(p=>p.position!=='GK');
+   const snap=await snapshot();
+   const player=(await ok(users[seller1],'GET',clubPath(seller1)+'/squad')).players.find(p=>p.position!=='GK');
    const before=await one('SELECT club_id,first_sale_done FROM players WHERE id=$1',[player.id]);
-   const listing=(await ok(users[0],'POST',clubPath(0)+'/transfers',{playerId:player.id,askingPriceUzs:'1000000'})).listing;
-   const outcomes=await Promise.all([1,2].map(i=>call(users[i],'POST',clubPath(i)+'/transfers/'+listing.id+'/buy',{})));
+   const listing=(await ok(users[seller1],'POST',clubPath(seller1)+'/transfers',{playerId:player.id,askingPriceUzs:'1000000'})).listing;
+   const outcomes=await Promise.all([buyer1,buyer2].map(i=>call(users[i],'POST',clubPath(i)+'/transfers/'+listing.id+'/buy',{})));
    assert.equal(outcomes.filter(x=>x.status===200).length,1,'only one buyer succeeds');
    assert.equal(outcomes.filter(x=>x.status===409).length,1,'the second buyer sees a closed listing');
-   const winner=outcomes[0].status===200?1:2;
+   const winner=outcomes[0].status===200?buyer1:buyer2;
    assert.equal((await one('SELECT status,buyer_club_id FROM player_transfer_listings WHERE id=$1',[listing.id])).status,'sold');
    assert.equal((await one('SELECT club_id FROM players WHERE id=$1',[player.id])).club_id,clubs[winner].id);
    assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM player_transfer_history WHERE listing_id=$1',[listing.id])).n),1);
-   await restore(indices,snap,[{id:player.id,...before}],[{listingId:listing.id,playerId:player.id}]);
+   await restore(snap,[{id:player.id,...before}],[{listingId:listing.id,playerId:player.id}]);
    await assertLedgersConsistent();
   }
 
   // Two different sellers race to spend the same buyer balance. Each listing is individually affordable,
   // but the combined asking prices exceed the buyer's available funds; only one can commit.
   {
-   const indices=[0,1,2],snap=await snapshot(indices),buyerBudget=snap.budgets[1],price=(buyerBudget/2n+1n).toString();
+   const snap=await snapshot(),buyerBudget=snap.budgets[buyer1],price=(buyerBudget/2n+1n).toString();
    const sellerPlayers=[];
-   for(const i of [0,2]){
+   for(const i of [seller1,seller2]){
     const p=(await ok(users[i],'GET',clubPath(i)+'/squad')).players.find(x=>x.position!=='GK');
     const before=await one('SELECT club_id,first_sale_done FROM players WHERE id=$1',[p.id]);
     const listing=(await ok(users[i],'POST',clubPath(i)+'/transfers',{playerId:p.id,askingPriceUzs:price})).listing;
     sellerPlayers.push({id:p.id,...before,listingId:listing.id});
    }
-   const outcomes=await Promise.all(sellerPlayers.map(item=>call(users[1],'POST',clubPath(1)+'/transfers/'+item.listingId+'/buy',{})));
+   const outcomes=await Promise.all(sellerPlayers.map(item=>call(users[buyer1],'POST',clubPath(buyer1)+'/transfers/'+item.listingId+'/buy',{})));
    assert.equal(outcomes.filter(x=>x.status===200).length,1,'one purchase fits the buyer budget');
    assert.equal(outcomes.filter(x=>x.status===400).length,1,'the second purchase is refused for insufficient funds');
    const winner=sellerPlayers[outcomes.findIndex(x=>x.status===200)];
-   assert.equal((await one('SELECT budget_uzs FROM clubs WHERE id=$1',[clubs[1].id])).budget_uzs,(buyerBudget-BigInt(price)).toString());
-   assert.equal((await one('SELECT club_id FROM players WHERE id=$1',[winner.id])).club_id,clubs[1].id);
+   assert.equal((await one('SELECT budget_uzs FROM clubs WHERE id=$1',[clubs[buyer1].id])).budget_uzs,(buyerBudget-BigInt(price)).toString());
+   assert.equal((await one('SELECT club_id FROM players WHERE id=$1',[winner.id])).club_id,clubs[buyer1].id);
    for(const item of sellerPlayers){
     const listing=await one('SELECT status FROM player_transfer_listings WHERE id=$1',[item.listingId]);
     assert.equal(listing.status,item.id===winner.id?'sold':'listed');
    }
-   await restore(indices,snap,sellerPlayers,sellerPlayers.map(item=>({listingId:item.listingId,playerId:item.id})));
+   await restore(snap,sellerPlayers,sellerPlayers.map(item=>({listingId:item.listingId,playerId:item.id})));
    await assertLedgersConsistent();
   }
  });
