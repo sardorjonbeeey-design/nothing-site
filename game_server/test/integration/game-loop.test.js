@@ -131,7 +131,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
  });
 
  await t.test('server starts, is ready and serves the game client',async()=>{
-  server=await startServer(childEnv());logs.push(server.log);
+  server=await startServer(childEnv({SUPER_ADMIN_TELEGRAM_ID:'dev-1'}));logs.push(server.log);
   assert.equal((await call(null,'GET','/health')).status,200);
   const ready=await call(null,'GET','/ready');assert.equal(ready.status,200);assert.equal(ready.data.seeded,true);
   for(const [route,type] of [['/','text/html'],['/index.html','text/html'],['/app.js','text/javascript'],['/styles.css','text/css'],['/config.js','text/javascript']]){
@@ -934,6 +934,33 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   await assertLedgersConsistent();await assertLineupValid(0);
  });
 
+ await t.test('single-owner super-admin routes enforce identity and audit admin mutations',async()=>{
+  const owner=users[0],other=users[1];
+  assert.equal((await call(null,'GET','/admin')).status,200);
+  assert.equal((await call(null,'GET','/admin.js')).status,200);
+  assert.equal((await call(owner,'GET','/api/admin/overview')).status,200);
+  assert.equal((await call(other,'GET','/api/admin/overview')).status,403);
+  const clubId=clubs[0].id;
+  const before=await budgetOf(0);
+  const funds=await ok(owner,'POST','/api/admin/funds',{clubId,amountUzs:'123456',reason:'integration admin adjustment'});
+  assert.equal(BigInt(funds.budgetUzs),before+123456n);
+  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM money_ledger WHERE club_id=$1 AND reason='admin_adjustment'",[clubId])).n),1);
+  const recipient=(await one("SELECT id FROM game_users WHERE telegram_user_id='dev-2'")).id;
+  await ok(owner,'POST','/api/admin/entitlement',{userId:recipient,feature:'gold',active:true,reason:'integration gold grant'});
+  assert.equal((await one("SELECT revoked_at FROM user_entitlements WHERE user_id=$1 AND feature='gold'",[recipient])).revoked_at,null);
+  await ok(owner,'POST','/api/admin/entitlement',{userId:recipient,feature:'gold',active:false,reason:'integration gold revoke'});
+  assert.ok((await one("SELECT revoked_at FROM user_entitlements WHERE user_id=$1 AND feature='gold'",[recipient])).revoked_at);
+  await ok(owner,'POST','/api/admin/competition-setting',{key:'integration.reward.top1',value:{uzs:5000000},reason:'integration reward setting'});
+  assert.deepEqual((await one("SELECT setting_value FROM competition_settings WHERE setting_key='integration.reward.top1'")).setting_value,{uzs:5000000});
+  const freePlayer=(await one("SELECT id FROM players WHERE club_id IS NULL AND origin='market' ORDER BY id LIMIT 1")).id;
+  await ok(owner,'POST','/api/admin/player-gift',{playerId:freePlayer,targetClubId:clubId,reason:'integration player gift'});
+  assert.equal((await one('SELECT club_id FROM players WHERE id=$1',[freePlayer])).club_id,clubId);
+  const actions=(await db.query("SELECT action FROM admin_audit_log WHERE actor_telegram_user_id='dev-1' ORDER BY id")).rows.map(x=>x.action);
+  assert.ok(actions.includes('funds_adjusted'));assert.ok(actions.includes('gold_granted'));assert.ok(actions.includes('gold_revoked'));assert.ok(actions.includes('setting_updated'));assert.ok(actions.includes('player_gifted'));
+  assert.equal((await call(owner,'POST','/api/admin/funds',{clubId,amountUzs:'-999999999999999',reason:'negative test'})).status,409);
+  assert.equal((await call(owner,'POST','/api/admin/funds',{clubId,amountUzs:'1',reason:''})).status,400);
+  await assertLedgersConsistent();await assertLineupValid(0);
+ });
  await t.test('no request or scheduler run produced a server error',()=>{
   for(const log of logs)assert.doesNotMatch(log(),/Error/);
  });
