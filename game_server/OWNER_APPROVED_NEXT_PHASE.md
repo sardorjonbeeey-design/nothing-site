@@ -1,6 +1,6 @@
 # Owner-approved next phase — competition, transfers and administration
 
-Status: Phase 3A formation matchup model, Phase 3B player-to-player transfer market, and Phase 3C sole-owner super-admin are implemented on `zamin-management-isolated`; longer formation balance review and remaining competition rules/rewards are pending.
+Status: Phase 3A formation matchup model, Phase 3B player-to-player transfer market, Phase 3C sole-owner super-admin, inactivity forfeits, match bonuses, and season prizes are implemented on `zamin-management-isolated`; final verification and longer formation balance review remain.
 Scope: isolated ZAMIN FK Management game only. Do not connect to the live Mini App, production backend, bot, or live database.
 
 ## 1. Competition integrity and match outcomes
@@ -13,11 +13,15 @@ Scope: isolated ZAMIN FK Management game only. Do not connect to the live Mini A
 ## 2. Club-owner inactivity
 
 - The 48-hour inactivity rule applies to each club's owner/manager, not the sole super-admin.
-- If an owner has had no qualifying active session for 48 consecutive hours at the scheduled kickoff, that club forfeits that fixture automatically.
-- Apply the forfeit server-side and idempotently; never rely on the client being open.
-- Record a distinct forfeit reason (owner inactivity) in the fixture/result history and financial ledger.
-- Do not apply repeated losses merely because an owner remains inactive: assess the rule at each scheduled fixture.
-- The qualifying definition of activity, warning/notification timing, and both-sides-inactive handling must be finalized before coding. Background polling alone must not keep an owner active.
+- Qualifying activity is an authenticated, user-initiated state-changing game request. Passive GET requests, dashboard refreshes, and background polling do not count.
+- Activity events are stored with timestamps. Eligibility is evaluated against the scheduled kick-off timestamp (not the later settlement time), and activity after kick-off cannot erase a forfeiture already earned.
+- If an owner has had no qualifying activity for 48 consecutive hours at scheduled kick-off, that club forfeits that fixture automatically.
+- Show an in-app warning at 24 hours idle and a final warning at 46 hours idle (2 hours remaining).
+- One inactive owner: the active opponent wins 3–0 and receives the normal win bonus.
+- Both owners inactive: 0–0 double forfeit; both clubs record a loss, neither receives league points or a match-result bonus.
+- Apply the forfeit server-side and idempotently; record the forfeit reason in fixture events/result history.
+- Assess each fixture independently. Remaining inactive does not create extra losses between scheduled fixtures.
+- Implemented in `src/competition.js`, `src/matches.js`, `/api/clubs/:id/activity`, and the club dashboard warning panel; migration `009_competition_rewards.sql` stores activity history.
 
 ## 3. Formation choices
 
@@ -78,19 +82,23 @@ Formations must alter the actual match simulation, not only the pitch display. E
 - Rewards are paid by the server after official settlement, exactly once per fixture, and written to the money ledger.
 - These are additional to the existing 750,000 UZS league-match income unless the owner later changes that rule.
 
-### Season top-three rewards — requested, amounts not yet approved
-- Reward 1st, 2nd and 3rd place at the end of the single starting league.
-- Exact prize amounts and tie-breaker policy need owner confirmation before implementation.
-- Pay once after the final standings are settled; use an idempotent season-reward record.
+### Season top-three rewards — owner-approved and implemented
+- 1st: 10,000,000 UZS.
+- 2nd: 7,000,000 UZS.
+- 3rd: 5,000,000 UZS.
+- Standings order: points, goal difference, goals scored, head-to-head points, then head-to-head goal difference.
+- Head-to-head figures are calculated among clubs tied on the first three criteria.
+- If clubs remain tied after all criteria, they share the tied positions and split the combined prize money for those positions equally. Any indivisible UZS remainder is distributed one so'm at a time in deterministic standings order.
+- A tie extending beyond 3rd place shares only the prize pool for the top-three positions occupied by that tie.
+- Pay once after the season is complete. `season_prize_payments` is unique by league and club; each payment is ledgered as `season_prize`.
 
 ## 7. Remaining delivery order
 
 1. Re-run the pending price-rebalance migrations and complete test suite on the current isolated branch; review proposed formation coefficients and perform longer realistic full-season balance simulations.
-2. Finalize the remaining inactivity edge cases and top-three prize amounts/tie-break policy.
-3. Implement the owner-approved match bonuses and finalized inactivity forfeits/season payouts.
-4. Run adversarial tests for concurrent transfers, duplicate rewards, scheduler restarts, inactive owners, both owners inactive, and economy balance.
+2. Add and pass adversarial tests for concurrent transfers, duplicate rewards, scheduler restarts, single/double inactivity forfeits, tie-split payouts, and economy balance.
+3. Run longer realistic full-season formation balance simulations and review the proposed tactical coefficients before any release.
 
-Completed Phase 3 systems: formation tactical matchup model (3A), player-to-player market (3B), sole-owner super-admin (3C).
+Completed Phase 3 systems: formation tactical matchup model (3A), player-to-player market (3B), sole-owner super-admin (3C), inactivity forfeits, match bonuses, standings tie-breaks and season prizes.
 
 ## Safety boundary
 
