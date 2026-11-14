@@ -274,7 +274,7 @@ async function handle(req,res){
    if(typeof body.formation!=='string'||!isFormation(body.formation))throw new HttpError(400,'Unsupported formation');
    const formation=body.formation,subs=body.substitutes===undefined?[]:body.substitutes;
    if(!Array.isArray(body.starters)||body.starters.length!==11)throw new HttpError(400,'Select exactly 11 unique starters');
-   if(!Array.isArray(subs)||subs.length!==7)throw new HttpError(400,'Select exactly seven substitutes');
+   if(!Array.isArray(subs)||subs.length>7)throw new HttpError(400,'Select no more than seven substitutes');
    const starters=body.starters.map(id=>uuid(id,'Player ID').toLowerCase()),bench=subs.map(id=>uuid(id,'Player ID').toLowerCase());
    if(new Set(starters).size!==11)throw new HttpError(400,'Select exactly 11 unique starters');
    if(new Set(bench).size!==bench.length||bench.some(id=>starters.includes(id)))throw new HttpError(400,'A player can be named only once in a lineup');
@@ -286,9 +286,6 @@ async function handle(req,res){
     const saved=(await client.query('SELECT formation,starters FROM lineups WHERE club_id=$1 FOR UPDATE',[clubId])).rows[0]||null;
     const problem=lineupProblem(formation,starters,squad,saved);
     if(problem)throw new HttpError(400,problem);
-    if(squad.length<18)throw new HttpError(400,'Recruit at least 18 players before confirming your team');
-    if(squad.filter(p=>p.position==='GK').length<2)throw new HttpError(400,'Your 18-player squad must include at least two goalkeepers');
-    if(starters.concat(bench).length!==18)throw new HttpError(400,'Your matchday team must contain 11 starters and seven substitutes');
     await client.query('INSERT INTO lineups(club_id,formation,starters,substitutes,updated_at) VALUES($1,$2,$3,$4,NOW()) ON CONFLICT(club_id) DO UPDATE SET formation=EXCLUDED.formation,starters=EXCLUDED.starters,substitutes=EXCLUDED.substitutes,updated_at=NOW()',[clubId,formation,starters,bench]);
     await ensureLeague(client);
     return lineupReport(formation,starters.map(id=>owned.get(id)));
