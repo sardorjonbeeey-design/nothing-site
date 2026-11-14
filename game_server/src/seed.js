@@ -1,5 +1,5 @@
 import {requireDb,assertIsolatedDatabase} from './db.js';
-import {starterPlayers} from './catalog.js';
+import {fictionalMarketPlayers} from './catalog.js';
 import {insertPlayer,ensureYouthSupply} from './players.js';
 const db=requireDb();
 try{
@@ -7,7 +7,7 @@ try{
  const client=await db.connect();
  try{
   await client.query('BEGIN');
-  for(const p of starterPlayers) await insertPlayer(client,p);
+  for(const p of fictionalMarketPlayers) await insertPlayer(client,p);
   await ensureYouthSupply(client);
   await client.query('COMMIT');
  }catch(error){await client.query('ROLLBACK');throw error;}
@@ -20,5 +20,5 @@ try{
   ['clean_sheet','Shutout','Keep a clean sheet','clean_sheets',1,8,'season']
  ];
  for(const m of missions)await db.query('INSERT INTO missions(id,title,description,metric,target,reward_dp,cadence) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(id) DO NOTHING',m);
- console.log('Seeded '+starterPlayers.length+' real Super League players and mission templates.');
+ console.log('Seeded '+fictionalMarketPlayers.length+' fictional market players and mission templates.');
 }finally{await db.end();}
