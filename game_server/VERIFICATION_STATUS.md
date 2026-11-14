@@ -188,5 +188,7 @@ Price rebalance and the 40–90 Uzbek League rating profile are verified on the 
 - Server enforces seller ownership, squad minimum/maximum, minimum goalkeeper retention, buyer affordability, and active-listing state; transaction performs buyer debit, seller credit, player ownership update and ledger/history writes atomically.
 - Listing row is locked before both club rows in purchases; club rows are locked in sorted ID order to serialize buyer spending. Cancellation uses listing-first lock ordering. Partial unique index prevents concurrent active duplicate listings.
 - Database trigger blocks the pre-existing sell-to-market endpoint from transferring out a player who remains actively listed.
-- Tests have not been run/observed in CI yet. No claim of verification. Adversarial concurrent DB tests remain outstanding.
+- GitHub Actions run `43585008300` passed: `npm test` — 85 passed, 0 failed, 1 skipped; PostgreSQL integration — 37 passed, 0 failed, 0 skipped.
+- The end-to-end transfer scenario passed: listing, browse, purchase, duplicate refusal, ownership transfer, seller/buyer lineup repair and paired ledger consistency. It restores fixture state after assertions.
+- Adversarial concurrent DB tests (simultaneous purchases against one listing, concurrent buyer spend, and listing/cancel races) remain outstanding.
 
