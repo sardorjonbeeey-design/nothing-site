@@ -17,6 +17,7 @@ import {lineupStrength} from './simulation.js';
 import {awardDevelopmentPoints,startScheduler} from './matches.js';
 import {createPlayerListing,browsePlayerListings,cancelPlayerListing,purchasePlayerListing} from './player-transfers.js';
 import {ratingProfileFor,assertValidRating} from './ratings.js';
+import {ownerActivity,leagueStandings} from './competition.js';
 import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValueUzs,overallFromAttributes,STARTING_BUDGET_UZS,MIN_SQUAD_SIZE,MAX_SQUAD_SIZE} from './economy.js';
 
 const db=()=>requireDb();
@@ -106,6 +107,8 @@ async function handle(req,res){
   const body=await readJson(req);return json(res,200,await telegramLogin(body.initData));
  }
  const user=await authenticate(req);
+ // Only explicit authenticated state-changing requests count as owner activity; GET polling never resets inactivity.
+ if(req.method==='POST'&&!path.startsWith('/api/admin'))await db().query('UPDATE game_users SET last_seen_at=NOW() WHERE id=$1',[user.id]);
  if(path.startsWith('/api/admin')){
   if(!config.superAdminTelegramId||String(user.telegramUserId)!==String(config.superAdminTelegramId))throw new HttpError(403,'Super-admin access denied');
   const audit=async(client,{targetType,targetId,action,before,after,reason})=>{
@@ -210,7 +213,7 @@ async function handle(req,res){
  if(parts[0]==='api'&&parts[1]==='clubs'&&parts[2]){
   const clubId=uuid(parts[2],'Club ID');
   const club=await ownedClub(db(),clubId,user.id);
-  if(req.method==='GET'&&parts.length===3)return json(res,200,{club});
+  if(req.method==='GET'&&parts.length===3)return json(res,200,{club,activity:await ownerActivity(db(),clubId)});
   if(req.method==='POST'&&parts[3]==='identity'){
    const body=await readJson(req),name=safeString(body.name,28,'Club name'),shortName=safeString(body.shortName,5,'Short name').toUpperCase();
    if(!/^[A-Z0-9]{2,5}$/.test(shortName))throw new HttpError(400,'Short name must contain 2–5 letters or numbers');
@@ -220,6 +223,7 @@ async function handle(req,res){
    const updated=await inTransaction(async client=>{await ownedClub(client,clubId,user.id,true);return (await client.query('UPDATE clubs SET name=$2,short_name=$3,primary_colour=$4,secondary_colour=$5,crest_url=$6 WHERE id=$1 RETURNING *',[clubId,name,shortName,primary,secondary,crest])).rows[0];});
    return json(res,200,{club:updated});
   }
+  if(req.method==='GET'&&parts[3]==='activity')return json(res,200,{activity:await ownerActivity(db(),clubId)});
   if(req.method==='GET'&&parts[3]==='squad')return json(res,200,{players:await clubSquad(clubId)});
   if(parts[3]==='transfers'){
    if(req.method==='GET'&&parts.length===4){
@@ -243,7 +247,7 @@ async function handle(req,res){
   if(req.method==='GET'&&parts[3]==='league'){
    // The club's latest season, plus the final table of the season before it (shown until the new season gets going).
    const seasons=await db().query('SELECT l.id,l.season_number,l.status,l.starts_on::text AS starts_on FROM leagues l JOIN league_members lm ON lm.league_id=l.id WHERE lm.club_id=$1 AND l.starts_on IS NOT NULL ORDER BY l.season_number DESC LIMIT 2',[clubId]);
-   const table=async league=>(await db().query('SELECT lm.*,c.name,c.short_name,c.primary_colour,c.crest_url FROM league_members lm JOIN clubs c ON c.id=lm.club_id WHERE lm.league_id=$1 ORDER BY lm.points DESC,(lm.goals_for-lm.goals_against) DESC,lm.goals_for DESC,c.name,c.id',[league.id])).rows;
+   const table=async league=>leagueStandings(db(),league.id);
    const [current,previous]=seasons.rows;
    const leagueExists=(await db().query('SELECT 1 FROM leagues WHERE starts_on IS NOT NULL LIMIT 1')).rowCount>0;
    return json(res,200,{leagueExists,table:current?await table(current):[],season:current?{number:current.season_number,status:current.status,startsOn:current.starts_on}:null,
