@@ -178,7 +178,7 @@ Headless Chromium, Pixel 7 emulation and a 360 px viewport. Newly covered: 20,00
 - Formation fit still moves strength by up to ±4, which under the new model is worth about as much as 4 overall.
 
 ## Release status
-Price rebalance and the 40–90 Uzbek League rating profile are verified on the isolated branch; all suites pass. The 12 formations are implemented and verified locally but not committed. Not production-tested, not deployed, not connected to the existing Mini App or any live database.
+Phase 3A–3C and the competition rules/rewards are committed on `zamin-management-isolated`. Latest successful CI run `43590707653`: 93 unit/default tests passed, 0 failed, 1 skipped; PostgreSQL integration 40/40 passed. A 120-season, 10-club simulation with balanced 18-player squads verifies formation points-per-game spread below 0.18. Not production-tested or deployed; no connection to the existing Mini App, bot or production database. A separate Phase 3 iPhone/Telegram mobile smoke run remains outstanding.
 
 ## Phase 3B — peer-to-peer transfer market (2026-11-14) — IMPLEMENTED, CI VERIFIED
 - New migration: `db/007_player_to_player_transfers.sql`.
@@ -190,7 +190,7 @@ Price rebalance and the 40–90 Uzbek League rating profile are verified on the 
 - Database trigger blocks the pre-existing sell-to-market endpoint from transferring out a player who remains actively listed.
 - GitHub Actions run `43585008300` passed: `npm test` — 85 passed, 0 failed, 1 skipped; PostgreSQL integration — 37 passed, 0 failed, 0 skipped.
 - The end-to-end transfer scenario passed: listing, browse, purchase, duplicate refusal, ownership transfer, seller/buyer lineup repair and paired ledger consistency. It restores fixture state after assertions.
-- Adversarial concurrent DB tests (simultaneous purchases against one listing, concurrent buyer spend, and listing/cancel races) remain outstanding.
+- Adversarial concurrent DB tests now pass: two buyers racing one listing cannot double-buy; concurrent purchases against two listings cannot overspend one buyer's balance. Listing/cancel race coverage remains limited to transactional lock-order review plus existing cancel/purchase state tests.
 
 
 
@@ -200,3 +200,14 @@ Price rebalance and the 40–90 Uzbek League rating profile are verified on the 
 - Verified APIs for club/user/player inspection, funds adjustments and ledger, player gifting and lineup repair, entitlements, settings, and audit.
 - CI run 43587396857: unit/default 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. Follow-up CI run 43587550239 passed, including the production owner-ID validation assertion: unit/default 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed.
 - No live database, deployment, merge or live Mini App integration.
+
+## Phase 3D — inactivity, match bonuses, standings and season prizes (2026-11-14) — IMPLEMENTED, CI VERIFIED
+- Migration 009 adds owner activity event history and idempotent season prize payment records; readiness checks require both tables.
+- Only successful authenticated state-changing POST requests count as owner activity. GET polling, dashboard refreshes and rejected requests do not.
+- Activity is evaluated as of the scheduled kick-off. One inactive owner loses 0–3; both inactive owners produce a 0–0 double forfeit, both record a loss and neither gets points or a result bonus.
+- Club dashboard warnings appear at 24h and 46h idle. API: GET /api/clubs/:clubId/activity.
+- Match bonuses: win 250,000 UZS, draw 100,000 UZS each, loss 0; double inactivity forfeit pays no result bonus. Additional to 750,000 UZS league income.
+- Season prizes: 1st 10M, 2nd 7M, 3rd 5M UZS. Standings order: points, GD, GF, head-to-head points, head-to-head GD. Remaining ties split the combined occupied prize slots equally; remainder is assigned deterministically.
+- Tests cover warning thresholds, single/double forfeits at scheduled kick-off, bonus ledgering, top-three prize pool, tie splits, idempotent payouts after scheduler restarts, concurrent transfers and full-season formation balance.
+- Latest CI run 43590707653: 93 passed, 0 failed, 1 skipped; PostgreSQL integration 40/40 passed.
+- Activation is still closed until the isolated runtime has SUPER_ADMIN_TELEGRAM_ID set to the owner's numeric Telegram user ID and migrations 008 and 009 are applied. No merge, deployment or production connection.
