@@ -180,7 +180,7 @@ Headless Chromium, Pixel 7 emulation and a 360 px viewport. Newly covered: 20,00
 ## Release status
 Price rebalance and the 40–90 Uzbek League rating profile are verified on the isolated branch; all suites pass. The 12 formations are implemented and verified locally but not committed. Not production-tested, not deployed, not connected to the existing Mini App or any live database.
 
-## Phase 3B — peer-to-peer transfer market (2026-11-14) — IMPLEMENTED, VERIFICATION PENDING
+## Phase 3B — peer-to-peer transfer market (2026-11-14) — IMPLEMENTED, CI VERIFIED
 - New migration: `db/007_player_to_player_transfers.sql`.
 - New domain service: `src/player-transfers.js`; wired into server API and mobile client market UI.
 - Unit tests: `test/player-transfers.test.js` (price validation, ownership gate, stale listing, bounded browse, seller cancellation, mocked successful purchase accounting).
