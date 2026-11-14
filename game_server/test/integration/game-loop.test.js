@@ -117,20 +117,15 @@ async function buildSquad(i,user){
  // First take a balanced spread of real players; use replenishing academy prospects for the remaining slots.
  await choose(['GK'],1);await choose(['CB'],1);await choose(['LB'],1);await choose(['RB'],1);await choose(['DM'],1);await choose(['CM'],1);await choose(['ST'],1);await choose(['AM'],1);await choose(['LW'],1);await choose(['RW'],1);
  await choose(['GK'],1);await choose(['CB'],2);await choose(['DM'],1);await choose(['CM'],2);await choose(['ST'],2);
+ const remaining=chosen.slice();
+ const take=position=>{const index=remaining.findIndex(p=>p.position===position);assert.ok(index>=0,'test squad has a '+position);return remaining.splice(index,1)[0].id;};
+ const starters=['GK','LB','CB','CB','RB','DM','CM','CM','LW','RW','ST'].map(take);
+ const substitutes=remaining.map(p=>p.id);
+ assert.equal(starters.length,11);assert.equal(substitutes.length,7);
+ await ok(user,'POST','/api/clubs/'+clubId+'/lineup',{formation:'4-3-3',starters,substitutes});
  if(i===0){
-  // Keep the academy AM available for the deliberately out-of-position lineup test, but below the natural CM options in 4-3-3.
-  const am=chosen.find(p=>p.position==='AM'&&p.origin==='generated');
-  if(am){const attrs=JSON.stringify({pace:45,shooting:45,passing:45,dribbling:45,defending:45,physical:45});await db.query('UPDATE players SET overall=45,quality=$2,attributes=$3::jsonb,market_value_uzs=$4 WHERE id=$1',[am.id,qualityForOverall(45),attrs,marketValueUzs(45)]);}
-  const lowCb=chosen.filter(p=>p.position==='CB'&&p.origin==='generated').sort((a,b)=>a.overall-b.overall)[0];
-  if(lowCb){const attrs=JSON.stringify({pace:45,shooting:45,passing:45,dribbling:45,defending:45,physical:45});await db.query('UPDATE players SET overall=45,quality=$2,attributes=$3::jsonb,market_value_uzs=$4 WHERE id=$1',[lowCb.id,qualityForOverall(45),attrs,marketValueUzs(45)]);}
- }
- const info=await ok(user,'GET','/api/clubs/'+clubId+'/formations'),best=info.formations.find(f=>f.id==='4-3-3').best;
- assert.equal(best.valid,true,'test squad can field a valid 4-3-3');
- await ok(user,'POST','/api/clubs/'+clubId+'/lineup',{formation:'4-3-3',starters:best.starters,substitutes:best.substitutes});
- if(i===0){
-  // Retain coverage for the one-time academy resale rule using controlled integration fixtures only.
-  await db.query("UPDATE players p SET origin='academy',first_sale_done=false WHERE p.id IN (SELECT unnest(l.substitutes) FROM lineups l WHERE l.club_id=$1) AND p.position IN ('GK','CB','CM','AM')",[clubId]);
-  await db.query("UPDATE players p SET origin='academy',first_sale_done=false WHERE p.id=(SELECT p2.id FROM players p2 JOIN lineups l ON l.club_id=p2.club_id WHERE p2.club_id=$1 AND p2.position='ST' AND p2.id=ANY(l.starters) ORDER BY p2.overall LIMIT 1)",[clubId]);
+  // Mark bench academy players for deterministic resale tests; the production market still keeps real players separate.
+  await db.query("UPDATE players SET origin='academy',first_sale_done=false WHERE id=ANY($1::uuid[]) AND position IN ('GK','CB','CM','AM','ST')",[substitutes]);
  }
  assert.equal((await ok(user,'GET','/api/clubs/'+clubId+'/squad')).players.length,18);
 }
@@ -334,7 +329,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:attacking.slice().reverse(),substitutes:attackingBench})).status,200,'in any order');
   assert.equal((await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking,substitutes:attackingBench})).status,400,'the allowance does not carry to another formation');
   // Improving it: the first XI with a spare striker for a centre-back has fewer players out of position, though still not none.
-  const firstCb=attacking.find(x=>byId.get(x).position==='CB'),spareFullback=squad.find(p=>(p.position==='LB'||p.position==='RB')&&!attacking.includes(p.id)).id,mild=attacking.map(x=>x===firstCb?spareFullback:x),mildBench=attackingBench.filter(id=>id!==spareFullback).concat(firstCb);
+  const firstCb=attacking.find(x=>byId.get(x).position==='CB'),spareMidfielder=squad.find(p=>p.position==='DM'&&!attacking.includes(p.id)).id,mild=attacking.map(x=>x===firstCb?spareMidfielder:x),mildBench=attackingBench.filter(id=>id!==spareMidfielder).concat(firstCb);
   const mildWrong=analyseLineup(team(mild),'4-1-4-1').outOfPosition;
   assert.ok(mildWrong>0&&mildWrong<wrongBefore.outOfPosition);
   assert.match(lineupProblem('4-1-4-1',mild,squad),/cannot be filled/,'not acceptable for a club without the legacy lineup');
