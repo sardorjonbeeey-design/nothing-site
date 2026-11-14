@@ -235,6 +235,7 @@ async function handle(req,res){
     const c=await ownedClub(client,clubId,user.id,true);
     const p=(await client.query('SELECT * FROM players WHERE id=$1 AND club_id=$2 FOR UPDATE',[playerId,clubId])).rows[0];
     if(!p)throw new HttpError(404,'Player not found');
+    if((await client.query("SELECT 1 FROM player_transfer_listings WHERE player_id=$1 AND status='listed'",[playerId])).rowCount)throw new HttpError(409,'Cancel the peer-to-peer listing before selling this player to the market');
     const count=await client.query('SELECT COUNT(*)::int AS count FROM players WHERE club_id=$1',[clubId]);
     if(Number(count.rows[0].count)<=MIN_SQUAD_SIZE)throw new HttpError(400,'A club must keep at least '+MIN_SQUAD_SIZE+' players');
     if(p.position==='GK'){const keepers=await client.query("SELECT COUNT(*)::int AS count FROM players WHERE club_id=$1 AND position='GK'",[clubId]);if(Number(keepers.rows[0].count)<=1)throw new HttpError(400,'A club must keep at least one goalkeeper');}
