@@ -63,23 +63,29 @@ export function startTelegramBot({ token, webAppUrl, fetchImpl = fetch, logger =
 
   const poll = async () => {
     let offset = 0;
+  logger.info('Starting Telegram bot connection');
+  while (!stopped) {
     try {
-      await telegramCall(token, 'deleteWebhook', { drop_pending_updates: false }, fetchImpl);
-      const me = await telegramCall(token, 'getMe', {}, fetchImpl);
-      logger.info(`Telegram bot connected as @${me.username || 'bot'}`);
+      const setupSignal = AbortSignal.timeout(15000);
+      await telegramCall(token, 'deleteWebhook', { drop_pending_updates: false }, fetchImpl, setupSignal);
+      const me = await telegramCall(token, 'getMe', {}, fetchImpl, AbortSignal.timeout(15000));
       await telegramCall(token, 'setMyCommands', {
         commands: [
           { command: 'start', description: 'Open ZAMIN FK Management Game' },
           { command: 'game', description: 'Open the game' },
           { command: 'help', description: 'Show game information' }
         ]
-      }, fetchImpl);
+      }, fetchImpl, AbortSignal.timeout(15000));
+      logger.info(`Telegram bot connected as @${me.username || 'bot'}`);
+      break;
     } catch (error) {
+      if (stopped) break;
       logger.error('Telegram bot setup failed:', error.message);
-      return;
+      await delay(5000);
     }
+  }
 
-    while (!stopped) {
+  while (!stopped) {
       try {
         const updates = await telegramCall(token, 'getUpdates', {
           offset, timeout: 25, allowed_updates: ['message']
