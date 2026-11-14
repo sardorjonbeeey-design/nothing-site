@@ -11,7 +11,7 @@ import {saveCrest,readCrest} from './uploads.js';
 import {LEAGUE_TIMEZONE,MATCH_DURATION_SECONDS} from './league.js';
 import {ensureLeague,LEAGUE_LOCK} from './seasons.js';
 import {insertPlayer,ensureYouthSupply} from './players.js';
-import {generateAcademySquad,YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL} from './catalog.js';
+import {YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL} from './catalog.js';
 import {repairClubLineup,lineupProblem} from './lineup.js';
 import {formations,FORMATION_IDS,isFormation,bestLineup,FIT_BONUS_MAX,FIT_BONUS_PER_PLAYER} from './formations.js';
 import {lineupStrength} from './simulation.js';
@@ -62,12 +62,11 @@ async function makeClub(userId,input){
    if((await client.query('SELECT 1 FROM clubs WHERE owner_user_id=$1',[userId])).rowCount)throw new HttpError(409,'You already manage a club');
    const c=await client.query('INSERT INTO clubs(owner_user_id,name,short_name,primary_colour,secondary_colour,crest_url,budget_uzs) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',[userId,name,shortName,primary,secondary,crest,STARTING_BUDGET_UZS.toString()]);
    const club=c.rows[0];
-   // Every club starts with the same generated academy squad; nothing is taken from the transfer market.
-   const players=[];for(const p of generateAcademySquad())players.push(await insertPlayer(client,p,club.id));
-   await client.query('INSERT INTO lineups(club_id,formation,starters,substitutes) VALUES($1,$2,$3,$4)',[club.id,'4-3-3',players.slice(0,11).map(p=>p.id),players.slice(11).map(p=>p.id)]);
+   // New clubs start empty: managers build their own 18-player squad from the transfer market.
+   // The lineup is created only after the manager has recruited players and saves a valid XI + seven substitutes.
+   const players=[];
    await client.query('INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason) VALUES($1,$2,$2,$3)',[club.id,STARTING_BUDGET_UZS.toString(),'club_created']);
    await client.query('INSERT INTO club_missions(club_id,mission_id) SELECT $1,id FROM missions WHERE active=true ON CONFLICT DO NOTHING',[club.id]);
-   await ensureLeague(client);
    return {club,players};
   });
  }catch(error){
@@ -207,7 +206,7 @@ async function handle(req,res){
  }
  if(req.method==='POST'&&path==='/api/clubs'){
   const body=await readJson(req);const result=await makeClub(user.id,body);
-  return json(res,201,{club:result.club,squad:result.players});
+  return json(res,201,{club:result.club,squad:result.players,startingBudgetUzs:STARTING_BUDGET_UZS.toString(),requiredSquadSize:18});
  }
  const parts=path.split('/').filter(Boolean);
  if(parts[0]==='api'&&parts[1]==='clubs'&&parts[2]){
@@ -275,7 +274,7 @@ async function handle(req,res){
    if(typeof body.formation!=='string'||!isFormation(body.formation))throw new HttpError(400,'Unsupported formation');
    const formation=body.formation,subs=body.substitutes===undefined?[]:body.substitutes;
    if(!Array.isArray(body.starters)||body.starters.length!==11)throw new HttpError(400,'Select exactly 11 unique starters');
-   if(!Array.isArray(subs)||subs.length>7)throw new HttpError(400,'Invalid substitutes');
+   if(!Array.isArray(subs)||subs.length!==7)throw new HttpError(400,'Select exactly seven substitutes');
    const starters=body.starters.map(id=>uuid(id,'Player ID').toLowerCase()),bench=subs.map(id=>uuid(id,'Player ID').toLowerCase());
    if(new Set(starters).size!==11)throw new HttpError(400,'Select exactly 11 unique starters');
    if(new Set(bench).size!==bench.length||bench.some(id=>starters.includes(id)))throw new HttpError(400,'A player can be named only once in a lineup');
@@ -287,7 +286,11 @@ async function handle(req,res){
     const saved=(await client.query('SELECT formation,starters FROM lineups WHERE club_id=$1 FOR UPDATE',[clubId])).rows[0]||null;
     const problem=lineupProblem(formation,starters,squad,saved);
     if(problem)throw new HttpError(400,problem);
+    if(squad.length<18)throw new HttpError(400,'Recruit at least 18 players before confirming your team');
+    if(squad.filter(p=>p.position==='GK').length<2)throw new HttpError(400,'Your 18-player squad must include at least two goalkeepers');
+    if(starters.concat(bench).length!==18)throw new HttpError(400,'Your matchday team must contain 11 starters and seven substitutes');
     await client.query('INSERT INTO lineups(club_id,formation,starters,substitutes,updated_at) VALUES($1,$2,$3,$4,NOW()) ON CONFLICT(club_id) DO UPDATE SET formation=EXCLUDED.formation,starters=EXCLUDED.starters,substitutes=EXCLUDED.substitutes,updated_at=NOW()',[clubId,formation,starters,bench]);
+    await ensureLeague(client);
     return lineupReport(formation,starters.map(id=>owned.get(id)));
    });
    return json(res,200,{ok:true,lineup:{formation,starters,substitutes:bench},analysis:report});
