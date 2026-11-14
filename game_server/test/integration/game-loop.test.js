@@ -616,6 +616,9 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   for(let i=0;i<10;i++){
    const income=await ledgerRows(i,'league_match_income');
    assert.equal(income.length,1);assert.equal(income[0].amount_uzs,'750000');
+   const row=table.find(x=>x.club_id===clubs[i].id),bonus=await ledgerRows(i,'match_result_bonus');
+   const expected=row.wins?250000n:row.draws?100000n:0n;
+   assert.equal(bonus.reduce((n,x)=>n+BigInt(x.amount_uzs),0n),expected,'match-result bonus follows the official result');
    assert.equal((await ledgerRows(i,'waiting_stipend')).length,0,'a league club never receives the stipend');
   }
   for(const i of [10,11]){
@@ -623,7 +626,8 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
    assert.equal(stipend.length,1);assert.equal(stipend[0].amount_uzs,'750000');assert.equal(await budgetOf(i),20750000n);
    assert.equal((await ledgerRows(i,'league_match_income')).length,0);
   }
-  assert.equal(await budgetOf(2),20750000n);
+  const club2Bonus=(await ledgerRows(2,'match_result_bonus')).reduce((n,x)=>n+BigInt(x.amount_uzs),0n);
+  assert.equal(await budgetOf(2),20750000n+club2Bonus);
   await assertLedgersConsistent();
   const done=(await ok(users[0],'GET',clubPath(0)+'/fixtures')).fixtures.find(f=>f.day_number===1);
   assert.equal(done.phase,'played');assert.equal(typeof done.home_goals,'number');
@@ -733,8 +737,8 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
  const assets=async()=>JSON.stringify((await db.query("SELECT c.id,c.name,c.crest_url,(SELECT json_agg(json_build_array(p.id,p.overall,p.attributes,p.origin,p.first_sale_done) ORDER BY p.id) FROM players p WHERE p.club_id=c.id) AS squad,(SELECT json_build_array(l.formation,l.starters,l.substitutes) FROM lineups l WHERE l.club_id=c.id) AS lineup FROM clubs c ORDER BY c.id")).rows);
  const wealth=async()=>JSON.stringify((await db.query('SELECT id,budget_uzs,development_points FROM clubs ORDER BY id')).rows);
 
- await t.test('the whole season is settled automatically, pays 13.5M per club, and the table is consistent',async()=>{
-  const before=await assets();
+ await t.test('the whole season is settled automatically, pays income, result bonuses and top-three prizes',async()=>{
+  const before=await assets(),budgetsBefore=await Promise.all(clubs.map((_,i)=>budgetOf(i)));
   server2=await startServer(childEnv({PORT:String(PORT+1)}));logs.push(server2.log);
   await db.query("UPDATE fixtures SET kickoff_at=kickoff_at-interval '40 days' WHERE kind='league' AND status='scheduled'");
   await waitFor(async()=>await playedCount()===90,'season settlement',40000);
@@ -744,7 +748,8 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(table.length,10);
   for(const r of table){assert.equal(r.played,18);assert.equal(r.wins+r.draws+r.losses,18);assert.equal(r.points,r.wins*3+r.draws);}
   const sum=k=>table.reduce((n,r)=>n+r[k],0);
-  assert.equal(sum('wins'),sum('losses'));assert.equal(sum('draws')%2,0);
+  const doubleForfeits=Number((await one("SELECT COUNT(*)::int AS n FROM fixtures WHERE league_id=$1 AND events->>'forfeit'='double'",[s1.id])).n);
+  assert.equal(sum('losses')-sum('wins'),doubleForfeits*2,'double forfeits count as two losses and no win');assert.equal(sum('draws')%2,0);
   assert.equal(sum('goals_for'),sum('goals_against'));assert.equal(sum('goals_for'),played.hg+played.ag);
   const order=(await db.query("SELECT day_number FROM fixtures WHERE league_id=$1 AND day_number>6 ORDER BY played_at,kickoff_at",[s1.id])).rows.map(r=>r.day_number);
   assert.deepEqual(order,order.slice().sort((a,b)=>a-b),'matchdays are settled in order');
@@ -758,7 +763,14 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
    assert.equal(income.length,18);assert.equal(new Set(income.map(x=>x.reference_id)).size,18);assert.equal(income.reduce((n,x)=>n+BigInt(x.amount_uzs),0n),13500000n);
    assert.equal((await ledgerRows(i,'waiting_stipend')).length,0);
   }
-  assert.equal(await budgetOf(3),33500000n,'an untouched league club ends the season with 20M + 13.5M');
+  for(let i=0;i<10;i++){
+   const bonus=(await ledgerRows(i,'match_result_bonus')).reduce((n,x)=>n+BigInt(x.amount_uzs),0n);
+   const prize=BigInt((await one('SELECT COALESCE(SUM(amount_uzs),0)::text AS n FROM season_prize_payments WHERE league_id=$1 AND club_id=$2',[s1.id,clubs[i].id])).n);
+   assert.equal(await budgetOf(i),budgetsBefore[i]+13500000n+bonus+prize,'baseline plus league income, result bonuses and prize');
+  }
+  const prizeSummary=await one('SELECT COUNT(*)::int AS payments,COALESCE(SUM(amount_uzs),0)::text AS total,MAX(place)::int AS max_place FROM season_prize_payments WHERE league_id=$1',[s1.id]);
+  assert.equal(BigInt(prizeSummary.total),22000000n,'top-three prize pool paid once, including tied-place splits');
+  assert.ok(prizeSummary.payments>=3);assert.ok(prizeSummary.max_place<=3);
   for(const [i,n] of [[10,18],[11,18],[12,16]]){
    const stipend=await ledgerRows(i,'waiting_stipend');
    assert.equal(stipend.length,n);assert.equal(await budgetOf(i),20000000n+750000n*BigInt(n));assert.equal((await ledgerRows(i,'league_match_income')).length,0);
@@ -865,7 +877,9 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   await sleep(500);
   assert.ok((await db.query('SELECT played FROM league_members WHERE league_id=$1',[s2.id])).rows.every(r=>r.played===1));
   assert.equal(JSON.stringify((await db.query('SELECT * FROM league_members WHERE league_id=$1 ORDER BY club_id',[s1.id])).rows),finalTable);
-  assert.equal(await budgetOf(3),before+750000n);assert.equal(await budgetOf(10),waitingBefore+750000n);
+  const fixture3=(await one("SELECT id FROM fixtures WHERE league_id=$1 AND day_number=1 AND (home_club_id=$2 OR away_club_id=$2)",[s2.id,clubs[3].id])).id;
+  const bonus3=BigInt((await one("SELECT COALESCE(SUM(amount_uzs),0)::text AS n FROM money_ledger WHERE club_id=$1 AND reason='match_result_bonus' AND reference_id=$2",[clubs[3].id,fixture3])).n);
+  assert.equal(await budgetOf(3),before+750000n+bonus3);assert.equal(await budgetOf(10),waitingBefore+750000n);
   assert.equal((await ledgerRows(10,'waiting_stipend')).length,19);
   const newest=(await ok(users[0],'GET',clubPath(0)+'/results?limit=1')).results[0];
   assert.equal(newest.season_number,2);assert.equal(newest.day_number,1);assert.equal(newest.viewed,false);
