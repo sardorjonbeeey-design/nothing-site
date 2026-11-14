@@ -4,16 +4,17 @@ export const OWNER_WARNING_HOURS=[24,46]; // 24h idle, then 2h remaining before 
 export const OWNER_INACTIVITY_MS=OWNER_INACTIVITY_HOURS*60*60*1000;
 export const SEASON_PRIZES_UZS=[10000000n,7000000n,5000000n];
 
-export async function ownerActivity(client,clubId){
- const row=(await client.query(`SELECT u.last_seen_at,NOW() AS server_now,
-  CASE WHEN u.last_seen_at IS NULL THEN NULL ELSE EXTRACT(EPOCH FROM (NOW()-u.last_seen_at)) END AS idle_seconds
-  FROM clubs c JOIN game_users u ON u.id=c.owner_user_id WHERE c.id=$1`,[clubId])).rows[0];
+export async function ownerActivity(client,clubId,atTime=null){
+ const row=(await client.query(`SELECT a.last_activity_at,NOW() AS server_now,
+  CASE WHEN a.last_activity_at IS NULL THEN NULL ELSE EXTRACT(EPOCH FROM (COALESCE($2::timestamptz,NOW())-a.last_activity_at)) END AS idle_seconds
+  FROM clubs c JOIN LATERAL (SELECT MAX(activity_at) AS last_activity_at FROM owner_activity_events WHERE user_id=c.owner_user_id) a ON TRUE
+  WHERE c.id=$1`,[clubId,atTime])).rows[0];
  if(!row)throw new Error('Club owner activity record is missing');
  const idleSeconds=row.idle_seconds===null?null:Number(row.idle_seconds);
  const inactive=idleSeconds===null||idleSeconds>=OWNER_INACTIVITY_HOURS*3600;
  const warningLevel=inactive?null:idleSeconds>=OWNER_WARNING_HOURS[1]*3600?2:idleSeconds>=OWNER_WARNING_HOURS[0]*3600?24:null;
- return {lastSeenAt:row.last_seen_at,idleSeconds,inactive,warningLevel,
-  forfeitsAt:row.last_seen_at?new Date(new Date(row.last_seen_at).getTime()+OWNER_INACTIVITY_MS).toISOString():null};
+ return {lastSeenAt:row.last_activity_at,idleSeconds,inactive,warningLevel,
+  forfeitsAt:row.last_activity_at?new Date(new Date(row.last_activity_at).getTime()+OWNER_INACTIVITY_MS).toISOString():null};
 }
 
 // The first three conventional criteria form the head-to-head comparison group.
