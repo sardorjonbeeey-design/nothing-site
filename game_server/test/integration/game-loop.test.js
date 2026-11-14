@@ -737,6 +737,43 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
  const assets=async()=>JSON.stringify((await db.query("SELECT c.id,c.name,c.crest_url,(SELECT json_agg(json_build_array(p.id,p.overall,p.attributes,p.origin,p.first_sale_done) ORDER BY p.id) FROM players p WHERE p.club_id=c.id) AS squad,(SELECT json_build_array(l.formation,l.starters,l.substitutes) FROM lineups l WHERE l.club_id=c.id) AS lineup FROM clubs c ORDER BY c.id")).rows);
  const wealth=async()=>JSON.stringify((await db.query('SELECT id,budget_uzs,development_points FROM clubs ORDER BY id')).rows);
 
+ await t.test('owner activity warnings and inactivity forfeits are evaluated at scheduled kick-off',async()=>{
+  const first=(await one("SELECT * FROM fixtures WHERE kind='league' AND day_number=6 AND status='scheduled' ORDER BY id LIMIT 1"));
+  const homeIndex=clubs.findIndex(c=>c.id===first.home_club_id),awayIndex=clubs.findIndex(c=>c.id===first.away_club_id);
+  assert.ok(homeIndex>=0&&awayIndex>=0);
+  await db.query("UPDATE owner_activity_events SET activity_at=NOW()-interval '49 hours' WHERE user_id=(SELECT owner_user_id FROM clubs WHERE id=$1)",[first.home_club_id]);
+  await db.query("UPDATE owner_activity_events SET activity_at=NOW()-interval '46 hours' WHERE user_id=(SELECT owner_user_id FROM clubs WHERE id=$1)",[first.away_club_id]);
+  const warning=await ok(users[awayIndex],'GET',clubPath(awayIndex)+'/activity');
+  assert.equal(warning.activity.warningLevel,2,'the 2-hour warning appears at 46 hours idle');
+  await db.query("UPDATE fixtures SET kickoff_at=NOW()-interval '61 seconds' WHERE id=$1",[first.id]);
+  await waitFor(async()=>(await one('SELECT status FROM fixtures WHERE id=$1',[first.id])).status==='played','single inactivity forfeit');
+  const single=await one('SELECT home_goals,away_goals,events FROM fixtures WHERE id=$1',[first.id]);
+  assert.equal(single.home_goals,0);assert.equal(single.away_goals,3);
+  assert.equal(single.events[0].reason,'owner_inactivity');assert.equal(single.events[0].forfeit,'single');
+  assert.equal((await ledgerRows(awayIndex,'match_result_bonus')).some(x=>x.reference_id===first.id),true,'active opponent receives the win bonus');
+  assert.equal((await ledgerRows(homeIndex,'match_result_bonus')).some(x=>x.reference_id===first.id),false,'inactive owner receives no result bonus');
+
+  const second=(await one("SELECT * FROM fixtures WHERE kind='league' AND day_number=6 AND status='scheduled' AND id<>$1 ORDER BY id LIMIT 1",[first.id]));
+  const h2=clubs.findIndex(c=>c.id===second.home_club_id),a2=clubs.findIndex(c=>c.id===second.away_club_id);
+  const pointsBefore=await db.query('SELECT club_id,points FROM league_members WHERE league_id=$1 AND club_id=ANY($2::uuid[])',[second.league_id,[second.home_club_id,second.away_club_id]]);
+  for(const clubId of [second.home_club_id,second.away_club_id])await db.query("UPDATE owner_activity_events SET activity_at=NOW()-interval '49 hours' WHERE user_id=(SELECT owner_user_id FROM clubs WHERE id=$1)",[clubId]);
+  const warning24=await ok(users[h2],'GET',clubPath(h2)+'/activity');
+  assert.equal(warning24.activity.inactive,true,'owner is already beyond the inactivity threshold');
+  await db.query("UPDATE fixtures SET kickoff_at=NOW()-interval '61 seconds' WHERE id=$1",[second.id]);
+  await waitFor(async()=>(await one('SELECT status FROM fixtures WHERE id=$1',[second.id])).status==='played','double inactivity forfeit');
+  const double=await one('SELECT home_goals,away_goals,events FROM fixtures WHERE id=$1',[second.id]);
+  assert.equal(double.home_goals,0);assert.equal(double.away_goals,0);
+  assert.equal(double.events[0].forfeit,'double');
+  for(const r of pointsBefore.rows){
+   const after=await one('SELECT points,losses,played FROM league_members WHERE league_id=$1 AND club_id=$2',[second.league_id,r.club_id]);
+   assert.equal(after.points,r.points,'double-forfeit clubs receive no league points');
+   assert.equal(after.losses,1);assert.equal(after.played,1);
+  }
+  assert.equal((await ledgerRows(h2,'match_result_bonus')).some(x=>x.reference_id===second.id),false);
+  assert.equal((await ledgerRows(a2,'match_result_bonus')).some(x=>x.reference_id===second.id),false);
+  await assertLedgersConsistent();
+ });
+
  await t.test('the whole season is settled automatically, pays income, result bonuses and top-three prizes',async()=>{
   const before=await assets(),budgetsBefore=await Promise.all(clubs.map((_,i)=>budgetOf(i)));
   server2=await startServer(childEnv({PORT:String(PORT+1)}));logs.push(server2.log);
