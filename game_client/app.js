@@ -97,7 +97,37 @@ function squadPage(){
  lineupPanel()+
  '<div class="row" style="margin:18px 0 10px"><div class="eyebrow">REGISTERED PLAYERS · '+players.length+' · MIN '+state.squadLimits.min+' · MAX '+state.squadLimits.max+'</div><div class="meta">Upgrade cost increases with attribute level</div></div><div class="players">'+(cards||'<div class="empty">No players in the squad yet.</div>')+'</div>';
 }
+// ---- Transfers: Market (the list), Scout (placeholder until the server supports scouting), Assistant (gap filler).
+const SQUAD_NEEDS={GK:2,CB:3,LB:1,RB:1,DM:2,CM:3,AM:1,LW:1,RW:1,ST:3};
+function marketTabs(){
+ const tabs=[['market','Market'],['scout','Scout'],['assistant','Assistant']];
+ return '<nav class="segments" aria-label="Transfer sections">'+tabs.map(([k,l])=>'<button data-action="market-tab" data-market-tab="'+k+'" class="'+((state.marketTab||'market')===k?'active':'')+'">'+l+'</button>').join('')+'</nav>';
+}
+function scoutPanel(){
+ const tier=(name,cost,detail)=>'<div class="scout-tier"><strong>'+name+'</strong><span>'+cost+'</span><small>'+detail+'</small></div>';
+ return '<section class="panel"><div class="eyebrow">SCOUT</div><h2>Find players by profile</h2><p class="sub">Set a position and age range, then send a scout. Scouting is not open yet; this is how it will work.</p>'+
+  '<div class="grid2"><div class="field"><label>POSITION</label><select disabled><option>Any position</option></select></div><div class="field"><label>AGE RANGE</label><select disabled><option>16 – 45</option></select></div></div>'+
+  '<div class="scout-tiers">'+tier('Normal scout','Cheaper','Slower search, standard quality')+tier('Advanced scout','Mid cost','Faster, better chance of quality')+tier('Top scout','Highest cost','Fastest, best chance of stars')+'</div>'+
+  '<button class="btn" disabled>Send scout · coming soon</button></section>';
+}
+// Assistant: for each position the squad is short of, the best affordable players in that position.
+function assistantPanel(){
+ const counts={};for(const p of state.squad)counts[p.position]=(counts[p.position]||0)+1;
+ const budget=BigInt(state.club.budget_uzs);
+ const gaps=Object.entries(SQUAD_NEEDS).map(([pos,need])=>[pos,Math.max(0,need-(counts[pos]||0))]).filter(([,n])=>n>0);
+ if(!gaps.length)return '<section class="panel"><div class="eyebrow">ASSISTANT</div><h2>Your squad covers every position</h2><p class="sub">Use Market to upgrade a starter.</p></section>';
+ const sections=gaps.map(([pos,n])=>{
+  const options=state.market.filter(p=>p.position===pos&&BigInt(p.market_value_uzs)<=budget).sort((a,b)=>b.overall-a.overall).slice(0,3);
+  const rows=options.map(p=>'<div class="assist-row"><div><strong>'+esc(p.full_name)+'</strong><div class="meta">'+esc(p.real_club_name||'Generated')+' · '+esc(p.age)+' yrs</div></div><span class="rating">'+esc(p.overall)+'</span><span class="price">'+money(p.market_value_uzs)+'</span><button class="btn" data-action="sign" data-player="'+p.id+'" '+(state.squad.length>=state.squadLimits.max?'disabled':'')+'>Sign</button></div>').join('');
+  return '<section class="panel"><div class="eyebrow">NEED '+n+' · '+pos+'</div>'+(rows||'<div class="empty">Nothing affordable in this position. Sell a player or check Market.</div>')+'</section>';
+ });
+ return '<section class="panel"><div class="eyebrow">ASSISTANT</div><h2>Positions to fill</h2><p class="sub">The best players you can afford for each position your squad is short of.</p></section>'+sections.join('');
+}
 function marketPage(){
+ const tab=state.marketTab||'market';
+ return marketTabs()+(tab==='scout'?scoutPanel():tab==='assistant'?assistantPanel():marketList());
+}
+function marketList(){
  const full=state.squad.length>=state.squadLimits.max;
  const realPlayers=state.market.filter(p=>p.real_club_name);
  const filtered=realPlayers.filter(p=>(state.marketPosition==='all'||p.position===state.marketPosition)&&(state.marketClub==='all'||p.real_club_key===state.marketClub)&&(!state.marketQuery||p.full_name.toLowerCase().includes(state.marketQuery.toLowerCase())));
@@ -375,6 +405,7 @@ root.addEventListener('click',async e=>{
   if(action==='replay-close'){clearReplay();state.replay=null;render();return;}
   if(action==='replay-again'){clearReplay();state.replay.started=false;render();return;}
   if(action==='replay-build'){clearReplay();state.replay=null;state.tab='market';render();return;}
+  if(action==='market-tab'){state.marketTab=b.dataset.marketTab;render();return;}
   if(action==='refresh'){await loadAll();toast('Updated');return;}
   if(action==='open-report'){const data=await api('/api/clubs/'+state.club.id+'/results/'+b.dataset.fixture);state.report=data.result;markViewed(state.results.find(x=>x.id===data.result.id));render();$('#match-report')?.scrollIntoView({block:'start'});return;}
   if(action==='close-report'){state.report=null;render();return;}
