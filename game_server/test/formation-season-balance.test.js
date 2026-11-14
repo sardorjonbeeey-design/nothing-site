@@ -36,11 +36,12 @@ test('30 complete 10-club seasons show no material formation advantage',()=>{
     });
     const home=table[h],away=table[a];
     home.played++;away.played++;home.gf+=result.homeGoals;home.ga+=result.awayGoals;away.gf+=result.awayGoals;away.ga+=result.homeGoals;
-    if(result.homeGoals>result.awayGoals){home.wins++;away.losses++;home.points+=3;}
-    else if(result.homeGoals<result.awayGoals){away.wins++;home.losses++;away.points+=3;}
-    else{home.draws++;away.draws++;home.points++;away.points++;}
-    pointsByFormation.set(formations[h],pointsByFormation.get(formations[h])+home.points-(home.points-(result.homeGoals>result.awayGoals?3:result.homeGoals===result.awayGoals?1:0)));
-    pointsByFormation.set(formations[a],pointsByFormation.get(formations[a])+away.points-(away.points-(result.awayGoals>result.homeGoals?3:result.awayGoals===result.homeGoals?1:0)));
+    let homePoints=0,awayPoints=0;
+    if(result.homeGoals>result.awayGoals){home.wins++;away.losses++;home.points+=3;homePoints=3;}
+    else if(result.homeGoals<result.awayGoals){away.wins++;home.losses++;away.points+=3;awayPoints=3;}
+    else{home.draws++;away.draws++;home.points++;away.points++;homePoints=1;awayPoints=1;}
+    pointsByFormation.set(formations[h],pointsByFormation.get(formations[h])+homePoints);
+    pointsByFormation.set(formations[a],pointsByFormation.get(formations[a])+awayPoints);
     gamesByFormation.set(formations[h],gamesByFormation.get(formations[h])+1);
     gamesByFormation.set(formations[a],gamesByFormation.get(formations[a])+1);
    }
