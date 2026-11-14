@@ -4,6 +4,21 @@ export const OWNER_WARNING_HOURS=[24,46]; // 24h idle, then 2h remaining before 
 export const OWNER_INACTIVITY_MS=OWNER_INACTIVITY_HOURS*60*60*1000;
 export const SEASON_PRIZES_UZS=[10000000n,7000000n,5000000n];
 
+// A modest operating cost prevents idle cash accumulation. Wages are 0.25% of squad market value per matchday,
+ // charged to league and waiting clubs alike. Payment is capped at available cash; no negative balance or debt is created.
+export async function chargeSquadWages(client,clubId,referenceId=null){
+ const total=(await client.query('SELECT COALESCE(SUM(market_value_uzs),0)::text AS value FROM players WHERE club_id=$1',[clubId])).rows[0].value;
+ const due=(BigInt(total)*25n)/10000n;
+ if(due<=0n)return 0n;
+ const club=(await client.query('SELECT budget_uzs FROM clubs WHERE id=$1 FOR UPDATE',[clubId])).rows[0];
+ if(!club)throw new Error('Club not found while charging wages');
+ const paid=due<BigInt(club.budget_uzs)?due:BigInt(club.budget_uzs);
+ if(paid<=0n)return 0n;
+ const balance=(await client.query('UPDATE clubs SET budget_uzs=budget_uzs-$2 WHERE id=$1 RETURNING budget_uzs',[clubId,paid.toString()])).rows[0].budget_uzs;
+ await client.query("INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,'player_wages',$4)",[clubId,(-paid).toString(),balance,referenceId]);
+ return paid;
+}
+
 export async function ownerActivity(client,clubId,atTime=null){
  const row=(await client.query(`SELECT a.last_activity_at,NOW() AS server_now,
   CASE WHEN a.last_activity_at IS NULL THEN NULL ELSE EXTRACT(EPOCH FROM (COALESCE($2::timestamptz,NOW())-a.last_activity_at)) END AS idle_seconds
