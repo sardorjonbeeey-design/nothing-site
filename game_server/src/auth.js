@@ -57,6 +57,13 @@ export async function telegramLogin(initData) {
  const user = verifyTelegramInitData(initData), db = requireDb();
  const r = await db.query('INSERT INTO game_users(telegram_user_id,username,first_name,last_name,last_seen_at) VALUES($1,$2,$3,$4,NOW()) ON CONFLICT(telegram_user_id) DO UPDATE SET username=EXCLUDED.username,first_name=EXCLUDED.first_name,last_name=EXCLUDED.last_name,last_seen_at=NOW() RETURNING id,telegram_user_id,username,first_name',
   [String(user.id),user.username || null,user.first_name || null,user.last_name || null]);
- const account = r.rows[0], token = signToken({sub:account.id,tg:account.telegram_user_id,exp:Math.floor(Date.now()/1000)+config.sessionMaxAgeSeconds});
+ const account = r.rows[0];
+ await db.query('UPDATE game_users SET telegram_notifications_enabled=COALESCE((SELECT enabled FROM telegram_notification_preferences WHERE telegram_user_id=$2),telegram_notifications_enabled) WHERE id=$1',[account.id,String(user.id)]);
+ const pending=(await db.query('SELECT referrer_user_id FROM pending_referrals WHERE referred_telegram_user_id=$1',[String(user.id)])).rows[0];
+ if(pending&&pending.referrer_user_id!==account.id){
+  await db.query('INSERT INTO referrals(referred_user_id,referrer_user_id) VALUES($1,$2) ON CONFLICT(referred_user_id) DO NOTHING',[account.id,pending.referrer_user_id]);
+ }
+ await db.query('DELETE FROM pending_referrals WHERE referred_telegram_user_id=$1',[String(user.id)]);
+ const token = signToken({sub:account.id,tg:account.telegram_user_id,exp:Math.floor(Date.now()/1000)+config.sessionMaxAgeSeconds});
  return { token, user:{id:account.id,username:account.username,firstName:account.first_name} };
 }
