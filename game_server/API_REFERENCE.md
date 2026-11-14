@@ -129,3 +129,14 @@ A request or acceptance is refused with 409 when either club already has a match
 ## Public operational routes
 - GET /health — process liveness.
 - GET /ready — verifies that PostgreSQL is reachable and its current database name matches EXPECTED_DATABASE_NAME.
+
+## Inactivity and competition rewards (migration 009)
+- GET /api/clubs/:clubId/activity — returns the owner's last qualifying activity, idle seconds, inactive status, warningLevel (24 or 2), and forfeitsAt.
+- Qualifying activity is a successful authenticated, user-initiated state-changing game request. Passive GET requests, background refreshes and rejected requests do not count.
+- The scheduler evaluates the latest activity at or before the fixture's scheduled kick-off. Actions after kick-off cannot reverse a forfeit.
+- In-app warnings appear at 24 hours idle and at 46 hours idle (less than 2 hours remain).
+- One inactive owner forfeits 0–3; the active opponent receives the 250,000 UZS win bonus. If both owners are inactive, the result is 0–0, both clubs record a loss, and neither receives points or a match-result bonus.
+- League match income remains 750,000 UZS per club per fixture. Additional result bonus: 250,000 UZS for a win, 100,000 UZS for a draw, 0 for a loss.
+- Final standings order: points, goal difference, goals scored, head-to-head points, head-to-head goal difference. Head-to-head stats are computed among clubs tied on the first three criteria.
+- Season prizes: 1st 10,000,000 UZS; 2nd 7,000,000 UZS; 3rd 5,000,000 UZS. Remaining ties share the combined prize pool for their occupied top-three positions equally, with indivisible so'm distributed deterministically.
+- season_prize_payments is unique by league and club; all payments are written to the money ledger and cannot be duplicated by scheduler restarts.
