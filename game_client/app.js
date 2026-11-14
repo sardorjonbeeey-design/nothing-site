@@ -212,12 +212,16 @@ function matchHome(){
  const ready=state.squad.length>=required&&keepers>=minKeepers&&xi===11;
  const next=state.fixtures.filter(f=>f.phase==='upcoming'||f.phase==='live').sort((a,b)=>Date.parse(a.kickoff_at)-Date.parse(b.kickoff_at))[0];
  const last=state.results[0];
- const hero=next?'<section class="match-hero"><div class="eyebrow">'+(next.phase==='live'?'LIVE NOW':'NEXT KICK-OFF')+'</div>'+teamsMarkup(next)+'<p class="meta">'+competition(next)+' · '+when(next.kickoff_at)+'</p></section>'
-  :'<section class="match-hero"><div class="eyebrow">'+(last?'NO FIXTURE YET':'YOUR FIRST MATCH')+'</div><h2>'+(last?'Next match is being scheduled':'Build your team to play')+'</h2><p class="sub">'+(ready?'Your team is ready. The league starts when ten clubs exist; fixtures appear here automatically.':'Recruit '+Math.max(0,required-state.squad.length)+' more players'+(keepers<minKeepers?' and '+(minKeepers-keepers)+' goalkeeper(s)':'')+', then name your XI.')+'</p></section>';
- const lastCard=last?'<section class="panel"><div class="eyebrow">LAST RESULT</div>'+resultCard(last)+'<div class="actions"><button class="btn" data-action="watch-replay" data-fixture="'+last.id+'">Watch replay</button><button class="btn secondary" data-action="open-report" data-fixture="'+last.id+'">Full report</button></div></section>':'';
- const sample=!last&&!ready?'<section class="panel entrance"><div class="eyebrow">WATCH FIRST</div><h2>See how a match plays out</h2><p class="sub">A one-minute sample match between two generated sides. Nothing is saved or paid.</p><button class="btn" data-action="watch-sample">Watch sample match</button></section>':'';
- const squad='<section class="panel"><div class="row"><div><div class="eyebrow">SQUAD</div><h2>'+state.squad.length+' / '+required+' players · '+xi+'/11 in XI</h2><p class="sub">Budget '+money(c.budget_uzs)+'</p></div><button class="btn secondary" data-tab="squad">Manage</button></div></section>';
- return pageHead('MATCHDAY',esc(c.name),'Watch every match. Shape your team between them.')+'<div class="hero-art" aria-hidden="true"></div>'+hero+lastCard+sample+squad+reportPanel();
+ const progress=Math.min(100,Math.round((state.squad.length/required)*100));
+ const line=next?(next.phase==='live'?'Live now · '+esc(next.home_short_name)+' v '+esc(next.away_short_name):'Next kick-off · '+when(next.kickoff_at)):ready?'Your team is ready for kick-off':'Build your squad to start playing';
+ let action;
+ if(next)action='<button class="btn big" data-tab="squad">Set your XI</button>';
+ else if(last)action='<button class="btn big" data-action="watch-replay" data-fixture="'+last.id+'">Watch last match</button>';
+ else action='<button class="btn big" data-action="watch-sample">Watch sample match</button>';
+ const stage='<section class="stage"><div class="stage-body"><div class="stage-kicker">MATCHDAY · '+esc(c.short_name)+'</div><h1 class="stage-title">'+esc(c.name)+'</h1><p class="stage-line">'+line+'</p><div class="stage-actions">'+action+(next||last||!ready?'<button class="btn ghost" data-tab="squad">Squad</button>':'')+'</div></div><div class="stage-progress"><i style="width:'+progress+'%"></i><span>'+state.squad.length+' / '+required+' players · XI '+xi+'/11</span></div></section>';
+ const score=last?'<section class="scoreboard" data-action="watch-replay" data-fixture="'+last.id+'"><div class="sb-team"><span class="mini-crest" style="--accent:'+esc(last.home_colour||'#167a55')+'">'+esc(last.home_short_name)+'</span><small>'+esc(last.home_name)+'</small></div><div class="sb-score">'+last.home_goals+' — '+last.away_goals+'</div><div class="sb-team"><span class="mini-crest" style="--accent:'+esc(last.away_colour||'#7c8b84')+'">'+esc(last.away_short_name)+'</span><small>'+esc(last.away_name)+'</small></div><div class="sb-play">Replay ▶</div></section>':'';
+ const sample=!last&&!ready?'<section class="panel tip"><strong>New here?</strong><p class="sub">Watch a one-minute sample match first. Nothing is saved or paid.</p></section>':'';
+ return stage+score+sample+reportPanel();
 }
 // ---- Season: one destination with segments for table, fixtures, objectives and challenges.
 function resultRowsSection(){
@@ -303,6 +307,8 @@ function startReplay(){
    line('goal','<b>'+minute+"'</b> ⚽ "+esc(e.scorerName||'Goal')+(e.assistName?' <span class="muted">· assist '+esc(e.assistName)+'</span>':''));
    haptic('success');
    const flash=document.createElement('div');flash.className='goal-flash';root.querySelector('.replay')?.appendChild(flash);at(1100,()=>flash.remove());
+   const banner=document.createElement('div');banner.className='goal-banner';banner.innerHTML='<small>GOAL · '+minute+"'</small><strong>"+esc(e.scorerName||'Goal')+'</strong>';root.querySelector('.replay')?.appendChild(banner);at(1800,()=>banner.remove());
+   score.classList.remove('pop');void score.offsetWidth;score.classList.add('pop');
    return;
   }
   moveBall(50,e.side==='away'?78:22);
