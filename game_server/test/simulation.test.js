@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateMatch,squadStrength,goalShare,MATCH_RATING_SCALE,MATCH_HOME_ADVANTAGE_POINTS} from '../src/simulation.js';
 
-const team=(rating)=>Array.from({length:11},(_,i)=>({id:String(i),overall:rating,position:i===0?'GK':'CM',fitness:100}));
+const team=(rating)=>Array.from({length:11},(_,i)=>({id:String(i),full_name:'Fictional Player '+i,overall:rating,position:i===0?'GK':i>8?'ST':'CM',attributes:{shooting:rating},fitness:100}));
 
 test('squad strength requires a complete starting eleven',()=>{
  assert.equal(squadStrength(team(70).slice(0,10)),35);
@@ -18,7 +18,7 @@ test('match simulation returns bounded integer score and ordered events',()=>{
  assert.deepEqual(result.events.map(e=>e.minute),result.events.map(e=>e.minute).slice().sort((a,b)=>a-b));
  const goals=result.events.filter(e=>e.type==='goal');
  assert.equal(goals.length,result.homeGoals+result.awayGoals);
- if(goals.length){assert.equal(goals.at(-1).homeScore,result.homeGoals);assert.equal(goals.at(-1).awayScore,result.awayGoals);}
+ if(goals.length){assert.equal(goals.at(-1).homeScore,result.homeGoals);assert.equal(goals.at(-1).awayScore,result.awayGoals);assert.ok(goals.every(g=>g.scorerName&&g.text.includes(g.scorerName)));}
  assert.ok(result.homeStrength>result.awayStrength);
 });
 
