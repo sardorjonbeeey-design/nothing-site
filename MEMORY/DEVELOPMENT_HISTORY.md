@@ -92,3 +92,12 @@ Chronological record. Append entries; do not erase earlier history.
 - The new 12-formation profile, matchup, antisymmetry and all-pairs balance tests passed.
 - Full-season balance with realistic league squads and mobile smoke on this Phase 3 branch remain outstanding. Proposed tactical coefficients and the 1.5-point cap are not final owner-approved values.
 - No merge, deployment, production database, live Mini App or bot connection.
+
+## 2026-11-14 — Phase 3B peer-to-peer transfer market implementation
+- Added migration `game_server/db/007_player_to_player_transfers.sql`: active listing uniqueness, listing state constraints, transfer history, and a database trigger preventing the existing sell-to-market path from moving a player with an active P2P listing.
+- Added `game_server/src/player-transfers.js`: seller listing creation/cancellation, browse, purchase with server ownership checks, squad limits, keeper protection, affordability, listing/player/club row locks, UZS debit-credit ledger entries and a unique transfer history record.
+- Integrated authenticated endpoints in `game_server/src/server.js`: public authenticated-market browse, club-owned listings, listing creation, cancellation and purchase.
+- Added P2P listing cards and owner actions to `game_client/app.js`: list player at an entered UZS asking price, buy listed players, cancel listings; global listings and the club's own listings load into the transfer-market view.
+- Added `game_server/test/player-transfers.test.js` coverage for invalid asking prices, ownership gate, stale/closed listing purchase, bounded browsing and seller-only cancellation.
+- No production DB, live Mini App, bot, merge or deployment. Full automated test run and concurrency integration tests have not yet been observed; implementation remains UNVERIFIED pending test execution.
+
