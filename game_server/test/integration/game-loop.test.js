@@ -718,6 +718,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   await waitFor(async()=>Number((await one('SELECT COUNT(*)::int AS n FROM stipend_runs')).n)===2,'stipend run for matchday 2',5000);
   await sleep(500);
   assert.equal((await db.query("SELECT 1 FROM money_ledger WHERE reason='league_match_income' GROUP BY club_id,reference_id HAVING COUNT(*)>1")).rowCount,0);
+  assert.equal((await db.query("SELECT 1 FROM money_ledger WHERE reason='match_result_bonus' GROUP BY club_id,reference_id HAVING COUNT(*)>1")).rowCount,0,'match-result bonuses are paid at most once per club and fixture');
   assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM money_ledger WHERE reason='league_match_income'")).n),20);
   assert.deepEqual(await one("SELECT COUNT(*)::int AS payments,COUNT(DISTINCT club_id)::int AS clubs,SUM(amount_uzs)::int AS total FROM stipend_payments"),{payments:4,clubs:2,total:3000000});
   assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM money_ledger WHERE reason='waiting_stipend'")).n),4);
@@ -913,7 +914,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.deepEqual([...new Set(fixtures.map(f=>f.day_number))].sort((a,b)=>a-b),[1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19]);
   assert.equal(new Set(fixtures.map(f=>f.home_club_id+'>'+f.away_club_id)).size,90);
   // Idempotent: two running schedulers, a restart, the ensure route and a direct duplicate insert create nothing more.
-  const assetsBefore=await assets(),wealthBefore=await wealth();
+  const assetsBefore=await assets(),wealthBefore=await wealth(),prizeSnapshot=await one('SELECT COUNT(*)::int AS payments,COALESCE(SUM(amount_uzs),0)::text AS total FROM season_prize_payments WHERE league_id=$1',[s1.id]);
   server.child.kill();await sleep(300);server=await startServer(childEnv({SUPER_ADMIN_TELEGRAM_ID:'dev-1'}));logs.push(server.log);
   await ok(users[0],'POST',clubPath(0)+'/leagues/ensure',{});await ok(users[10],'POST',clubPath(10)+'/leagues/ensure',{});
   await sleep(1500);
@@ -924,6 +925,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   server2.child.kill();server2=null;
   // Clubs retain cash, Development Points, squads, upgrades, lineups and history.
   assert.equal(await assets(),assetsBefore);assert.equal(await wealth(),wealthBefore,'the rollover itself moves no money and no points');
+  assert.deepEqual(await one('SELECT COUNT(*)::int AS payments,COALESCE(SUM(amount_uzs),0)::text AS total FROM season_prize_payments WHERE league_id=$1',[s1.id]),prizeSnapshot,'scheduler restart does not duplicate season prizes');
   const league=await ok(users[0],'GET',clubPath(0)+'/league');
   assert.equal(league.season.number,2);assert.equal(league.season.status,'active');assert.ok(league.table.every(r=>r.played===0));
   assert.equal(league.previous.season.number,1);assert.equal(league.previous.season.status,'completed');assert.ok(league.previous.table.every(r=>r.played===18));
