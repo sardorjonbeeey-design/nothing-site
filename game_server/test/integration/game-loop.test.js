@@ -947,8 +947,10 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM money_ledger WHERE club_id=$1 AND reason='admin_adjustment'",[clubId])).n),1);
   const recipient=(await one("SELECT id FROM game_users WHERE telegram_user_id='dev-2'")).id;
   await ok(owner,'POST','/api/admin/entitlement',{userId:recipient,feature:'gold',active:true,reason:'integration gold grant'});
+  assert.ok((await call(other,'GET','/api/account/entitlements')).data.entitlements.some(e=>e.feature==='gold'));
   assert.equal((await one("SELECT revoked_at FROM user_entitlements WHERE user_id=$1 AND feature='gold'",[recipient])).revoked_at,null);
   await ok(owner,'POST','/api/admin/entitlement',{userId:recipient,feature:'gold',active:false,reason:'integration gold revoke'});
+  assert.equal((await call(other,'GET','/api/account/entitlements')).data.entitlements.some(e=>e.feature==='gold'),false);
   assert.ok((await one("SELECT revoked_at FROM user_entitlements WHERE user_id=$1 AND feature='gold'",[recipient])).revoked_at);
   await ok(owner,'POST','/api/admin/competition-setting',{key:'integration.reward.top1',value:{uzs:5000000},reason:'integration reward setting'});
   assert.deepEqual((await one("SELECT setting_value FROM competition_settings WHERE setting_key='integration.reward.top1'")).setting_value,{uzs:5000000});
@@ -959,6 +961,8 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal((await one('SELECT club_id FROM players WHERE id=$1',[freePlayer])).club_id,giftTarget);
   const actions=(await db.query("SELECT action FROM admin_audit_log WHERE actor_telegram_user_id='dev-1' ORDER BY id")).rows.map(x=>x.action);
   assert.ok(actions.includes('funds_adjusted'));assert.ok(actions.includes('gold_granted'));assert.ok(actions.includes('gold_revoked'));assert.ok(actions.includes('setting_updated'));assert.ok(actions.includes('player_gifted'));
+  const auditId=(await one('SELECT MIN(id) AS id FROM admin_audit_log')).id;
+  await assert.rejects(()=>db.query('UPDATE admin_audit_log SET reason=$2 WHERE id=$1',[auditId,'tamper']),/append-only/);
   assert.equal((await call(owner,'POST','/api/admin/funds',{clubId,amountUzs:'-999999999999999',reason:'negative test'})).status,409);
   assert.equal((await call(owner,'POST','/api/admin/funds',{clubId,amountUzs:'1',reason:''})).status,400);
   await assertLedgersConsistent();await assertLineupValid(giftTargetIndex);
