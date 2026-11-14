@@ -1,7 +1,7 @@
 (() => {
 const root=document.getElementById('app');
 const cfg=window.ZAMIN_GAME_CONFIG||{};
-const state={token:null,user:null,clubs:[],club:null,squad:[],market:[],lineup:null,lineupDraft:[],missions:[],fixtures:[],table:[],ledger:[],dpLedger:[],tab:'overview',crestData:'',results:[],newResults:0,resultIndex:0,opening:false,report:null,friendlies:[],opponents:[],youth:[],academy:[],peerListings:[],ownListings:[],affordableOnly:false,overviewFilter:'squad',profilePlayer:null,marketQuery:'',marketPosition:'all',marketClub:'all',season:null,previousSeason:null,squadLimits:{min:13,max:26,required:18,minimumGoalkeepers:2},formations:[],formationInfo:null,formationDraft:null};
+const state={token:null,user:null,clubs:[],club:null,squad:[],market:[],lineup:null,lineupDraft:[],missions:[],fixtures:[],table:[],ledger:[],dpLedger:[],tab:'overview',crestData:'',results:[],newResults:0,resultIndex:0,opening:false,report:null,friendlies:[],opponents:[],youth:[],academy:[],peerListings:[],ownListings:[],affordableOnly:false,overviewFilter:'squad',profilePlayer:null,marketQuery:'',marketPosition:'all',marketClub:'all',season:null,previousSeason:null,competitionSection:'fixtures',clubSection:'missions',squadLimits:{min:13,max:26,required:18,minimumGoalkeepers:2},formations:[],formationInfo:null,formationDraft:null};
 let loadInFlight=false,loadAgain=false,initialLoadDone=false,refreshTimer=null;
 const esc=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=(v)=>{try{return new Intl.NumberFormat('en-US').format(BigInt(v||0))+' UZS';}catch{return '0 UZS';}};
@@ -21,12 +21,20 @@ async function api(path,options={}){
 }
 function shell(body){
  root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><div class="top-right">'+(state.clubs.length>1?'<select id="club-switcher">'+state.clubs.map(x=>'<option value="'+x.id+'" '+(x.id===state.club.id?'selected':'')+'>'+esc(x.short_name)+' · '+esc(x.name)+'</option>').join('')+'</select>':'')+'<div class="club-context">'+miniCrest(state.club)+'<span>'+esc(state.club.name)+'</span></div><span class="tag">FOOTBALL MANAGER</span></div></header><div class="layout"><nav class="nav">'+
- [['overview','Matchday'],['squad','My team'],['market','Scout players'],['missions','Objectives'],['fixtures','Schedule'],['results','Results'],['friendlies','Challenges'],['league','League']].map(x=>'<button data-tab="'+x[0]+'" class="'+(state.tab===x[0]?'active':'')+'">'+x[1]+'</button>').join('')+
+ [['overview','Matchday'],['squad','My team'],['market','Scout'],['competition','Competition'],['club','Club']].map(x=>'<button data-tab="'+x[0]+'" class="'+(state.tab===x[0]?'active':'')+'">'+x[1]+'</button>').join('')+
  '<div class="nav-foot">ISOLATED GAME CLIENT<br>NOT CONNECTED TO LIVE SYSTEMS</div></nav><main class="content">'+body+'</main></div><footer class="footer"><span>ZAMIN FK · MANAGEMENT GAME</span><span>ISOLATED BUILD 0.1</span></footer></div>';
 }
 function pageHead(kicker,title,sub,action){return '<div class="hero"><div><div class="eyebrow">'+kicker+'</div><h1>'+title+'</h1><p class="sub">'+sub+'</p></div>'+(action||'')+'</div>';}
 function crest(club,large){const style='style="--accent:'+esc(club.primary_colour||'#167a55')+'"';return '<div class="crest" '+style+'>'+(club.crest_url?'<img src="'+esc((cfg.apiBase||'')+club.crest_url)+'" alt="Club crest">':esc(club.short_name||'ZFK'))+'</div>';}
 function miniCrest(club){return '<span class="mini-crest" style="--accent:'+esc(club.primary_colour||'#167a55')+'">'+(club.crest_url?'<img src="'+esc((cfg.apiBase||'')+club.crest_url)+'" alt="">':esc(club.short_name||'ZFK'))+'</span>';}
+function livePitch(f){
+ const elapsed=Math.max(0,Math.floor((Date.now()-Date.parse(f.kickoff_at))/1000));
+ const remaining=Math.max(0,60-elapsed);
+ const home=[[7,50],[20,18],[20,39],[20,61],[20,82],[39,32],[39,50],[39,68],[61,25],[61,75],[78,50]];
+ const away=home.map(([x,y])=>[100-x,100-y]);
+ const dots=home.map(([x,y])=>'<i class="dot home" style="left:'+x+'%;top:'+y+'%"></i>').join('')+away.map(([x,y])=>'<i class="dot away" style="left:'+x+'%;top:'+y+'%"></i>').join('');
+ return '<section class="panel live-match-panel"><div class="row"><div><div class="eyebrow">LIVE MATCH · 60 SECONDS</div><h2>'+esc(f.home_name)+' vs '+esc(f.away_name)+'</h2></div><span class="pill live">LIVE</span></div><div class="pitch live-pitch"><div class="pitch-mid"></div><div class="pitch-circle"></div><div class="pitch-box left"></div><div class="pitch-box right"></div><div class="pitch-goal left"></div><div class="pitch-goal right"></div>'+dots+'</div><div class="row"><span class="meta">Server-controlled match · No manual controls</span><strong class="score">00:'+String(remaining).padStart(2,'0')+'</strong></div><p class="meta">The server decides the result and named scorers at the end of the 60-second match.</p></section>';
+}
 function overview(){
  const c=state.club, count=state.squad.length, required=state.squadLimits.required||18, minKeepers=state.squadLimits.minimumGoalkeepers||2, keepers=state.squad.filter(p=>p.position==='GK').length;
  const complete=state.fixtures.some(f=>f.kind==='league')||(count>=required&&keepers>=minKeepers&&state.lineup&&state.lineup.starters?.length===11&&state.lineup.substitutes?.length===7);
@@ -39,7 +47,7 @@ function overview(){
  if(state.overviewFilter==='matches')content=next?'<section class="panel"><div class="eyebrow">NEXT MATCH</div>'+teamsMarkup(next)+'<p class="meta">'+competition(next)+' · '+when(next.kickoff_at)+'</p><button class="btn secondary" data-tab="fixtures">Open fixtures →</button></section>':'<section class="panel"><h2>No upcoming match</h2><p>Your club is ready. The league schedule will appear here.</p></section>';
  else if(state.overviewFilter==='finances')content='<section class="panel"><div class="eyebrow">CLUB FINANCES</div><h2>'+money(c.budget_uzs)+'</h2><p>Transfer budget</p>'+(state.ledger.slice(0,6).map(t=>'<div class="fixture"><div><strong>'+esc(t.reason.replaceAll('_',' '))+'</strong><div class="meta">'+new Date(t.created_at).toLocaleDateString()+'</div></div><div class="score">'+(BigInt(t.amount_uzs)>=0n?'+':'')+money(t.amount_uzs)+'</div></div>').join('')||'<div class="empty">No transfers or income recorded yet.</div>')+'</section>';
  else content='<section class="panel"><div class="eyebrow">FIRST TEAM</div><h2>'+count+' players registered</h2><p>Starting XI · '+(state.lineup?.formation||'Formation not set')+' · '+(state.lineup?.starters?.length||0)+'/11 starters</p><div class="actions"><button class="btn secondary" data-tab="squad">Open squad →</button><button class="btn secondary" data-tab="market">Transfer market →</button></div></section><section class="panel"><div class="eyebrow">LATEST RESULT</div>'+(state.results[0]?'<h2>'+esc(state.results[0].home_name)+' '+state.results[0].home_goals+' — '+state.results[0].away_goals+' '+esc(state.results[0].away_name)+'</h2><p>'+when(state.results[0].kickoff_at)+'</p>':'<p>Your match results will appear here.</p>')+'</section>';
- return pageHead('MATCHDAY CENTRE',esc(c.name),'Your club. Your players. Your decisions.')+'<div class="stats"><div class="stat"><div class="label">TRANSFER BUDGET</div><strong>'+money(c.budget_uzs)+'</strong><p>Available funds</p></div><div class="stat"><div class="label">SQUAD</div><strong>'+count+'/26</strong><p>Registered players</p></div><div class="stat"><div class="label">LEAGUE</div><strong>'+(state.season?'S'+state.season.number:'—')+'</strong><p>'+(state.season?state.season.status:'Not qualified')+'</p></div></div>'+tabs+content;
+ return pageHead('MATCHDAY CENTRE',esc(c.name),'Your club. Your players. Your decisions.')+(next?.phase==='live'?livePitch(next):'')+'<div class="stats"><div class="stat"><div class="label">TRANSFER BUDGET</div><strong>'+money(c.budget_uzs)+'</strong><p>Available funds</p></div><div class="stat"><div class="label">SQUAD</div><strong>'+count+'/26</strong><p>Registered players</p></div><div class="stat"><div class="label">LEAGUE</div><strong>'+(state.season?'S'+state.season.number:'—')+'</strong><p>'+(state.season?state.season.status:'Not qualified')+'</p></div></div>'+tabs+content;
 }
 const tierNames={academy:'PROSPECT',developing:'DEVELOPING',established:'ESTABLISHED',elite:'ELITE'};
 function tier(p){return esc(tierNames[p.quality]||p.quality);}
@@ -179,6 +187,17 @@ function leaguePage(){
  '<section class="panel table-wrap" id="league-current">'+(state.table.length?leagueTable(state.table):'<div class="empty">'+(state.leagueExists&&state.season===null?'Your club is not in a league yet. While you wait, it receives the same income as league clubs on every league matchday.':'No active league yet. It will be generated automatically when 10 clubs exist.')+'</div>')+'</section>'+
  (prev?'<div class="eyebrow" style="margin:22px 0 10px">SEASON '+esc(prev.season.number)+' · FINAL TABLE</div><section class="panel table-wrap" id="league-previous">'+leagueTable(prev.table)+'</section>':'');
 }
+function competitionPage(){
+ const sections=[['fixtures','Fixtures'],['results','Results'],['league','League']];
+ const tabs='<div class="game-filters">'+sections.map(([id,label])=>'<button class="btn '+(state.competitionSection===id?'':'secondary')+'" data-tab="'+id+'">'+label+'</button>').join('')+'</div>';
+ const page=state.competitionSection==='results'?resultsPage():state.competitionSection==='league'?leaguePage():fixturesPage();
+ return tabs+page;
+}
+function clubHubPage(){
+ const sections=[['missions','Objectives'],['friendlies','Challenges']];
+ const tabs='<div class="game-filters">'+sections.map(([id,label])=>'<button class="btn '+(state.clubSection===id?'':'secondary')+'" data-tab="'+id+'">'+label+'</button>').join('')+'</div>';
+ return tabs+(state.clubSection==='friendlies'?friendliesPage():missionsPage());
+}
 function createPage(){
  return '<div class="create">'+pageHead('NEW CLUB','Create your club','Create your club identity. Then recruit your own players and build your team.')+'<form id="club-form" class="panel"><div class="field"><label>CLUB NAME</label><input name="name" maxlength="28" required placeholder="e.g. Tashkent United"></div><div class="grid2"><div class="field"><label>SHORT NAME</label><input name="shortName" maxlength="5" required placeholder="TUN"></div><div class="field"><label>PRIMARY COLOUR</label><input name="primaryColour" type="color" value="#167a55"></div></div><div class="field"><label>SECONDARY COLOUR</label><input name="secondaryColour" type="color" value="#f0c75e"></div><div class="field"><label>CLUB CREST · OPTIONAL</label><input id="crest-file" type="file" accept="image/png,image/jpeg,image/webp"><small class="meta">PNG, JPG or WEBP · Maximum 2 MB</small></div><div class="field"><label>EDITABLE CREST GENERATION PROMPT</label><textarea id="crest-prompt" rows="4">Create an original professional football club crest for [club name]. Use [primary colour] as the main colour and [secondary colour] as the accent. Design a distinctive shield with a memorable central symbol, clean vector geometry, strong contrast and readable initials. Do not copy any existing club badge. Transparent background, flat colours, suitable for a mobile football management game.</textarea><button class="btn secondary" type="button" data-action="copy-prompt">Copy prompt</button></div><div class="notice">You start with 20,000,000 UZS. Recruit 18 players, including two goalkeepers, then select 11 starters and seven substitutes. Each user manages one club.</div><button class="btn" type="submit">Create club →</button></form></div>';
 }
@@ -189,7 +208,7 @@ function identityPage(){
 function render(){
  if(!state.club){root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><span class="tag">ISOLATED BUILD</span></header>'+createPage()+'</div>';return;}
  if(state.opening&&state.results.length){root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><div class="club-context">'+miniCrest(state.club)+'<span>'+esc(state.club.name)+'</span></div></header>'+openingPage()+'</div>';return;}
- let body=state.tab==='identity'?identityPage():state.tab==='overview'?overview():state.tab==='squad'?squadPage():state.tab==='market'?marketPage():state.tab==='missions'?missionsPage():state.tab==='fixtures'?fixturesPage():state.tab==='results'?resultsPage():state.tab==='friendlies'?friendliesPage():leaguePage();
+ let body=state.tab==='identity'?identityPage():state.tab==='overview'?overview():state.tab==='squad'?squadPage():state.tab==='market'?marketPage():state.tab==='competition'?competitionPage():state.tab==='club'?clubHubPage():state.tab==='missions'?missionsPage():state.tab==='fixtures'?fixturesPage():state.tab==='results'?resultsPage():state.tab==='friendlies'?friendliesPage():leaguePage();
  shell(body);
 }
 async function loadAll(){
@@ -219,13 +238,18 @@ async function loadAll(){
 }
 function startAutoRefresh(){
  if(refreshTimer)clearInterval(refreshTimer);
- // Refresh only while the app is visible and the manager is not editing a form. Hidden/background polling is avoided.
+ // Poll every 2s only during the 60-second live window; otherwise retain the 30s background-safe refresh.
+ let lastRefresh=0;
  const refresh=()=>{
   if(document.visibilityState!=='visible'||state.opening)return;
   if(document.activeElement?.closest?.('form'))return;
+  const live=state.fixtures.some(f=>f.phase==='live');
+  const interval=live?2000:30000;
+  if(Date.now()-lastRefresh<interval)return;
+  lastRefresh=Date.now();
   void loadAll().catch(()=>{});
  };
- refreshTimer=setInterval(refresh,30000);
+ refreshTimer=setInterval(refresh,2000);
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh();});
  window.addEventListener('focus',refresh);
 }
@@ -236,7 +260,7 @@ async function uploadCrest(file){
  return (await api('/api/uploads/crest',{method:'POST',body:{dataUrl}})).crestUrl;
 }
 root.addEventListener('click',async e=>{
- const tab=e.target.closest('[data-tab]');if(tab){state.tab=tab.dataset.tab;render();return;}
+ const tab=e.target.closest('[data-tab]');if(tab){const target=tab.dataset.tab;if(['fixtures','results','league'].includes(target)){state.competitionSection=target;state.tab='competition';}else if(['missions','friendlies'].includes(target)){state.clubSection=target;state.tab='club';}else state.tab=target;render();return;}
  const b=e.target.closest('[data-action]');if(!b)return;
  try{
   const action=b.dataset.action;
