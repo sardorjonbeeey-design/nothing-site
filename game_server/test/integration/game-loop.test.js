@@ -952,14 +952,16 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.ok((await one("SELECT revoked_at FROM user_entitlements WHERE user_id=$1 AND feature='gold'",[recipient])).revoked_at);
   await ok(owner,'POST','/api/admin/competition-setting',{key:'integration.reward.top1',value:{uzs:5000000},reason:'integration reward setting'});
   assert.deepEqual((await one("SELECT setting_value FROM competition_settings WHERE setting_key='integration.reward.top1'")).setting_value,{uzs:5000000});
+  const giftTarget=(await one('SELECT c.id FROM clubs c WHERE (SELECT COUNT(*) FROM players p WHERE p.club_id=c.id)<26 ORDER BY c.created_at LIMIT 1')).id;
+  const giftTargetIndex=clubs.findIndex(c=>c.id===giftTarget);assert.ok(giftTargetIndex>=0);
   const freePlayer=(await one("SELECT id FROM players WHERE club_id IS NULL AND origin='market' ORDER BY id LIMIT 1")).id;
-  await ok(owner,'POST','/api/admin/player-gift',{playerId:freePlayer,targetClubId:clubId,reason:'integration player gift'});
-  assert.equal((await one('SELECT club_id FROM players WHERE id=$1',[freePlayer])).club_id,clubId);
+  await ok(owner,'POST','/api/admin/player-gift',{playerId:freePlayer,targetClubId:giftTarget,reason:'integration player gift'});
+  assert.equal((await one('SELECT club_id FROM players WHERE id=$1',[freePlayer])).club_id,giftTarget);
   const actions=(await db.query("SELECT action FROM admin_audit_log WHERE actor_telegram_user_id='dev-1' ORDER BY id")).rows.map(x=>x.action);
   assert.ok(actions.includes('funds_adjusted'));assert.ok(actions.includes('gold_granted'));assert.ok(actions.includes('gold_revoked'));assert.ok(actions.includes('setting_updated'));assert.ok(actions.includes('player_gifted'));
   assert.equal((await call(owner,'POST','/api/admin/funds',{clubId,amountUzs:'-999999999999999',reason:'negative test'})).status,409);
   assert.equal((await call(owner,'POST','/api/admin/funds',{clubId,amountUzs:'1',reason:''})).status,400);
-  await assertLedgersConsistent();await assertLineupValid(0);
+  await assertLedgersConsistent();await assertLineupValid(giftTargetIndex);
  });
  await t.test('no request or scheduler run produced a server error',()=>{
   for(const log of logs)assert.doesNotMatch(log(),/Error/);
