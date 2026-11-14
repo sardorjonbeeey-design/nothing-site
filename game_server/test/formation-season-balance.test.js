@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {simulateMatch} from '../src/simulation.js';
-import {formationOf,FORMATION_IDS} from '../src/formations.js';
+import {bestLineup,FORMATION_IDS} from '../src/formations.js';
 import {attributesFor} from '../src/catalog.js';
 import {generateDoubleRoundRobin} from '../src/league.js';
 
@@ -9,11 +9,10 @@ function seeded(seed){
  let state=seed>>>0;
  return ()=>{state=(Math.imul(state,1664525)+1013904223)>>>0;return state/4294967296;};
 }
-function equalStrengthXI(formation,rating=65){
- return formationOf(formation).slots.map((slot,i)=>({
-  id:formation+'-'+i,position:slot.natural[0],overall:rating,fitness:100,
-  attributes:attributesFor(rating,slot.natural[0])
- }));
+function balancedSquad(clubId){
+ const positions=['GK','GK','CB','CB','LB','RB','CB','DM','DM','CM','CM','AM','CM','LW','RW','ST','ST','ST'];
+ const ratings=[65,62,68,66,64,63,61,67,65,69,66,64,62,68,66,70,65,63];
+ return positions.map((position,i)=>({id:clubId+'-p'+i,position,overall:ratings[i],fitness:100,attributes:attributesFor(ratings[i],position)}));
 }
 
 test('120 complete 10-club seasons show no material formation advantage',()=>{
@@ -24,7 +23,7 @@ test('120 complete 10-club seasons show no material formation advantage',()=>{
  const gamesByFormation=new Map(FORMATION_IDS.map(id=>[id,0]));
  for(let season=0;season<120;season++){
   const formations=clubs.map((_,i)=>FORMATION_IDS[(i+season)%FORMATION_IDS.length]);
-  const lineups=formations.map(id=>equalStrengthXI(id));
+  const lineups=formations.map((id,i)=>bestLineup(balancedSquad(clubs[i]),id).starters);
   const table=clubs.map(()=>({played:0,wins:0,draws:0,losses:0,points:0,gf:0,ga:0}));
   for(let round=0;round<schedule.length;round++){
    for(let index=0;index<schedule[round].length;index++){
