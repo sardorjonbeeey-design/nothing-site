@@ -1,0 +1,31 @@
+name: ZAMIN FK Management Game checks
+
+on:
+  pull_request:
+    branches:
+      - zamin-management-isolated
+  push:
+    branches:
+      - zamin-management-gameplay-real-squads
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: game_server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: game_server/package-lock.json
+      - run: npm ci
+      - name: Check server and client JavaScript syntax
+        run: |
+          node --check src/server.js
+          node --check src/seasons.js
+          node --check ../game_client/app.js
+      - name: Run unit and default test suite
+        run: npm test

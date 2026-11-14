@@ -10,8 +10,8 @@ import {json,readJson,HttpError,safeString,colour,uuid} from './http.js';
 import {saveCrest,readCrest} from './uploads.js';
 import {LEAGUE_TIMEZONE,MATCH_DURATION_SECONDS} from './league.js';
 import {ensureLeague,LEAGUE_LOCK} from './seasons.js';
-import {insertPlayer,ensureYouthSupply} from './players.js';
-import {generateAcademySquad,YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL} from './catalog.js';
+import {ensureYouthSupply} from './players.js';
+import {YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL} from './catalog.js';
 import {repairClubLineup,lineupProblem} from './lineup.js';
 import {formations,FORMATION_IDS,isFormation,bestLineup,FIT_BONUS_MAX,FIT_BONUS_PER_PLAYER} from './formations.js';
 import {lineupStrength} from './simulation.js';
@@ -19,7 +19,7 @@ import {awardDevelopmentPoints,startScheduler} from './matches.js';
 import {createPlayerListing,browsePlayerListings,cancelPlayerListing,purchasePlayerListing} from './player-transfers.js';
 import {ratingProfileFor,assertValidRating} from './ratings.js';
 import {ownerActivity,leagueStandings} from './competition.js';
-import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValueUzs,overallFromAttributes,STARTING_BUDGET_UZS,MIN_SQUAD_SIZE,MAX_SQUAD_SIZE} from './economy.js';
+import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValueUzs,overallFromAttributes,STARTING_BUDGET_UZS,MIN_SQUAD_SIZE,MAX_SQUAD_SIZE,STARTING_SQUAD_SIZE,MINIMUM_GOALKEEPERS} from './economy.js';
 
 const db=()=>requireDb();
 const clientRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../game_client');
@@ -62,12 +62,11 @@ async function makeClub(userId,input){
    if((await client.query('SELECT 1 FROM clubs WHERE owner_user_id=$1',[userId])).rowCount)throw new HttpError(409,'You already manage a club');
    const c=await client.query('INSERT INTO clubs(owner_user_id,name,short_name,primary_colour,secondary_colour,crest_url,budget_uzs) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *',[userId,name,shortName,primary,secondary,crest,STARTING_BUDGET_UZS.toString()]);
    const club=c.rows[0];
-   // Every club starts with the same generated academy squad; nothing is taken from the transfer market.
-   const players=[];for(const p of generateAcademySquad())players.push(await insertPlayer(client,p,club.id));
-   await client.query('INSERT INTO lineups(club_id,formation,starters,substitutes) VALUES($1,$2,$3,$4)',[club.id,'4-3-3',players.slice(0,11).map(p=>p.id),players.slice(11).map(p=>p.id)]);
+   // New clubs start empty: managers build their own 18-player squad from the transfer market.
+   // The lineup is created only after the manager has recruited players and saves a valid XI + seven substitutes.
+   const players=[];
    await client.query('INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason) VALUES($1,$2,$2,$3)',[club.id,STARTING_BUDGET_UZS.toString(),'club_created']);
    await client.query('INSERT INTO club_missions(club_id,mission_id) SELECT $1,id FROM missions WHERE active=true ON CONFLICT DO NOTHING',[club.id]);
-   await ensureLeague(client);
    return {club,players};
   });
  }catch(error){
@@ -189,13 +188,14 @@ async function handle(req,res){
 
  if(req.method==='POST'&&path==='/api/uploads/crest'){if(!rateLimit(clientIp(req)+':crest',10))throw new HttpError(429,'Too many crest uploads');const body=await readJson(req,3_100_000);const crestUrl=await saveCrest(body.dataUrl);return json(res,201,{crestUrl});}
  if(req.method==='GET'&&path==='/api/market'){
-  const columns='id,full_name,nationality,age,position,quality,overall,potential,market_value_uzs,attributes,origin';
+  const columns='id,full_name,nationality,CASE WHEN real_player_dob IS NOT NULL THEN EXTRACT(YEAR FROM AGE(CURRENT_DATE,real_player_dob))::int ELSE age END AS age,position,quality,overall,potential,market_value_uzs,attributes,origin,real_club_name,real_club_key,real_club_crest_url,real_roster_source,real_roster_checked_at';
   const maxValue=url.searchParams.get('maxValue');
   if(maxValue!==null&&!/^\d{1,15}$/.test(maxValue))throw new HttpError(400,'maxValue is invalid');
-  const r=await db().query('SELECT '+columns+' FROM players WHERE club_id IS NULL AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 100',[maxValue]);
+  const r=await db().query('SELECT '+columns+' FROM players WHERE club_id IS NULL AND real_club_key IS NOT NULL AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 500',[maxValue]);
   // The generated 45–50 players are listed separately so they are never pushed out by the 100-row limit.
   const youth=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND origin='generated' AND overall BETWEEN $1 AND $2 ORDER BY position,overall DESC,id LIMIT 60",[YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL]);
-  return json(res,200,{players:r.rows,youth:youth.rows,squadLimits:{min:MIN_SQUAD_SIZE,max:MAX_SQUAD_SIZE}});
+  const academy=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND origin='academy' AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 100",[maxValue]);
+  return json(res,200,{players:r.rows,youth:youth.rows,academy:academy.rows,squadLimits:{min:MIN_SQUAD_SIZE,max:MAX_SQUAD_SIZE,required:STARTING_SQUAD_SIZE,minimumGoalkeepers:MINIMUM_GOALKEEPERS}});
  }
  if(req.method==='GET'&&path==='/api/transfers'){
   const limit=Math.max(1,Math.min(100,Number(url.searchParams.get('limit'))||50));
@@ -207,7 +207,7 @@ async function handle(req,res){
  }
  if(req.method==='POST'&&path==='/api/clubs'){
   const body=await readJson(req);const result=await makeClub(user.id,body);
-  return json(res,201,{club:result.club,squad:result.players});
+  return json(res,201,{club:result.club,squad:result.players,startingBudgetUzs:STARTING_BUDGET_UZS.toString(),requiredSquadSize:STARTING_SQUAD_SIZE});
  }
  const parts=path.split('/').filter(Boolean);
  if(parts[0]==='api'&&parts[1]==='clubs'&&parts[2]){
@@ -275,7 +275,7 @@ async function handle(req,res){
    if(typeof body.formation!=='string'||!isFormation(body.formation))throw new HttpError(400,'Unsupported formation');
    const formation=body.formation,subs=body.substitutes===undefined?[]:body.substitutes;
    if(!Array.isArray(body.starters)||body.starters.length!==11)throw new HttpError(400,'Select exactly 11 unique starters');
-   if(!Array.isArray(subs)||subs.length>7)throw new HttpError(400,'Invalid substitutes');
+   if(!Array.isArray(subs)||subs.length>7)throw new HttpError(400,'Select no more than seven substitutes');
    const starters=body.starters.map(id=>uuid(id,'Player ID').toLowerCase()),bench=subs.map(id=>uuid(id,'Player ID').toLowerCase());
    if(new Set(starters).size!==11)throw new HttpError(400,'Select exactly 11 unique starters');
    if(new Set(bench).size!==bench.length||bench.some(id=>starters.includes(id)))throw new HttpError(400,'A player can be named only once in a lineup');
@@ -288,6 +288,7 @@ async function handle(req,res){
     const problem=lineupProblem(formation,starters,squad,saved);
     if(problem)throw new HttpError(400,problem);
     await client.query('INSERT INTO lineups(club_id,formation,starters,substitutes,updated_at) VALUES($1,$2,$3,$4,NOW()) ON CONFLICT(club_id) DO UPDATE SET formation=EXCLUDED.formation,starters=EXCLUDED.starters,substitutes=EXCLUDED.substitutes,updated_at=NOW()',[clubId,formation,starters,bench]);
+    await ensureLeague(client);
     return lineupReport(formation,starters.map(id=>owned.get(id)));
    });
    return json(res,200,{ok:true,lineup:{formation,starters,substitutes:bench},analysis:report});

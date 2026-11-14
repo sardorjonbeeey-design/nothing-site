@@ -1,7 +1,7 @@
 // League seasons: creation of the schedule, automatic rollover and the waiting-list stipend.
 // Everything here runs inside a caller-supplied transaction and is safe to call repeatedly.
 import {leagueSchedule,LEAGUE_TIMEZONE,LEAGUE_KICKOFF_TIME,MATCH_DURATION_SECONDS} from './league.js';
-import {WAITING_STIPEND_UZS} from './economy.js';
+import {WAITING_STIPEND_UZS,STARTING_SQUAD_SIZE,MINIMUM_GOALKEEPERS} from './economy.js';
 export const LEAGUE_LOCK=8111001;
 export const LEAGUE_SIZE=10;
 export const REST_DAYS_BETWEEN_SEASONS=2;
@@ -25,7 +25,7 @@ export async function ensureLeague(client){
  await client.query('SELECT pg_advisory_xact_lock($1)',[LEAGUE_LOCK]);
  const existing=await client.query('SELECT id FROM leagues WHERE starts_on IS NOT NULL ORDER BY season_number DESC LIMIT 1');
  if(existing.rowCount)return existing.rows[0].id;
- const clubs=await client.query('SELECT id FROM clubs ORDER BY created_at ASC,id ASC LIMIT $1',[LEAGUE_SIZE]);
+ const clubs=await client.query(`SELECT c.id FROM clubs c JOIN players p ON p.club_id=c.id JOIN lineups l ON l.club_id=c.id GROUP BY c.id,c.created_at,l.starters,l.substitutes HAVING COUNT(p.id)>=$2 AND COUNT(*) FILTER (WHERE p.position='GK')>=$3 AND cardinality(l.starters)=11 AND cardinality(l.substitutes)=7 AND cardinality(ARRAY(SELECT DISTINCT x FROM unnest(l.starters||l.substitutes) AS x))=$2 ORDER BY c.created_at ASC,c.id ASC LIMIT $1`,[LEAGUE_SIZE,STARTING_SQUAD_SIZE,MINIMUM_GOALKEEPERS]);
  if(clubs.rowCount<LEAGUE_SIZE)return null;
  return createSeason(client,1,clubs.rows.map(r=>r.id),'(NOW() AT TIME ZONE $2)::date+1',[LEAGUE_TIMEZONE]);
 }

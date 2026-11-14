@@ -48,3 +48,59 @@
 .pill.unsaved{color:#ffedb5;background:#594a27}
 @media(max-width:700px){.formations{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.formation strong{font-size:16px}}
 \n.admin-shell h1{font-size:clamp(28px,5vw,42px);letter-spacing:-.05em;margin:8px 0}.admin-nav{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}.admin-nav button{font-size:10px}.admin-shell .panel{overflow:hidden}.admin-shell code{font:9px 'DM Mono',monospace;overflow-wrap:anywhere;color:#e5c46b}.admin-shell hr{border:0;border-top:1px solid var(--line);margin:22px 0}.admin-shell textarea{width:100%;background:#101a16;border:1px solid #3a4e43;border-radius:10px;padding:12px;color:#fff;font:11px 'DM Mono',monospace}.admin-shell form{max-width:680px}.admin-shell .table-wrap{margin-top:12px}.admin-shell table{min-width:700px}.admin-shell .field>label:first-child{display:block}\n
+/* Football-game presentation: retain the established dark green and gold palette. */
+.top .tag{font-size:9px}
+.game-filters{display:flex;gap:7px;margin:4px 0 14px}
+.game-filters .btn{min-width:96px}
+.build-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:22px;align-items:center;background:linear-gradient(135deg,#1d382c,#17251f 70%)}
+.build-copy h2{font-size:22px;margin:8px 0}
+.build-copy>p{max-width:560px}
+.build-progress{max-width:430px;margin:16px 0 8px}
+.build-progress>span,.build-progress>small{display:block;font-size:10px;color:#c7d8ce}
+.build-progress .progress{height:8px;margin:8px 0}
+.build-budget{padding:18px;border-left:1px solid #45634f;min-width:210px}
+.build-budget strong{display:block;font-size:24px;letter-spacing:-.04em;margin:10px 0}
+.build-reminder{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.build-reminder strong{font-size:14px}
+.build-reminder p{margin:4px 0}
+.build-reminder span{font:12px 'DM Mono',monospace;color:var(--gold);white-space:nowrap}
+.market-filters{display:grid;grid-template-columns:2fr 1fr 1.4fr;gap:8px;margin:14px 0}
+.market-filters input,.market-filters select{min-width:0;background:#101a16;border:1px solid #3a4e43;border-radius:10px;padding:11px;color:#fff;font-size:11px}
+.market-list{display:flex;flex-direction:column;gap:7px}
+.market-player{display:grid;grid-template-columns:minmax(0,1fr) 55px 130px auto;align-items:center;gap:13px;background:#1b2a24;border:1px solid var(--line);border-radius:13px;padding:11px 13px}
+.market-club{display:flex;align-items:center;gap:6px;color:#a6c5b1;font-size:9px;margin-bottom:4px}
+.market-club img{width:18px;height:18px;object-fit:contain}
+.market-main h3{font-size:12px;margin:0 0 4px}
+.market-rating{text-align:center}
+.market-rating strong{display:block;font:21px 'DM Mono',monospace;color:var(--gold)}
+.market-rating span{font:8px 'DM Mono',monospace;color:var(--muted)}
+.market-price{text-align:right;font-size:10px;color:#e3eae5;white-space:nowrap}
+.market-actions{display:flex;gap:6px}
+.market-actions .btn{padding:8px 10px;font-size:9px}
+.profile-backdrop{position:fixed;inset:0;background:#000b;z-index:30;display:grid;place-items:center;padding:16px}
+.player-profile{width:min(100%,470px);max-height:90vh;overflow:auto;position:relative;margin:0}
+.player-profile h2{font-size:22px;margin:8px 0}
+.profile-close{float:right}
+.profile-overall{font:700 40px 'DM Mono',monospace;color:var(--gold);margin:14px 0}
+.profile-overall small{font-size:11px;color:var(--muted)}
+.profile-attributes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.profile-attributes>div{display:grid;grid-template-columns:1fr auto;gap:5px;font-size:9px}
+.profile-attributes span{color:var(--muted)}
+.profile-attributes b{font:12px 'DM Mono',monospace}
+.profile-attributes i{grid-column:1/3;height:5px;background:#33463b;border-radius:8px;overflow:hidden}
+.profile-attributes em{display:block;height:100%;background:#75b18d}
+.formations{display:flex;flex-wrap:wrap;gap:6px}
+.formation{min-height:36px;padding:7px 10px;border-radius:8px}
+.formation strong{font-size:12px}
+.formation small,.formation em{display:none}
+@media(max-width:700px){
+ .build-panel{grid-template-columns:1fr;gap:8px}
+ .build-budget{border-left:0;border-top:1px solid #45634f;padding:12px 0 0;min-width:0}
+ .build-budget strong{font-size:20px}
+ .market-filters{grid-template-columns:1fr 1fr}
+ .market-filters input{grid-column:1/3}
+ .market-player{grid-template-columns:minmax(0,1fr) 45px;gap:7px}
+ .market-price{grid-column:1;text-align:left}
+ .market-actions{grid-column:2;grid-row:2;justify-content:flex-end}
+ .build-reminder{align-items:flex-start;flex-direction:column}
+}

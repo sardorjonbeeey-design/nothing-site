@@ -15,7 +15,7 @@ import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import pg from 'pg';
 import {upgradeCost,saleValueUzs,marketValueUzs,qualityForOverall} from '../../src/economy.js';
-import {academySquadTemplate,youthSlots} from '../../src/catalog.js';
+import {youthSlots} from '../../src/catalog.js';
 import {isValidLineup,lineupProblem} from '../../src/lineup.js';
 import {FORMATION_IDS,analyseLineup} from '../../src/formations.js';
 import {squadStrength} from '../../src/simulation.js';
@@ -100,6 +100,35 @@ async function assertLineupValid(i){
  assert.ok(lineup.substitutes.every(id=>players.some(p=>p.id===id)&&!lineup.starters.includes(id)));
  return {players,lineup};
 }
+async function buildSquad(i,user){
+ const clubId=clubs[i].id,used=new Set(),chosen=[];let realSigned=0;
+ const choose=async(positions,count)=>{
+  for(let n=0;n<count;n++){
+   const market=await ok(user,'GET','/api/market');
+   const sortByPrice=(a,b)=>BigInt(a.market_value_uzs)<BigInt(b.market_value_uzs)?-1:BigInt(a.market_value_uzs)>BigInt(b.market_value_uzs)?1:a.overall-b.overall;
+   const real=market.players.filter(p=>positions.includes(p.position)&&!used.has(p.id)).sort(sortByPrice);
+   const youth=market.youth.filter(p=>positions.includes(p.position)&&!used.has(p.id)).sort(sortByPrice);
+   const p=realSigned<7&&real.length?real[0]:(youth[0]||real[0]);
+   assert.ok(p,'real market or academy supply has a player for '+positions.join('/'));
+   await ok(user,'POST','/api/clubs/'+clubId+'/players/sign',{playerId:p.id});
+   used.add(p.id);chosen.push(p);if(p.origin==='market')realSigned++;
+  }
+ };
+ // First take a balanced spread of real players; use replenishing academy prospects for the remaining slots.
+ await choose(['GK'],1);await choose(['CB'],1);await choose(['LB'],1);await choose(['RB'],1);await choose(['DM'],1);await choose(['CM'],1);await choose(['ST'],1);await choose(['AM'],1);await choose(['LW'],1);await choose(['RW'],1);
+ await choose(['GK'],1);await choose(['CB'],2);await choose(['DM'],1);await choose(['CM'],2);await choose(['ST'],2);
+ const remaining=chosen.slice();
+ const take=position=>{const index=remaining.findIndex(p=>p.position===position);assert.ok(index>=0,'test squad has a '+position);return remaining.splice(index,1)[0].id;};
+ const starters=['GK','LB','CB','CB','RB','DM','CM','CM','LW','RW','ST'].map(take);
+ const substitutes=remaining.map(p=>p.id);
+ assert.equal(starters.length,11);assert.equal(substitutes.length,7);
+ await ok(user,'POST','/api/clubs/'+clubId+'/lineup',{formation:'4-3-3',starters,substitutes});
+ if(i===0){
+  // Mark bench academy players for deterministic resale tests; the production market still keeps real players separate.
+  await db.query("UPDATE players SET origin='academy',first_sale_done=false WHERE id=ANY($1::uuid[]) AND position IN ('GK','CB','CM','AM','ST')",[substitutes]);
+ }
+ assert.equal((await ok(user,'GET','/api/clubs/'+clubId+'/squad')).players.length,18);
+}
 
 test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'INTEGRATION_DATABASE_URL is not set'},async t=>{
  assertLocalDatabase();
@@ -117,9 +146,9 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const second=await run('src/migrate.js');
   assert.match(second,/Skipped migration 001_initial/);assert.match(second,/Skipped migration 002_development_ledger/);
   await run('src/seed.js');await run('src/seed.js');
-  assert.match(first,/Applied migration 003_league_schedule/);assert.match(first,/Applied migration 004_economy/);assert.match(first,/Applied migration 005_price_rebalance/);assert.match(first,/Applied migration 006_rating_profiles/);assert.match(second,/Skipped migration 004_economy/);assert.match(second,/Skipped migration 005_price_rebalance/);assert.match(second,/Skipped migration 006_rating_profiles/);
-  const counts=(await db.query("SELECT (SELECT COUNT(*)::int FROM players WHERE origin='market') AS market,(SELECT COUNT(*)::int FROM players WHERE origin='generated') AS generated,(SELECT COUNT(*)::int FROM players WHERE origin='academy') AS academy,(SELECT COUNT(DISTINCT catalog_key)::int FROM players) AS keys,(SELECT COUNT(*)::int FROM missions) AS missions")).rows[0];
-  assert.deepEqual(counts,{market:360,generated:12,academy:0,keys:360,missions:5},'seeding twice creates nothing twice');
+  assert.match(first,/Applied migration 003_league_schedule/);assert.match(first,/Applied migration 004_economy/);assert.match(first,/Applied migration 005_price_rebalance/);assert.match(first,/Applied migration 006_rating_profiles/);assert.match(first,/Applied migration 010_real_player_club_metadata/);assert.match(first,/Applied migration 011_real_player_date_of_birth/);assert.match(second,/Skipped migration 011_real_player_date_of_birth/);assert.match(second,/Skipped migration 004_economy/);assert.match(second,/Skipped migration 005_price_rebalance/);assert.match(second,/Skipped migration 006_rating_profiles/);
+  const counts=(await db.query("SELECT (SELECT COUNT(*)::int FROM players WHERE origin='market') AS market,(SELECT COUNT(*)::int FROM players WHERE origin='generated') AS generated,(SELECT COUNT(*)::int FROM players WHERE origin='academy') AS academy,(SELECT COUNT(DISTINCT catalog_key)::int FROM players) AS keys,(SELECT COUNT(*)::int FROM missions) AS missions,(SELECT COUNT(DISTINCT real_club_key)::int FROM players WHERE origin='market') AS clubs,(SELECT COUNT(*)::int FROM players WHERE origin='market' AND real_player_dob IS NOT NULL AND real_club_crest_url IS NOT NULL) AS verified")).rows[0];
+  assert.deepEqual(counts,{market:236,generated:12,academy:0,keys:236,missions:5,clubs:16,verified:68},'real catalogue and youth supply seed once');
   // The migration's SQL price formula and the server's JavaScript formula agree for every rating.
   const sqlPrices=(await db.query("SELECT o::int AS overall,(ROUND(11000000*POWER(1.112::numeric,o-80)/10000)*10000)::bigint AS price FROM generate_series(1,100) o")).rows;
   for(const r of sqlPrices)assert.equal(Number(r.price),marketValueUzs(r.overall),'overall '+r.overall);
@@ -167,7 +196,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(tampered.status,401);
  });
 
- await t.test('crest upload and club creation assign a starter squad and lineup',async()=>{
+ await t.test('crest upload and club creation start with an empty squad and the full budget',async()=>{
   const png=Buffer.alloc(32);Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]).copy(png);
   const up=await ok(users[0],'POST','/api/uploads/crest',{dataUrl:'data:image/png;base64,'+png.toString('base64')});
   uploaded.push(up.crestUrl);
@@ -180,27 +209,20 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(created.club.crest_url,up.crestUrl);assert.equal(created.club.budget_uzs,'20000000');assert.equal(created.club.development_points,0);
   const crest=await fetch(BASE+up.crestUrl);assert.equal(crest.status,200);assert.equal(crest.headers.get('content-type'),'image/png');
   const squad=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/squad')).players;
-  assert.equal(squad.length,18);
-  // Player classification and the approved distribution: every starter-squad player is an academy product.
-  const key=p=>p.position+':'+p.overall;
-  assert.deepEqual(squad.map(key).sort(),academySquadTemplate.map(([position,overall])=>position+':'+overall).sort());
-  for(const p of squad){
-   assert.equal(p.origin,'academy');assert.equal(p.first_sale_done,false);assert.equal(p.catalog_key,null);
-   assert.equal(Number(p.market_value_uzs),marketValueUzs(p.overall));assert.equal(p.quality,qualityForOverall(p.overall));
-   assert.equal(Object.values(p.attributes).reduce((a,b)=>a+b,0),p.overall*6,'attributes average exactly to overall');
-  }
-  assert.equal(squad.reduce((n,p)=>n+Number(p.market_value_uzs),0),10520000);
-  const lineup=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/lineup')).lineup;
-  assert.equal(lineup.formation,'4-3-3');assert.equal(lineup.starters.length,11);assert.equal(lineup.substitutes.length,7);
-  assert.ok(squad.some(p=>p.position==='GK'&&lineup.starters.includes(p.id)));
+  assert.equal(squad.length,0,'new clubs receive no pre-assigned players');
+  assert.equal((await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/lineup')).lineup,null,'new clubs receive no pre-saved formation');
+  assert.deepEqual(await ok(users[0],'POST','/api/clubs/'+clubs[0].id+'/leagues/ensure',{}),{leagueId:null,created:false},'an empty club cannot enter the league');
   const ledger=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/ledger')).transactions;
   assert.equal(ledger.length,1);assert.equal(ledger[0].reason,'club_created');assert.equal(ledger[0].amount_uzs,'20000000');assert.equal(ledger[0].balance_after_uzs,'20000000');
-  const starters=squad.filter(p=>lineup.starters.includes(p.id)).map(p=>p.overall).sort((a,b)=>b-a);
-  assert.deepEqual(starters,[58,56,56,54,54,54,54,52,52,52,52],'the XI holds the eleven strongest players');
+  await buildSquad(0,users[0]);
+  const built=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/squad')).players;
+  const lineup=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/lineup')).lineup;
+  assert.equal(built.length,18);assert.equal(lineup.starters.length,11);assert.equal(lineup.substitutes.length,7);
+  assert.ok(built.filter(p=>p.position==='GK').length>=2);
   // One club per user.
   const second=await call(users[0],'POST','/api/clubs',{name:'Second Club',shortName:'SEC',primaryColour:'#111111',secondaryColour:'#ffffff'});
   assert.equal(second.status,409);assert.match(second.data.error,/already manage a club/);
-  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM players WHERE club_id IS NOT NULL')).n),18,'the refused request created no players');
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM players WHERE club_id=$1',[clubs[0].id])).n),18,'the refused request created no players');
   assert.equal((await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/missions')).missions.length,5);
   assert.equal((await ok(users[0],'GET','/api/clubs')).clubs.length,1);
  });
@@ -231,11 +253,12 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   // Position mapping: an eleven with six attackers cannot play 5-4-1 (one striker's place), and the saved lineup is left alone.
   const pick=(position,n)=>squad.filter(p=>p.position===position).slice(0,n).map(p=>p.id);
   const attacking=[...pick('GK',1),...pick('CB',3),...pick('CM',1),...pick('AM',1),...pick('LW',1),...pick('RW',1),...pick('ST',3)];assert.equal(attacking.length,11);
-  const wrongShape=await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking});
+  const attackingBench=squad.filter(p=>!attacking.includes(p.id)).slice(0,7).map(p=>p.id);
+  const wrongShape=await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking,substitutes:attackingBench});
   assert.equal(wrongShape.status,400);assert.match(wrongShape.data.error,/5-4-1 cannot be filled.*ST.*out of position/);
   assert.deepEqual((await ok(users[0],'GET',route)).lineup,lineup);
   // The very same eleven is a legitimate, if poorly suited, 4-3-3: wingers cover at full-back, strikers on the wings.
-  const asFront=await ok(users[0],'POST',route,{formation:'4-3-3',starters:attacking});
+  const asFront=await ok(users[0],'POST',route,{formation:'4-3-3',starters:attacking,substitutes:attackingBench});
   assert.equal(asFront.analysis.valid,true);assert.ok(asFront.analysis.cover>=5);assert.ok(asFront.analysis.fitBonus<1&&asFront.analysis.fitBonus>=-4);
   await ok(users[0],'POST',route,{formation:'4-4-2',starters:lineup.starters,substitutes:lineup.substitutes});
   assert.equal((await ok(users[0],'GET',route)).lineup.formation,'4-4-2');
@@ -249,7 +272,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const info=await ok(users[0],'GET','/api/clubs/'+id+'/formations');
   assert.deepEqual(info.formations.map(f=>f.id),FORMATION_IDS);assert.equal(info.formations.length,12);
   assert.equal(info.current.formation,'4-3-3');assert.equal(info.current.valid,true);assert.equal(info.current.fit,11);assert.equal(info.current.fitBonus,4);
-  assert.equal(info.current.strength,squadStrength(original.starters.map(x=>byId.get(x)),'4-3-3'));
+  assert.equal(info.current.strength,Number(squadStrength(original.starters.map(x=>byId.get(x)),'4-3-3').toFixed(1)));
   assert.equal((await call(users[1]||{dev:99},'GET','/api/clubs/'+id+'/formations')).status,404,'another user cannot read this club');
   // Every formation: the suggested XI is accepted, stored and read back, and the report is computed by the server.
   for(const f of info.formations){
@@ -281,7 +304,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
    'duplicate starter':{formation:'4-3-3',starters:xi.slice(0,10).concat(xi[0])},'duplicate in another letter case':{formation:'4-3-3',starters:xi.slice(0,10).concat(xi[0].toUpperCase())},
    'not a UUID':{formation:'4-3-3',starters:xi.slice(0,10).concat('1')},'free agent':{formation:'4-3-3',starters:xi.slice(0,10).concat(freeAgent)},
    'no goalkeeper':{formation:'4-3-3',starters:outfield.concat(subs.find(x=>byId.get(x).position!=='GK'))},'two goalkeepers':{formation:'4-3-3',starters:xi.slice(0,10).concat(spareKeeper)},
-   'six attackers in a back five':{formation:'5-4-1',starters:attacking},'six attackers in 4-1-4-1':{formation:'4-1-4-1',starters:attacking},
+   'six attackers in a back five':{formation:'5-4-1',starters:attacking,substitutes:original.substitutes},'six attackers in 4-1-4-1':{formation:'4-1-4-1',starters:attacking},
    'starter repeated on the bench':{formation:'4-3-3',starters:xi,substitutes:[xi[3]]},'duplicate substitute':{formation:'4-3-3',starters:xi,substitutes:[subs[0],subs[0]]},
    'eight substitutes':{formation:'4-3-3',starters:xi,substitutes:subs.concat(subs[0])},'foreign substitute':{formation:'4-3-3',starters:xi,substitutes:[freeAgent]}
   };
@@ -297,20 +320,29 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   // Backward compatibility: a lineup stored before roles were validated (the old rules took any eleven with a goalkeeper).
   // The club must be able to save it again unchanged and to improve it, but not to make it worse.
   await db.query("UPDATE lineups SET formation='4-1-4-1',starters=$2 WHERE club_id=$1",[id,attacking]);
-  const legacy={formation:'4-1-4-1',starters:attacking},team=ids=>ids.map(x=>byId.get(x)),wrongBefore=analyseLineup(team(attacking),'4-1-4-1');
+  const attackingBench=squad.filter(p=>!attacking.includes(p.id)).slice(0,7).map(p=>p.id);
+  const legacy={formation:'4-1-4-1',starters:attacking,substitutes:attackingBench},team=ids=>ids.map(x=>byId.get(x)),wrongBefore=analyseLineup(team(attacking),'4-1-4-1');
   assert.equal(wrongBefore.valid,false);
   const legacyInfo=await ok(users[0],'GET','/api/clubs/'+id+'/formations');
   assert.equal(legacyInfo.current.valid,false);assert.equal(legacyInfo.current.outOfPosition,wrongBefore.outOfPosition);
   assert.equal((await call(users[0],'POST',route,legacy)).status,200,'the legacy lineup can be saved again unchanged');
-  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:attacking.slice().reverse()})).status,200,'in any order');
-  assert.equal((await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking})).status,400,'the allowance does not carry to another formation');
+  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:attacking.slice().reverse(),substitutes:attackingBench})).status,200,'in any order');
+  assert.equal((await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking,substitutes:attackingBench})).status,400,'the allowance does not carry to another formation');
   // Improving it: the first XI with a spare striker for a centre-back has fewer players out of position, though still not none.
-  const firstCb=xi.find(x=>byId.get(x).position==='CB'),spareStriker=squad.find(p=>p.position==='ST'&&!xi.includes(p.id)).id,mild=xi.map(x=>x===firstCb?spareStriker:x);
-  const mildWrong=analyseLineup(team(mild),'4-1-4-1').outOfPosition;
-  assert.ok(mildWrong>0&&mildWrong<wrongBefore.outOfPosition);
+  // Find a real bench replacement that improves this particular 18-player squad; do not assume a fixed RB is always the best fit.
+  let mild=null,mildWrong=wrongBefore.outOfPosition,mildOutgoing=null,mildIncoming=null;
+  for(const outgoing of attacking.filter(id=>byId.get(id).position==='CB')){
+   for(const incoming of squad.filter(p=>!attacking.includes(p.id))){
+    const candidate=attacking.map(id=>id===outgoing?incoming.id:id);
+    const outOfPosition=analyseLineup(team(candidate),'4-1-4-1').outOfPosition;
+    if(outOfPosition<mildWrong){mild=candidate;mildWrong=outOfPosition;mildOutgoing=outgoing;mildIncoming=incoming.id;}
+   }
+  }
+  assert.ok(mild&&mildWrong<wrongBefore.outOfPosition,`no bench replacement improved out-of-position count; before=${wrongBefore.outOfPosition}; best=${mildWrong}`);
+  const mildBench=attackingBench.filter(id=>id!==mildIncoming).concat(mildOutgoing);
   assert.match(lineupProblem('4-1-4-1',mild,squad),/cannot be filled/,'not acceptable for a club without the legacy lineup');
   assert.equal(lineupProblem('4-1-4-1',mild,squad,legacy),null);
-  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:mild})).status,200,'the legacy lineup can be improved step by step');
+  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:mild,substitutes:mildBench})).status,200,'the legacy lineup can be improved step by step');
   // Making it worse again is refused, and the stored lineup stays as it was.
   const kept=await stored(),refused=await call(users[0],'POST',route,legacy);
   assert.equal(refused.status,400);assert.match(refused.data.error,/cannot be filled/);assert.equal(await stored(),kept);
@@ -320,38 +352,45 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
 
  await t.test('transfer market: rebalanced price curve, classification, 80-rated signing affordability, youth supply',async()=>{
   const market=await ok(users[0],'GET','/api/market');
-  assert.deepEqual(market.squadLimits,{min:13,max:26});
-  assert.ok(market.players.length>0&&market.players.length<=100);
+  assert.deepEqual(market.squadLimits,{min:13,max:26,required:18,minimumGoalkeepers:2});
+  assert.ok(market.players.length>0&&market.players.length<=500);
+  assert.equal(market.players.length,229,'seven real players have already been recruited by the first club');
+  assert.equal(new Set(market.players.map(p=>p.real_club_key)).size,16,'all 16 Super League clubs are represented');
+  assert.ok(market.players.every(p=>p.real_club_name&&p.real_club_crest_url&&Number.isInteger(p.age)&&p.age>=16),'real market entries include club, crest and current age');
+  assert.ok(Array.isArray(market.academy),'resold academy players are returned separately from real players');
   for(const p of market.players.concat(market.youth))assert.equal(Number(p.market_value_uzs),marketValueUzs(p.overall),'price follows the curve');
   assert.ok(market.players.every(p=>p.origin==='market'),'the top of the market is the seeded catalogue');
   // Generated youth: every slot is covered, all rated 45-50, none of them from the catalogue.
   const need={};for(const pos of youthSlots)need[pos]=(need[pos]||0)+1;
   for(const [pos,n] of Object.entries(need))assert.ok(market.youth.filter(p=>p.position===pos).length>=n,'youth stock for '+pos);
   assert.ok(market.youth.every(p=>p.origin==='generated'&&p.overall>=45&&p.overall<=50));
-  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n),12,'exactly the standing stock exists, no more');
+  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated' AND club_id IS NULL")).n),12,'the free academy stock stays at twelve despite already-signed prospects');
   const capped=(await ok(users[0],'GET','/api/market?maxValue=3000000')).players;
   assert.ok(capped.length>0&&capped.every(p=>BigInt(p.market_value_uzs)<=3000000n));
   assert.equal((await call(users[0],'GET','/api/market?maxValue=abc')).status,400);
-  // An 80-rated player costs 11,000,000 UZS: one fits the opening budget, two do not.
+  // An 80-rated player costs 11,000,000 UZS: one fits the 20M opening budget, two do not. The club has already recruited its squad.
   const elite=(await one("INSERT INTO players(full_name,age,position,quality,overall,potential,attributes,market_value_uzs,origin) VALUES('Test Elite',27,'ST','elite',80,84,'{\"pace\":82,\"shooting\":88,\"passing\":76,\"dribbling\":81,\"defending\":70,\"physical\":83}',$1,'market') RETURNING id",[marketValueUzs(80)])).id;
   assert.equal(marketValueUzs(80),11000000);
   assert.ok(marketValueUzs(80)<=20000000);
   assert.ok(2*marketValueUzs(80)>20000000);
-  assert.equal(await budgetOf(0),20000000n);
+  const budgetAfterRecruitment=await budgetOf(0);
+  assert.ok(budgetAfterRecruitment>0n&&budgetAfterRecruitment<20000000n);
   // Buying a youth player goes through the normal signing rules and is replaced by exactly one new youth player.
-  const youth=market.youth.find(p=>p.position==='CM');
+  const generatedBefore=Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n);
+  const youth=market.youth.filter(p=>p.position!=='GK').slice().sort((a,b)=>BigInt(a.market_value_uzs)<BigInt(b.market_value_uzs)?-1:BigInt(a.market_value_uzs)>BigInt(b.market_value_uzs)?1:0)[0];
+  assert.ok(budgetAfterRecruitment>BigInt(youth.market_value_uzs),'the completed squad leaves enough budget for one more academy prospect');
   const signed=await ok(users[0],'POST',clubPath(0)+'/players/sign',{playerId:youth.id});
-  assert.equal(signed.budgetUzs,(20000000n-BigInt(youth.market_value_uzs)).toString());
+  assert.equal(signed.budgetUzs,(budgetAfterRecruitment-BigInt(youth.market_value_uzs)).toString());
   const after=(await ok(users[0],'GET','/api/market')).youth;
   assert.ok(!after.some(p=>p.id===youth.id));assert.ok(after.filter(p=>p.position==='CM').length>=need.CM,'the slot is filled again');
-  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n),13);
-  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated' AND club_id IS NULL")).n),12);
+  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n),generatedBefore+1,'signing one youth prospect creates exactly one replacement');
+  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated' AND club_id IS NULL")).n),12,'twelve free youth prospects remain after replacement');
   assert.equal((await call(users[0],'POST',clubPath(0)+'/players/sign',{playerId:youth.id})).status,404,'a signed player cannot be signed twice');
   clubs[0].youthId=youth.id;clubs[0].eliteId=elite;
  });
 
  await t.test('no league exists below 10 clubs',async()=>{
-  for(let i=1;i<9;i++)clubs[i]=(await ok(users[i],'POST','/api/clubs',{name:'Integration Club '+(i+1),shortName:'IC'+(i+1),primaryColour:'#225588',secondaryColour:'#ffffff'})).club;
+  for(let i=1;i<9;i++){clubs[i]=(await ok(users[i],'POST','/api/clubs',{name:'Integration Club '+(i+1),shortName:'IC'+(i+1),primaryColour:'#225588',secondaryColour:'#ffffff'})).club;await buildSquad(i,users[i]);}
   assert.deepEqual(await ok(users[0],'GET',clubPath(0)+'/league'),{leagueExists:false,table:[],season:null,previous:null});
   assert.deepEqual((await ok(users[0],'GET',clubPath(0)+'/fixtures')).fixtures,[]);
   assert.deepEqual((await ok(users[0],'GET',clubPath(0)+'/results')).results,[]);
@@ -455,6 +494,8 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
 
  await t.test('the 10th club creates an 18-round, 19-day league with 20:00 Asia/Tashkent kick-offs',async()=>{
   clubs[9]=(await ok(users[9],'POST','/api/clubs',{name:'Integration Club 10',shortName:'IC10',primaryColour:'#225588',secondaryColour:'#ffffff'})).club;
+  assert.deepEqual(await ok(users[9],'POST',clubPath(9)+'/leagues/ensure',{}),{leagueId:null,created:false},'the tenth club is not admitted until it has a complete squad');
+  await buildSquad(9,users[9]);
   const table=(await ok(users[0],'GET',clubPath(0)+'/league')).table;
   assert.equal(table.length,10);assert.ok(table.every(r=>r.played===0&&r.points===0));
   const league=await one("SELECT id,status,starts_on::text AS starts_on,((NOW() AT TIME ZONE 'Asia/Tashkent')::date+1)::text AS tomorrow FROM leagues");
@@ -508,7 +549,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.deepEqual(race.map(r=>r.status).sort(),[201,409,409],'exactly one of three simultaneous requests creates the club');
   clubs[11]=race.find(r=>r.status===201).data.club;
   assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM clubs WHERE owner_user_id=$1',[clubs[11].owner_user_id])).n),1);
-  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM players WHERE club_id=$1',[clubs[11].id])).n),18);
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM players WHERE club_id=$1',[clubs[11].id])).n),0,'new club remains empty until its manager recruits players');
   assert.equal((await db.query('SELECT owner_user_id FROM clubs GROUP BY owner_user_id HAVING COUNT(*)>1')).rowCount,0);
   await assert.rejects(db.query('INSERT INTO clubs(owner_user_id,name,short_name) VALUES($1,$2,$3)',[clubs[11].owner_user_id,'Direct','DIR']),/clubs_one_per_owner/,'the database itself refuses a second club');
  });
@@ -516,24 +557,24 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
  await t.test('resale rates, automatic lineup replacement, squad limits and a consistent ledger',async()=>{
   const id=clubs[0].id,sell=playerId=>call(users[0],'POST',clubPath(0)+'/players/sell',{playerId}),sign=playerId=>call(users[0],'POST',clubPath(0)+'/players/sign',{playerId});
   const squad=(await ok(users[0],'GET',clubPath(0)+'/squad')).players,lineup=(await ok(users[0],'GET',clubPath(0)+'/lineup')).lineup;
-  assert.equal(squad.length,19);
-  const bench=(pos,overall)=>squad.find(p=>!lineup.starters.includes(p.id)&&p.position===pos&&p.overall===overall&&p.origin==='academy');
+  assert.equal(squad.length,18);
+  const bench=pos=>squad.find(p=>!lineup.starters.includes(p.id)&&p.position===pos&&p.origin==='academy');
   let budget=await budgetOf(0);
   // 1. Academy player, first sale: 50%.
-  const cb=bench('CB',50),first=await sell(cb.id);
-  assert.equal(first.status,200);assert.equal(first.data.resaleRatePercent,50);assert.equal(first.data.feeUzs,saleValueUzs(cb.market_value_uzs,50).toString());assert.equal(first.data.feeUzs,'230000');
-  budget+=230000n;assert.equal(first.data.budgetUzs,budget.toString());assert.deepEqual(first.data.promoted,[],'selling a substitute promotes nobody');
+  const cb=bench('CB'),first=await sell(cb.id);
+  assert.equal(first.status,200);assert.equal(first.data.resaleRatePercent,50);assert.equal(first.data.feeUzs,saleValueUzs(cb.market_value_uzs,50).toString());
+  budget+=BigInt(first.data.feeUzs);assert.equal(first.data.budgetUzs,budget.toString());assert.deepEqual(first.data.promoted,[],'selling a substitute promotes nobody');
   assert.equal((await sell(cb.id)).status,404);
   const listed=await one('SELECT club_id,origin,first_sale_done,market_value_uzs FROM players WHERE id=$1',[cb.id]);
-  assert.deepEqual(listed,{club_id:null,origin:'academy',first_sale_done:true,market_value_uzs:String(marketValueUzs(50))},'the sold academy player stays on the market at full price');
-  assert.ok((await ok(users[0],'GET','/api/market?maxValue=1000000')).players.some(p=>p.id===cb.id));
+  assert.deepEqual(listed,{club_id:null,origin:'academy',first_sale_done:true,market_value_uzs:String(cb.market_value_uzs)},'the sold academy player stays on the market at full price');
+  assert.ok((await ok(users[0],'GET','/api/market?maxValue=1000000')).academy.some(p=>p.id===cb.id));
   // 2. Buying him back costs the full price; selling him again pays 80%: the 50% rate applies once only.
-  assert.equal((await sign(cb.id)).status,200);budget-=460000n;
-  const again=await sell(cb.id);assert.equal(again.data.resaleRatePercent,80);assert.equal(again.data.feeUzs,'368000');budget+=368000n;
+  assert.equal((await sign(cb.id)).status,200);budget-=BigInt(cb.market_value_uzs);
+  const again=await sell(cb.id);assert.equal(again.data.resaleRatePercent,80);assert.equal(again.data.feeUzs,saleValueUzs(cb.market_value_uzs,80).toString());budget+=BigInt(again.data.feeUzs);
   // 3. A generated youth player is a transfer-market player: 80%.
   const youth=squad.find(p=>p.id===clubs[0].youthId),soldYouth=await sell(youth.id);
   assert.equal(soldYouth.data.resaleRatePercent,80);assert.equal(soldYouth.data.feeUzs,saleValueUzs(youth.market_value_uzs,80).toString());budget+=BigInt(soldYouth.data.feeUzs);
-  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n),13,'selling a youth player back creates no new one');
+  assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated' AND club_id IS NULL")).n),13,'selling a youth player adds it back without generating another');
   // 4. A catalogue player bought and sold: 80%.
   const target=(await ok(users[0],'GET','/api/market?maxValue=5000000')).players.find(p=>p.origin==='market');
   assert.equal((await sign(target.id)).status,200);budget-=BigInt(target.market_value_uzs);
@@ -554,7 +595,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(lastKeeper.status,400);assert.match(lastKeeper.data.error,/at least one goalkeeper/);
   // 7. Minimum squad of 13: two more sales are allowed, the next is refused. The XI is valid after every sale.
   assert.equal(state.players.length,15);
-  for(const p of [bench('CM',50),bench('AM',50)]){assert.equal((await sell(p.id)).status,200);await assertLineupValid(0);}
+  for(const p of [bench('CM'),bench('AM')]){assert.equal((await sell(p.id)).status,200);await assertLineupValid(0);}
   state=await assertLineupValid(0);assert.equal(state.players.length,13);
   const tooFew=await sell(state.lineup.substitutes[0]||state.lineup.starters[10]);
   assert.equal(tooFew.status,400);assert.match(tooFew.data.error,/at least 13 players/);
@@ -695,6 +736,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
 
  await t.test('a matchday is live for 60 seconds and all five matches are settled by the server at kick-off + 60s',async()=>{
   // Move matchday 1 so that it kicked off 57 seconds ago (database clock). No HTTP request is made while waiting for settlement.
+  const club2BeforeMatchday=await budgetOf(2);
   await db.query("UPDATE fixtures SET kickoff_at=date_trunc('milliseconds',NOW())-interval '57 seconds' WHERE kind='league' AND day_number=1");
   const live=(await ok(users[0],'GET',clubPath(0)+'/fixtures')).fixtures.find(f=>f.day_number===1);
   assert.equal(live.phase,'live');assert.equal(live.status,'scheduled');assert.equal(live.home_goals,null);
@@ -723,7 +765,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
    assert.equal((await ledgerRows(i,'league_match_income')).length,0);
   }
   const club2Bonus=(await ledgerRows(2,'match_result_bonus')).reduce((n,x)=>n+BigInt(x.amount_uzs),0n);
-  assert.equal(await budgetOf(2),20750000n+club2Bonus);
+  assert.equal(await budgetOf(2),club2BeforeMatchday+750000n+club2Bonus);
   await assertLedgersConsistent();
   const done=(await ok(users[0],'GET',clubPath(0)+'/fixtures')).fixtures.find(f=>f.day_number===1);
   assert.equal(done.phase,'played');assert.equal(typeof done.home_goals,'number');
@@ -998,7 +1040,8 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
 
 
  await t.test('six attribute points raise overall by exactly one and reprice the player',async()=>{
-  const squad=(await ok(users[5],'GET',clubPath(5)+'/squad')).players,p=squad.find(x=>x.overall===47&&x.position==='ST');
+  const attributes=JSON.stringify({pace:47,shooting:47,passing:47,dribbling:47,defending:47,physical:47});
+  const p=await one("INSERT INTO players(club_id,full_name,age,position,quality,overall,potential,attributes,market_value_uzs,origin) VALUES($1,'Upgrade Point Probe',22,'ST',$2,47,60,$3::jsonb,$4,'market') RETURNING id,attributes,overall",[clubs[5].id,qualityForOverall(47),attributes,marketValueUzs(47)]);
   assert.equal(Object.values(p.attributes).reduce((a,b)=>a+b,0),47*6);
   const names=['pace','shooting','passing','dribbling','defending','physical'];
   for(let i=0;i<6;i++){
@@ -1029,18 +1072,18 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(newest.season_number,2);assert.equal(newest.day_number,1);assert.equal(newest.viewed,false);
   assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM leagues')).n),2,'an unfinished season creates no successor');
   await assertLedgersConsistent();
-  for(let i=0;i<13;i++)await assertLineupValid(i);
+  for(let i=0;i<10;i++)await assertLineupValid(i);
  });
 
- await t.test('rating profile: every stored player is an Uzbek League player rated 40-90 with potential up to 90',async()=>{
+ await t.test('rating profile: real Super League players retain nationality and all stored players obey the game profile',async()=>{
   const profile=await one('SELECT * FROM rating_profiles');
   assert.deepEqual(profile,{category:'uzbek_league',min_overall:UZBEK_LEAGUE.minOverall,max_overall:UZBEK_LEAGUE.maxOverall,max_potential:UZBEK_LEAGUE.maxPotential,max_attribute:UZBEK_LEAGUE.maxAttribute});
   assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM rating_profiles')).n),1);
   const stats=await one("SELECT COUNT(*)::int AS n,MIN(overall)::int AS low,MAX(overall)::int AS high,MAX(potential)::int AS potential,COUNT(*) FILTER (WHERE category<>'uzbek_league')::int AS foreign_rows,COUNT(*) FILTER (WHERE potential<overall)::int AS inverted FROM players");
-  assert.ok(stats.n>500);assert.ok(stats.low>=40&&stats.high<=90&&stats.potential<=90);assert.equal(stats.foreign_rows,0);assert.equal(stats.inverted,0);
-  // The seeded catalogue was not extended: its best player is still 74, and nine potentials sit at the 90 cap.
+  assert.ok(stats.n>180);assert.ok(stats.low>=40&&stats.high<=90&&stats.potential<=90);assert.equal(stats.foreign_rows,0);assert.equal(stats.inverted,0);
+  // The imported catalogue is a curated 236-player snapshot with game-only OVR estimates in the 54-69 range.
   const catalogue=await one("SELECT MAX(overall)::int AS high,MIN(overall)::int AS low,COUNT(*)::int AS n,COUNT(*) FILTER (WHERE potential=90)::int AS capped FROM players WHERE catalog_key IS NOT NULL");
-  assert.equal(catalogue.n,360);assert.equal(catalogue.low,46);assert.ok(catalogue.capped>=9);
+  assert.equal(catalogue.n,236);assert.equal(catalogue.low,54);assert.equal(catalogue.high,69);assert.equal(catalogue.capped,0);
   const bad=(await db.query("SELECT 1 FROM players p,jsonb_each_text(p.attributes) a WHERE a.value::numeric NOT BETWEEN 1 AND 99")).rowCount;
   assert.equal(bad,0);
   const insert="INSERT INTO players(full_name,age,position,quality,overall,potential,attributes,market_value_uzs,origin) VALUES('Rating Probe',22,'ST','elite',$1,$2,$3::jsonb,0,'market') RETURNING id";
@@ -1103,7 +1146,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const funds=await ok(owner,'POST','/api/admin/funds',{clubId,amountUzs:'123456',reason:'integration admin adjustment'});
   assert.equal(BigInt(funds.budgetUzs),before+123456n);
   assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM money_ledger WHERE club_id=$1 AND reason='admin_adjustment'",[clubId])).n),1);
-  const recipient=(await one("SELECT id FROM game_users WHERE telegram_user_id='dev-2'")).id;
+  const recipient=(await one('SELECT owner_user_id AS id FROM clubs WHERE id=$1',[clubs[1].id])).id;
   await ok(owner,'POST','/api/admin/entitlement',{userId:recipient,feature:'gold',active:true,reason:'integration gold grant'});
   assert.ok((await call(other,'GET','/api/account/entitlements')).data.entitlements.some(e=>e.feature==='gold'));
   assert.equal((await one("SELECT revoked_at FROM user_entitlements WHERE user_id=$1 AND feature='gold'",[recipient])).revoked_at,null);
