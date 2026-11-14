@@ -67,7 +67,7 @@ export async function payCompletedSeasonPrizes(client){
     const pool=prizeSlots.reduce((sum,n)=>sum+n,0n),count=BigInt(end-start),base=pool/count,remainder=pool%count;
     for(let i=start;i<end;i++){
      const amount=base+(BigInt(i-start)<remainder?1n:0n);
-     const inserted=await client.query('INSERT INTO season_prize_payments(league_id,club_id,place,amount_uzs) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING club_id',[league.id,standings[i].club_id,i+1,amount.toString()]);
+     const inserted=await client.query('INSERT INTO season_prize_payments(league_id,club_id,place,amount_uzs) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING club_id',[league.id,standings[i].club_id,start+1,amount.toString()]);
      if(!inserted.rowCount)continue;
      const balance=(await client.query('UPDATE clubs SET budget_uzs=budget_uzs+$2 WHERE id=$1 RETURNING budget_uzs',[standings[i].club_id,amount.toString()])).rows[0].budget_uzs;
      await client.query("INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,'season_prize',$4)",[standings[i].club_id,amount.toString(),balance,league.id]);
