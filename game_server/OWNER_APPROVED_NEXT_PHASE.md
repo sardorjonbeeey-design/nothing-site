@@ -96,7 +96,7 @@ Formations must alter the actual match simulation, not only the pitch display. E
 
 ## 7. Verification and activation gate
 
-- Latest successful GitHub Actions run `43590707653`: `npm test` — 93 passed, 0 failed, 1 skipped; PostgreSQL integration — 40/40 passed.
+- Latest successful GitHub Actions run `43590913933`: `npm test` — 93 passed, 0 failed, 1 skipped; PostgreSQL integration — 40/40 passed, including the final concurrent cancel-vs-buy race test.
 - Coverage includes successful/failed inactivity warnings, single and double inactivity forfeits at the scheduled kick-off, match bonus amounts, 22M UZS prize pool, tied-place prize splitting, idempotent prize payouts across scheduler restarts, concurrent same-listing purchases, concurrent buyer-budget contention, and a 120-season/10-club formation balance simulation.
 - The current branch remains isolated. Before admin access can open, set `SUPER_ADMIN_TELEGRAM_ID` to the owner's numeric Telegram user ID in the isolated runtime and apply migration `008_super_admin.sql`. Migration `009_competition_rewards.sql` must also be applied for inactivity and season rewards. Do not claim admin access is active before those steps are verified.
 - Run the mobile smoke test in the isolated runtime/Telegram client before any release. Phase 2 mobile smoke numbers were owner-reported; this Phase 3 branch has not had a separate live iPhone Telegram smoke run.
