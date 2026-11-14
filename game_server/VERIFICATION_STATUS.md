@@ -179,3 +179,13 @@ Headless Chromium, Pixel 7 emulation and a 360 px viewport. Newly covered: 20,00
 
 ## Release status
 Price rebalance and the 40–90 Uzbek League rating profile are verified on the isolated branch; all suites pass. The 12 formations are implemented and verified locally but not committed. Not production-tested, not deployed, not connected to the existing Mini App or any live database.
+
+## Phase 3B — peer-to-peer transfer market (2026-11-14) — IMPLEMENTED, VERIFICATION PENDING
+- New migration: `db/007_player_to_player_transfers.sql`.
+- New domain service: `src/player-transfers.js`; wired into server API and mobile client market UI.
+- Test file: `test/player-transfers.test.js` (validation, stale listing gate, bounded browse and seller cancellation).
+- Server enforces seller ownership, squad minimum/maximum, minimum goalkeeper retention, buyer affordability, and active-listing state; transaction performs buyer debit, seller credit, player ownership update and ledger/history writes atomically.
+- Listing row is locked before both club rows in purchases; club rows are locked in sorted ID order to serialize buyer spending. Cancellation uses listing-first lock ordering. Partial unique index prevents concurrent active duplicate listings.
+- Database trigger blocks the pre-existing sell-to-market endpoint from transferring out a player who remains actively listed.
+- Tests have not been run/observed in CI yet. No claim of verification. Adversarial concurrent DB tests remain outstanding.
+
