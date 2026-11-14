@@ -755,7 +755,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
 
   const second=(await one("SELECT * FROM fixtures WHERE kind='league' AND day_number=6 AND status='scheduled' AND id<>$1 ORDER BY id LIMIT 1",[first.id]));
   const h2=clubs.findIndex(c=>c.id===second.home_club_id),a2=clubs.findIndex(c=>c.id===second.away_club_id);
-  const pointsBefore=await db.query('SELECT club_id,points FROM league_members WHERE league_id=$1 AND club_id=ANY($2::uuid[])',[second.league_id,[second.home_club_id,second.away_club_id]]);
+  const pointsBefore=await db.query('SELECT club_id,points,losses,played FROM league_members WHERE league_id=$1 AND club_id=ANY($2::uuid[])',[second.league_id,[second.home_club_id,second.away_club_id]]);
   for(const clubId of [second.home_club_id,second.away_club_id])await db.query("UPDATE owner_activity_events SET activity_at=NOW()-interval '49 hours' WHERE user_id=(SELECT owner_user_id FROM clubs WHERE id=$1)",[clubId]);
   const warning24=await ok(users[h2],'GET',clubPath(h2)+'/activity');
   assert.equal(warning24.activity.inactive,true,'owner is already beyond the inactivity threshold');
@@ -767,7 +767,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   for(const r of pointsBefore.rows){
    const after=await one('SELECT points,losses,played FROM league_members WHERE league_id=$1 AND club_id=$2',[second.league_id,r.club_id]);
    assert.equal(after.points,r.points,'double-forfeit clubs receive no league points');
-   assert.equal(after.losses,1);assert.equal(after.played,1);
+   assert.equal(after.losses,r.losses+1);assert.equal(after.played,r.played+1);
   }
   assert.equal((await ledgerRows(h2,'match_result_bonus')).some(x=>x.reference_id===second.id),false);
   assert.equal((await ledgerRows(a2,'match_result_bonus')).some(x=>x.reference_id===second.id),false);
