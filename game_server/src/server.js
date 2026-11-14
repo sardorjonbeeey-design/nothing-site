@@ -108,7 +108,10 @@ async function handle(req,res){
  }
  const user=await authenticate(req);
  // Only explicit authenticated state-changing requests count as owner activity; GET polling never resets inactivity.
- if(req.method==='POST'&&!path.startsWith('/api/admin'))await db().query('UPDATE game_users SET last_seen_at=NOW() WHERE id=$1',[user.id]);
+ if(req.method==='POST'&&!path.startsWith('/api/admin')){
+  await db().query('INSERT INTO owner_activity_events(user_id) VALUES($1)',[user.id]);
+  await db().query('UPDATE game_users SET last_seen_at=NOW() WHERE id=$1',[user.id]);
+ }
  if(path.startsWith('/api/admin')){
   if(!config.superAdminTelegramId||String(user.telegramUserId)!==String(config.superAdminTelegramId))throw new HttpError(403,'Super-admin access denied');
   const audit=async(client,{targetType,targetId,action,before,after,reason})=>{
