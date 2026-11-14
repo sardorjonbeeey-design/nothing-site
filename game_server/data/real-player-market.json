@@ -3,25 +3,30 @@
   "generatedAt": "2026-11-14",
   "description": "Separate static real-player catalogue for ZAMIN FK Management Game. Existing gameOVR values are approximate game-balancing ratings. Internet base ratings are populated only where a published rating was located; null means no exact online rating verified.",
   "ratingMethod": {
-    "sourceRating": "PlayFootballSim Uzbekistan national squad player rating listing (accessed 2026-11-14)",
-    "gameOVR": "Existing ZAMIN FK gameplay rating, approximate, not an official rating",
-    "limitations": "The internet source covers a national-team subset, not all 68 domestic-club catalogue players. Do not represent null source ratings as verified."
+    "sourceRating": "2026 Uzbekistan Super League average match ratings where available (ZeroZero); corroborating league leaders and player stats from NoFluffPicks and club/PFL sources.",
+    "estimatedOVR": "Where a 2026 average match rating exists: round(48 + 12 × (seasonAverageMatchRating − 6.0)), clamped 50–75. Where unavailable, retain the existing provisional gameOVR rather than invent a source rating.",
+    "caution": "These are ZAMIN FK gameplay estimates, not official EA FC/FIFA ratings. A match-performance average is not the same thing as a videogame overall rating. Revisit low-confidence entries when player-specific stats or market values are found."
   },
   "sources": [
     {
-      "name": "PlayFootballSim — Uzbekistan Squad & Player Ratings",
-      "url": "https://playfootballsim.com/teams/uzbekistan",
-      "type": "online player rating reference"
+      "name": "ZeroZero — Uzbekistan Super League 2026 player ratings",
+      "url": "https://www.zerozero.pt/edicao/uzbekistan-super-league-2026/213342/estatisticas-jogadores?avg=1&stat=80",
+      "type": "season average match ratings; source for matched players"
     },
     {
-      "name": "FIFACM — EA FC 26 Uzbekistan player database",
-      "url": "https://www.fifacm.com/26/players?nations=191&vid=440",
-      "type": "EA FC rating cross-reference (selected players only)"
+      "name": "NoFluffPicks — Uzbekistan Super League 2026 stats",
+      "url": "https://nofluffpicks.com/uzbekistan/uzbekistan-super-league",
+      "type": "league player rating leaders, goals, assists and minutes; data page notes 10 August 2026"
     },
     {
-      "name": "Uzbekistan PFL",
+      "name": "Official Andijan FC statistics",
+      "url": "https://andijonfk.uz/sayt/en/statistika/",
+      "type": "club season statistics and player performance"
+    },
+    {
+      "name": "Uzbekistan Professional Football League",
       "url": "https://pfl.uz/",
-      "type": "official roster/club reference; rosterSource links retained per club"
+      "type": "official competition and roster context"
     }
   ],
   "clubs": {
@@ -117,7 +122,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": 70,
       "internetRatingSource": "PlayFootballSim Uzbekistan squad ratings",
-      "gameOVR": 57
+      "gameOVR": 57,
+      "seasonAverageMatchRating": 6.6,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 55,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Koffi Kouao",
@@ -129,7 +138,11 @@
       "dobSource": "PFL / Neftchi",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 61
+      "gameOVR": 61,
+      "seasonAverageMatchRating": 6.9,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 59,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Ikromjon Aliboyev",
@@ -141,7 +154,11 @@
       "dobSource": "PFL / Neftchi",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 60
+      "gameOVR": 60,
+      "seasonAverageMatchRating": 6.9,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 59,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Stipe Perica",
@@ -153,7 +170,11 @@
       "dobSource": "Transfermarkt",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 64
+      "gameOVR": 64,
+      "seasonAverageMatchRating": 6.9,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 59,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Vladimir Jovovic",
@@ -165,7 +186,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 64
+      "gameOVR": 64,
+      "seasonAverageMatchRating": 6.8,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 58,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Hamidullo Abdunabiyev",
@@ -177,7 +202,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 55
+      "gameOVR": 55,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 55,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Avazbek Ulmasaliyev",
@@ -189,7 +218,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 58
+      "gameOVR": 58,
+      "seasonAverageMatchRating": 6.6,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 55,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Siavash Haghnazari",
@@ -201,7 +234,11 @@
       "dobSource": "Transfermarkt",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 63
+      "gameOVR": 63,
+      "seasonAverageMatchRating": 6.5,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 54,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Ivan Peshich",
@@ -213,7 +250,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 61
+      "gameOVR": 61,
+      "seasonAverageMatchRating": 6.4,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 53,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Giorgi Papava",
@@ -225,7 +266,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 60
+      "gameOVR": 60,
+      "seasonAverageMatchRating": 6.6,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 55,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Sanjar Kuvvatov",
@@ -237,7 +282,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 59
+      "gameOVR": 59,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 59,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Sherzod Nasrullayev",
@@ -249,7 +298,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 56
+      "gameOVR": 56,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 56,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Akmal Mozgovoy",
@@ -261,7 +314,11 @@
       "dobSource": "UAE Pro League",
       "internetBaseRating": 69,
       "internetRatingSource": "PlayFootballSim Uzbekistan squad ratings",
-      "gameOVR": 62
+      "gameOVR": 62,
+      "seasonAverageMatchRating": 6.8,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 58,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Stefen Chinedu",
@@ -273,7 +330,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 60
+      "gameOVR": 60,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 60,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Rahimjon Davronov",
@@ -285,7 +346,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 54
+      "gameOVR": 54,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 54,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Shahzod Akramov",
@@ -297,7 +362,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 56
+      "gameOVR": 56,
+      "seasonAverageMatchRating": 6.5,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 54,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Javohir Sidiqov",
@@ -309,7 +378,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 58
+      "gameOVR": 58,
+      "seasonAverageMatchRating": 6.6,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 55,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Silvanus Nimeli",
@@ -321,7 +394,11 @@
       "dobSource": "Transfermarkt",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 57
+      "gameOVR": 57,
+      "seasonAverageMatchRating": 6.7,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 56,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Umidjon Hamroyev",
@@ -333,7 +410,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 56
+      "gameOVR": 56,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 56,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Xurshidbek Muxtorov",
@@ -345,7 +426,11 @@
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 57
+      "gameOVR": 57,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 57,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Sherzod Esanov",
@@ -357,7 +442,11 @@
       "dobSource": "PFL / Transfermarkt",
       "internetBaseRating": 68,
       "internetRatingSource": "PlayFootballSim Uzbekistan squad ratings",
-      "gameOVR": 55
+      "gameOVR": 55,
+      "seasonAverageMatchRating": 6.5,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 54,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Nika Kachavara",
@@ -369,7 +458,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 58
+      "gameOVR": 58,
+      "seasonAverageMatchRating": 6.7,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 56,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Abduvohid Nematov",
@@ -381,7 +474,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": 70,
       "internetRatingSource": "PlayFootballSim Uzbekistan squad ratings",
-      "gameOVR": 61
+      "gameOVR": 61,
+      "seasonAverageMatchRating": 6.7,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 56,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Golib Gaybullayev",
@@ -393,7 +490,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 60
+      "gameOVR": 60,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 60,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Sharof Muhiddinov",
@@ -405,7 +506,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 61
+      "gameOVR": 61,
+      "seasonAverageMatchRating": 6.7,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 56,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Bobur Abduxoliqov",
@@ -417,7 +522,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 63
+      "gameOVR": 63,
+      "seasonAverageMatchRating": 6.8,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 58,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Vladislav Rusanov",
@@ -429,7 +538,11 @@
       "dobSource": "PFL / Mash'al",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 55
+      "gameOVR": 55,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 55,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Zafarbek Akramov",
@@ -441,7 +554,11 @@
       "dobSource": "Mash'al / Transfermarkt",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 55
+      "gameOVR": 55,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 55,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Sardor Abduraimov",
@@ -453,7 +570,11 @@
       "dobSource": "Mash'al / PFL",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 58
+      "gameOVR": 58,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 58,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Firdavs Jovliev",
@@ -465,7 +586,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 54
+      "gameOVR": 54,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 54,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Otabek Boymurodov",
@@ -477,7 +602,11 @@
       "dobSource": "Transfermarkt / PFL matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 58
+      "gameOVR": 58,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 58,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Behzod Shamsiyev",
@@ -489,7 +618,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 56
+      "gameOVR": 56,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 56,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Humoyun Sherbotayev",
@@ -501,7 +634,11 @@
       "dobSource": "Sofascore / PFL matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 57
+      "gameOVR": 57,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 57,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Richard Friday",
@@ -513,7 +650,11 @@
       "dobSource": "Transfermarkt / PFL matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 57
+      "gameOVR": 57,
+      "seasonAverageMatchRating": 6.6,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 55,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Shohruh Isoqov",
@@ -525,7 +666,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 56
+      "gameOVR": 56,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 56,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Zoir Djurabayev",
@@ -537,7 +682,11 @@
       "dobSource": "PFL / Transfermarkt",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 58
+      "gameOVR": 58,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 58,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Javohir Qahramonov",
@@ -549,7 +698,11 @@
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 57
+      "gameOVR": 57,
+      "seasonAverageMatchRating": 6.5,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 54,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Lyupcho Doriev",
@@ -561,7 +714,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 58
+      "gameOVR": 58,
+      "seasonAverageMatchRating": 7.3,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 64,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Edem Nemanov",
@@ -573,7 +730,11 @@
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 54
+      "gameOVR": 54,
+      "seasonAverageMatchRating": 6.5,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 54,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Artyom Radayev",
@@ -585,7 +746,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 55
+      "gameOVR": 55,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 55,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Anvarjon Hojimirzayev",
@@ -597,7 +762,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 62
+      "gameOVR": 62,
+      "seasonAverageMatchRating": 6.8,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 58,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Azizbek Amonov",
@@ -609,7 +778,11 @@
       "dobSource": "PFL / Transfermarkt",
       "internetBaseRating": 68,
       "internetRatingSource": "PlayFootballSim Uzbekistan squad ratings",
-      "gameOVR": 62
+      "gameOVR": 62,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 62,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Farhod Rahmatov",
@@ -621,7 +794,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 57
+      "gameOVR": 57,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 57,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Ilhomjon Vahobov",
@@ -633,7 +810,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 56
+      "gameOVR": 56,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 56,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Douglas Maykon",
@@ -645,7 +826,11 @@
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 55
+      "gameOVR": 55,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 55,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Otabek Jo'raqo'ziyev",
@@ -657,7 +842,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 56
+      "gameOVR": 56,
+      "seasonAverageMatchRating": 6.8,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 58,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Shahzod Turopov",
@@ -669,7 +858,11 @@
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 57
+      "gameOVR": 57,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 57,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "O'tkir Yusupov",
@@ -681,7 +874,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": 65,
       "internetRatingSource": "PlayFootballSim Uzbekistan squad ratings",
-      "gameOVR": 60
+      "gameOVR": 60,
+      "seasonAverageMatchRating": 6.5,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 54,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Islombek Mamatkazin",
@@ -693,7 +890,11 @@
       "dobSource": "Transfermarkt / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 57
+      "gameOVR": 57,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 57,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Diyor Kholmatov",
@@ -705,7 +906,11 @@
       "dobSource": "Transfermarkt / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 59
+      "gameOVR": 59,
+      "seasonAverageMatchRating": 7,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 60,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Husayn Norchayev",
@@ -717,7 +922,11 @@
       "dobSource": "PFL / Transfermarkt",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 58
+      "gameOVR": 58,
+      "seasonAverageMatchRating": 7.5,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 66,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Eldor Adhamov",
@@ -729,7 +938,11 @@
       "dobSource": "PFL / Andijon",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 56
+      "gameOVR": 56,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 56,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Odilbek Abdumajidov",
@@ -741,7 +954,11 @@
       "dobSource": "Andijon official squad",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 59
+      "gameOVR": 59,
+      "seasonAverageMatchRating": 6.8,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 58,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Aleksandre Andronikashvili",
@@ -753,7 +970,11 @@
       "dobSource": "PFL / Andijon",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 56
+      "gameOVR": 56,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 56,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Martin Boakye",
@@ -765,7 +986,11 @@
       "dobSource": "Transfermarkt / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 60
+      "gameOVR": 60,
+      "seasonAverageMatchRating": 6.8,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 58,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Aleksey Kozlov",
@@ -777,7 +1002,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 55
+      "gameOVR": 55,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 55,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Oleg Zoteyev",
@@ -789,7 +1018,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 58
+      "gameOVR": 58,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 58,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Sukhrob Nurulloyev",
@@ -801,7 +1034,11 @@
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 59
+      "gameOVR": 59,
+      "seasonAverageMatchRating": 6.7,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 56,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Temurkhuja Abduxoliqov",
@@ -813,7 +1050,11 @@
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 59
+      "gameOVR": 59,
+      "seasonAverageMatchRating": 6.9,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 59,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Sardor Mirzayev",
@@ -825,7 +1066,11 @@
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 58
+      "gameOVR": 58,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 58,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Abdumavlon Abdujalilov",
@@ -837,7 +1082,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 57
+      "gameOVR": 57,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 57,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Islom Anvarov",
@@ -849,7 +1098,11 @@
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 54
+      "gameOVR": 54,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 54,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Shamsiddin Tursunmahammadov",
@@ -861,7 +1114,11 @@
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 55
+      "gameOVR": 55,
+      "seasonAverageMatchRating": 6.8,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 58,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Matiya Krivokapich",
@@ -873,7 +1130,11 @@
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 56
+      "gameOVR": 56,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 56,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Umidjon Ergashev",
@@ -885,7 +1146,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 58
+      "gameOVR": 58,
+      "seasonAverageMatchRating": 7.5,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 66,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Suhrob Izzatov",
@@ -897,7 +1162,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 57
+      "gameOVR": 57,
+      "seasonAverageMatchRating": 6.7,
+      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "estimatedOVR": 56,
+      "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
       "fullName": "Rafael Sabino",
@@ -909,7 +1178,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 58
+      "gameOVR": 58,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 58,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     },
     {
       "fullName": "Rafael Tavaresh",
@@ -921,7 +1194,11 @@
       "dobSource": "PFL profile",
       "internetBaseRating": null,
       "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
-      "gameOVR": 57
+      "gameOVR": 57,
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "estimatedOVR": 57,
+      "ratingConfidence": "low — provisional estimate; no published player average located"
     }
   ]
 }
