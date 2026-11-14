@@ -71,10 +71,17 @@ Do not connect the live Telegram Mini App, live bot, existing backend, productio
 - Fixed the pre-existing scheduler shutdown race: scheduler stop waits for an active tick, and server shutdown awaits it before closing the database pool.
 - A full-season simulation with realistic league squads and a mobile smoke run on this Phase 3 branch remain outstanding.
 - No merge, deployment, production database, live Mini App or bot connection.
+## Phase 3C — sole-owner super-admin (2026-11-14) — IMPLEMENTED, CI VERIFIED
+- Separate /admin dashboard served by the isolated game server; Telegram login uses the existing signed session.
+- Server authorization requires the exact SUPER_ADMIN_TELEGRAM_ID; production config validates it is numeric and fails closed when unset. No public registration or multi-admin workflow.
+- Admin capabilities: inspect clubs/users/players; ledgered UZS budget adjustments; player gifts with squad-bound validation and transactional lineup repair; Gold/VIP grant/revoke and user-facing active-entitlement API; persistent JSON competition settings.
+- Migration 008 creates admin audit, entitlement and settings tables. Audit entries store actor Telegram ID, target, action, time, before/after JSON and required reason; DB trigger enforces append-only.
+- Integration tests cover owner/non-owner authorization, funds ledger, Gold grant/revoke and entitlement access, competition settings, player gift and lineup integrity, required reason, negative budget protection and audit immutability.
+- GitHub Actions run 43587396857 passed: 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. A follow-up test for production Telegram ID config validation is running on the latest commit.
+- No merge, deployment, production DB, live Mini App or bot connection.
+
 ## Remaining Phase 3 work
-1. Review the proposed tactical coefficients and run a longer full-season formation balance simulation with realistic squads.
-2. Finalize the open inactivity-forfeit edge cases, top-three prize amounts and tie-break policy.
-3. Player-to-player transfer market implemented and CI verified: 85 unit/default tests passed, 0 failed, 1 skipped; PostgreSQL integration 37/37 passed. Adversarial concurrency testing remains outstanding.
-4. Implement the sole super-admin backend authorization, audit trail and separate panel.
-5. Implement owner-approved match bonuses and the finalized inactivity/season rewards.
-6. Run adversarial tests for transfers, duplicate rewards, scheduler restarts, inactivity and economy balance.
+1. Re-run pending price-rebalance migrations/full suite; review proposed formation tactical coefficients and run longer full-season balance simulations with realistic squads.
+2. Finalize inactivity-forfeit edge cases, top-three prize amounts and tie-break policy.
+3. Implement approved match bonuses and finalized inactivity/season rewards.
+4. Run adversarial tests for concurrent transfers, duplicate rewards, scheduler restarts, inactivity and economy balance.
