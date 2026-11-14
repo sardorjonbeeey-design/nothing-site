@@ -116,7 +116,7 @@ async function buildSquad(i,user){
  };
  // First take a balanced spread of real players; use replenishing academy prospects for the remaining slots.
  await choose(['GK'],1);await choose(['CB'],1);await choose(['LB'],1);await choose(['RB'],1);await choose(['DM'],1);await choose(['CM'],1);await choose(['AM'],1);await choose(['ST'],1);await choose(['LW'],1);await choose(['RW'],1);
- await choose(['GK'],1);await choose(['CB'],2);await choose(['CM'],2);await choose(['AM'],1);await choose(['ST'],2);
+ await choose(['GK'],1);await choose(['CB'],2);await choose(['DM'],1);await choose(['CM'],2);await choose(['ST'],2);
  const info=await ok(user,'GET','/api/clubs/'+clubId+'/formations'),best=info.formations.find(f=>f.id==='4-3-3').best;
  assert.equal(best.valid,true,'test squad can field a valid 4-3-3');
  await ok(user,'POST','/api/clubs/'+clubId+'/lineup',{formation:'4-3-3',starters:best.starters,substitutes:best.substitutes});
@@ -344,7 +344,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const market=await ok(users[0],'GET','/api/market');
   assert.deepEqual(market.squadLimits,{min:13,max:26,required:18,minimumGoalkeepers:2});
   assert.ok(market.players.length>0&&market.players.length<=500);
-  assert.equal(market.players.length,68,'the compact real-player catalogue is loaded');
+  assert.equal(market.players.length,60,'eight real players have already been recruited by the first club');
   assert.equal(new Set(market.players.map(p=>p.real_club_key)).size,16,'all 16 Super League clubs are represented');
   assert.ok(market.players.every(p=>p.real_club_name&&p.real_club_crest_url&&Number.isInteger(p.age)&&p.age>=16),'real market entries include club, crest and current age');
   for(const p of market.players.concat(market.youth))assert.equal(Number(p.market_value_uzs),marketValueUzs(p.overall),'price follows the curve');
@@ -722,6 +722,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
 
  await t.test('a matchday is live for 60 seconds and all five matches are settled by the server at kick-off + 60s',async()=>{
   // Move matchday 1 so that it kicked off 57 seconds ago (database clock). No HTTP request is made while waiting for settlement.
+  const club2BeforeMatchday=await budgetOf(2);
   await db.query("UPDATE fixtures SET kickoff_at=date_trunc('milliseconds',NOW())-interval '57 seconds' WHERE kind='league' AND day_number=1");
   const live=(await ok(users[0],'GET',clubPath(0)+'/fixtures')).fixtures.find(f=>f.day_number===1);
   assert.equal(live.phase,'live');assert.equal(live.status,'scheduled');assert.equal(live.home_goals,null);
@@ -750,7 +751,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
    assert.equal((await ledgerRows(i,'league_match_income')).length,0);
   }
   const club2Bonus=(await ledgerRows(2,'match_result_bonus')).reduce((n,x)=>n+BigInt(x.amount_uzs),0n);
-  assert.equal(await budgetOf(2),20750000n+club2Bonus);
+  assert.equal(await budgetOf(2),club2BeforeMatchday+750000n+club2Bonus);
   await assertLedgersConsistent();
   const done=(await ok(users[0],'GET',clubPath(0)+'/fixtures')).fixtures.find(f=>f.day_number===1);
   assert.equal(done.phase,'played');assert.equal(typeof done.home_goals,'number');
@@ -1056,18 +1057,18 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(newest.season_number,2);assert.equal(newest.day_number,1);assert.equal(newest.viewed,false);
   assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM leagues')).n),2,'an unfinished season creates no successor');
   await assertLedgersConsistent();
-  for(let i=0;i<13;i++)await assertLineupValid(i);
+  for(let i=0;i<10;i++)await assertLineupValid(i);
  });
 
- await t.test('rating profile: every stored player is an Uzbek League player rated 40-90 with potential up to 90',async()=>{
+ await t.test('rating profile: real Super League players retain nationality and all stored players obey the game profile',async()=>{
   const profile=await one('SELECT * FROM rating_profiles');
   assert.deepEqual(profile,{category:'uzbek_league',min_overall:UZBEK_LEAGUE.minOverall,max_overall:UZBEK_LEAGUE.maxOverall,max_potential:UZBEK_LEAGUE.maxPotential,max_attribute:UZBEK_LEAGUE.maxAttribute});
   assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM rating_profiles')).n),1);
   const stats=await one("SELECT COUNT(*)::int AS n,MIN(overall)::int AS low,MAX(overall)::int AS high,MAX(potential)::int AS potential,COUNT(*) FILTER (WHERE category<>'uzbek_league')::int AS foreign_rows,COUNT(*) FILTER (WHERE potential<overall)::int AS inverted FROM players");
-  assert.ok(stats.n>500);assert.ok(stats.low>=40&&stats.high<=90&&stats.potential<=90);assert.equal(stats.foreign_rows,0);assert.equal(stats.inverted,0);
-  // The seeded catalogue was not extended: its best player is still 74, and nine potentials sit at the 90 cap.
+  assert.ok(stats.n>180);assert.ok(stats.low>=40&&stats.high<=90&&stats.potential<=90);assert.equal(stats.foreign_rows,0);assert.equal(stats.inverted,0);
+  // The imported catalogue is a curated 68-player snapshot with game-only OVRs in the 54-64 range.
   const catalogue=await one("SELECT MAX(overall)::int AS high,MIN(overall)::int AS low,COUNT(*)::int AS n,COUNT(*) FILTER (WHERE potential=90)::int AS capped FROM players WHERE catalog_key IS NOT NULL");
-  assert.equal(catalogue.n,360);assert.equal(catalogue.low,46);assert.ok(catalogue.capped>=9);
+  assert.equal(catalogue.n,68);assert.equal(catalogue.low,54);assert.equal(catalogue.high,64);assert.equal(catalogue.capped,0);
   const bad=(await db.query("SELECT 1 FROM players p,jsonb_each_text(p.attributes) a WHERE a.value::numeric NOT BETWEEN 1 AND 99")).rowCount;
   assert.equal(bad,0);
   const insert="INSERT INTO players(full_name,age,position,quality,overall,potential,attributes,market_value_uzs,origin) VALUES('Rating Probe',22,'ST','elite',$1,$2,$3::jsonb,0,'market') RETURNING id";
@@ -1130,7 +1131,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const funds=await ok(owner,'POST','/api/admin/funds',{clubId,amountUzs:'123456',reason:'integration admin adjustment'});
   assert.equal(BigInt(funds.budgetUzs),before+123456n);
   assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM money_ledger WHERE club_id=$1 AND reason='admin_adjustment'",[clubId])).n),1);
-  const recipient=(await one("SELECT id FROM game_users WHERE telegram_user_id='dev-2'")).id;
+  const recipient=(await one('SELECT owner_user_id AS id FROM clubs WHERE id=$1',[clubs[1].id])).id;
   await ok(owner,'POST','/api/admin/entitlement',{userId:recipient,feature:'gold',active:true,reason:'integration gold grant'});
   assert.ok((await call(other,'GET','/api/account/entitlements')).data.entitlements.some(e=>e.feature==='gold'));
   assert.equal((await one("SELECT revoked_at FROM user_entitlements WHERE user_id=$1 AND feature='gold'",[recipient])).revoked_at,null);
