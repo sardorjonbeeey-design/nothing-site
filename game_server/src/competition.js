@@ -30,7 +30,7 @@ export async function leagueStandings(client,leagueId){
   FROM base
  ), head AS (
   SELECT a.club_id,
-   COALESCE(SUM(CASE WHEN f.events->>'forfeit'='double' THEN 0
+   COALESCE(SUM(CASE WHEN f.events->0->>'forfeit'='double' THEN 0
     WHEN (a.club_id=f.home_club_id AND f.home_goals>f.away_goals) OR (a.club_id=f.away_club_id AND f.away_goals>f.home_goals) THEN 3
     WHEN f.home_goals=f.away_goals THEN 1 ELSE 0 END),0)::int AS h2h_points,
    COALESCE(SUM(CASE WHEN a.club_id=f.home_club_id THEN f.home_goals-f.away_goals ELSE f.away_goals-f.home_goals END),0)::int AS h2h_goal_difference
