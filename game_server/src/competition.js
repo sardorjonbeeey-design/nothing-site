@@ -7,7 +7,7 @@ export const SEASON_PRIZES_UZS=[10000000n,7000000n,5000000n];
 export async function ownerActivity(client,clubId,atTime=null){
  const row=(await client.query(`SELECT a.last_activity_at,NOW() AS server_now,
   CASE WHEN a.last_activity_at IS NULL THEN NULL ELSE EXTRACT(EPOCH FROM (COALESCE($2::timestamptz,NOW())-a.last_activity_at)) END AS idle_seconds
-  FROM clubs c JOIN LATERAL (SELECT MAX(activity_at) AS last_activity_at FROM owner_activity_events WHERE user_id=c.owner_user_id) a ON TRUE
+  FROM clubs c JOIN LATERAL (SELECT MAX(activity_at) AS last_activity_at FROM owner_activity_events WHERE user_id=c.owner_user_id AND activity_at<=COALESCE($2::timestamptz,NOW())) a ON TRUE
   WHERE c.id=$1`,[clubId,atTime])).rows[0];
  if(!row)throw new Error('Club owner activity record is missing');
  const idleSeconds=row.idle_seconds===null?null:Number(row.idle_seconds);
