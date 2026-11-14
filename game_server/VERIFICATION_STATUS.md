@@ -190,7 +190,7 @@ Phase 3A–3C and the competition rules/rewards are committed on `zamin-manageme
 - Database trigger blocks the pre-existing sell-to-market endpoint from transferring out a player who remains actively listed.
 - GitHub Actions run `43585008300` passed: `npm test` — 85 passed, 0 failed, 1 skipped; PostgreSQL integration — 37 passed, 0 failed, 0 skipped.
 - The end-to-end transfer scenario passed: listing, browse, purchase, duplicate refusal, ownership transfer, seller/buyer lineup repair and paired ledger consistency. It restores fixture state after assertions.
-- Adversarial concurrent DB tests now pass: two buyers racing one listing cannot double-buy; concurrent purchases against two listings cannot overspend one buyer's balance. Listing/cancel race coverage remains limited to transactional lock-order review plus existing cancel/purchase state tests.
+- Adversarial concurrent DB tests now pass: two buyers racing one listing cannot double-buy; concurrent purchases against two listings cannot overspend one buyer's balance; cancel-versus-buy on one listing resolves to exactly one valid state transition.
 
 
 
@@ -209,5 +209,5 @@ Phase 3A–3C and the competition rules/rewards are committed on `zamin-manageme
 - Match bonuses: win 250,000 UZS, draw 100,000 UZS each, loss 0; double inactivity forfeit pays no result bonus. Additional to 750,000 UZS league income.
 - Season prizes: 1st 10M, 2nd 7M, 3rd 5M UZS. Standings order: points, GD, GF, head-to-head points, head-to-head GD. Remaining ties split the combined occupied prize slots equally; remainder is assigned deterministically.
 - Tests cover warning thresholds, single/double forfeits at scheduled kick-off, bonus ledgering, top-three prize pool, tie splits, idempotent payouts after scheduler restarts, concurrent transfers and full-season formation balance.
-- Latest CI run 43590707653: 93 passed, 0 failed, 1 skipped; PostgreSQL integration 40/40 passed.
+- Latest CI run 43590913933: 93 passed, 0 failed, 1 skipped; PostgreSQL integration 40/40 passed, including the cancel-versus-buy race.
 - Activation is still closed until the isolated runtime has SUPER_ADMIN_TELEGRAM_ID set to the owner's numeric Telegram user ID and migrations 008 and 009 are applied. No merge, deployment or production connection.
