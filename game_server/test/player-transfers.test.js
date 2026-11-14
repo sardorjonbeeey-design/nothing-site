@@ -47,7 +47,7 @@ test('cancel only targets a listed item belonging to the seller',async()=>{
   if(sql.includes('SELECT id,owner_user_id,budget_uzs FROM clubs'))return {rowCount:1,rows:[{id:'club',owner_user_id:'owner',budget_uzs:'100'}]};
   updateSql=sql;updateParams=p;return {rowCount:0,rows:[]};
  }};
- await assert.rejects(cancelPlayerListing(db,{clubId:'club',userId:'owner',listingId:'listing'}),{status:404});
+ await assert.rejects(cancelPlayerListing(db,{clubId:'club',userId:'owner',listingId:'listing'}),{status:409});
  assert.match(updateSql,/seller_club_id=\$2 AND status='listed'/);
  assert.deepEqual(updateParams,['listing','club']);
 });
