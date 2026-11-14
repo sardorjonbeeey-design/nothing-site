@@ -115,8 +115,13 @@ async function buildSquad(i,user){
   }
  };
  // First take a balanced spread of real players; use replenishing academy prospects for the remaining slots.
- await choose(['GK'],1);await choose(['CB'],1);await choose(['LB'],1);await choose(['RB'],1);await choose(['DM'],1);await choose(['CM'],1);await choose(['ST'],1);await choose(['CM'],1);await choose(['LW'],1);await choose(['RW'],1);
+ await choose(['GK'],1);await choose(['CB'],1);await choose(['LB'],1);await choose(['RB'],1);await choose(['DM'],1);await choose(['CM'],1);await choose(['ST'],1);await choose(['AM'],1);await choose(['LW'],1);await choose(['RW'],1);
  await choose(['GK'],1);await choose(['CB'],2);await choose(['DM'],1);await choose(['CM'],2);await choose(['ST'],2);
+ if(i===0){
+  // Keep the academy AM available for the deliberately out-of-position lineup test, but below the natural CM options in 4-3-3.
+  const am=chosen.find(p=>p.position==='AM'&&p.origin==='generated');
+  if(am){const attrs=JSON.stringify({pace:45,shooting:45,passing:45,dribbling:45,defending:45,physical:45});await db.query('UPDATE players SET overall=45,quality=$2,attributes=$3::jsonb,market_value_uzs=$4 WHERE id=$1',[am.id,qualityForOverall(45),attrs,marketValueUzs(45)]);}
+ }
  const info=await ok(user,'GET','/api/clubs/'+clubId+'/formations'),best=info.formations.find(f=>f.id==='4-3-3').best;
  assert.equal(best.valid,true,'test squad can field a valid 4-3-3');
  await ok(user,'POST','/api/clubs/'+clubId+'/lineup',{formation:'4-3-3',starters:best.starters,substitutes:best.substitutes});
@@ -369,7 +374,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const generatedBefore=Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n);
   const youth=market.youth.find(p=>p.position==='CM');
   const signed=await ok(users[0],'POST',clubPath(0)+'/players/sign',{playerId:youth.id});
-  assert.equal(signed.budgetUzs,(20000000n-BigInt(youth.market_value_uzs)).toString());
+  assert.equal(signed.budgetUzs,(budgetAfterRecruitment-BigInt(youth.market_value_uzs)).toString());
   const after=(await ok(users[0],'GET','/api/market')).youth;
   assert.ok(!after.some(p=>p.id===youth.id));assert.ok(after.filter(p=>p.position==='CM').length>=need.CM,'the slot is filled again');
   assert.equal(Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n),generatedBefore+1,'signing one youth prospect creates exactly one replacement');
@@ -584,8 +589,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(lastKeeper.status,400);assert.match(lastKeeper.data.error,/at least one goalkeeper/);
   // 7. Minimum squad of 13: two more sales are allowed, the next is refused. The XI is valid after every sale.
   assert.equal(state.players.length,15);
-  const cm=bench('CM');assert.equal((await sell(cm.id)).status,200);await assertLineupValid(0);
-  const secondCm=bench('CM');assert.equal((await sell(secondCm.id)).status,200);await assertLineupValid(0);
+  for(const p of [bench('CM'),bench('AM')]){assert.equal((await sell(p.id)).status,200);await assertLineupValid(0);}
   state=await assertLineupValid(0);assert.equal(state.players.length,13);
   const tooFew=await sell(state.lineup.substitutes[0]||state.lineup.starters[10]);
   assert.equal(tooFew.status,400);assert.match(tooFew.data.error,/at least 13 players/);
