@@ -2,6 +2,8 @@
 export const STARTING_BUDGET_UZS=20_000_000n;
 export const LEAGUE_MATCH_INCOME_UZS=750_000n;
 export const WAITING_STIPEND_UZS=750_000n;
+export const MATCH_WIN_BONUS_UZS=250_000n;
+export const MATCH_DRAW_BONUS_UZS=100_000n;
 export const MIN_SQUAD_SIZE=13;
 export const MAX_SQUAD_SIZE=26;
 export const STARTING_SQUAD_SIZE=18;
