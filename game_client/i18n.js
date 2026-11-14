@@ -2,7 +2,7 @@
 (() => {
 const DICT = {
  uz: {
-  'GOAL':'GOL','assist':'assist',
+  'GOAL':'GOL','assist':'yordamchi',
   'Home team scores':'Ev jamoasi gol urdi',
   'Away team scores':'Mehmon jamoasi gol urdi',
   'A dangerous attack':'Xavfli hujum',

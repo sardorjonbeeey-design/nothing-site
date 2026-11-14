@@ -284,7 +284,8 @@ function showMainButton(text,onTap){const tg=tgWebApp();if(!tg||!tg.MainButton)r
 function clearReplay(){const m=state.replay;if(m&&m.timers){m.timers.forEach(clearTimeout);m.timers=[];}hideMainButton();}
 function replayScreen(){
  const m=state.replay,home=m.home,away=m.away;
- const dots=[...placeOnPitch(home.players||[],false,'home').map(d=>dotMarkup(d,home.colour)),...placeOnPitch(away.players||[],true,'away').map(d=>dotMarkup(d,away.colour))].join('');
+ const awayColour=(away.colour||'').toLowerCase()===(home.colour||'').toLowerCase()?'#8a9a92':away.colour;
+ const dots=[...placeOnPitch(home.players||[],false,'home').map(d=>dotMarkup(d,home.colour)),...placeOnPitch(away.players||[],true,'away').map(d=>dotMarkup(d,awayColour))].join('');
  return '<div class="replay"><header class="replay-top"><button class="btn ghost" data-action="replay-close">Close</button><span class="eyebrow">'+esc(m.title)+'</span><span></span></header>'+
   '<div class="replay-score"><span class="team-tag" style="--accent:'+esc(home.colour||'#167a55')+'">'+esc(home.short||home.name)+'</span><strong id="replay-score">0 — 0</strong><span class="team-tag" style="--accent:'+esc(away.colour||'#7c8b84')+'">'+esc(away.short||away.name)+'</span></div>'+
   '<div class="match-pitch replay-pitch"><div class="pitch-centre"></div>'+dots+'<div class="ball" id="replay-ball"></div></div>'+
