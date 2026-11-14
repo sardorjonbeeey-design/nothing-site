@@ -30,7 +30,7 @@ function miniCrest(club){return '<span class="mini-crest" style="--accent:'+esc(
 function overview(){
  const c=state.club;
  const inactivity=state.activity;
- const inactivityWarning=inactivity?.warningLevel===2?'<section class="panel" style="border:1px solid #d97706"><div class="eyebrow">OWNER ACTIVITY WARNING</div><h2>2 hours until automatic forfeit</h2><p>Your club must make a qualifying game action before the 48-hour inactivity limit. Background refreshes do not count.</p></section>':inactivity?.warningLevel===24?'<section class="panel" style="border:1px solid #d97706"><div class="eyebrow">OWNER ACTIVITY WARNING</div><h2>24-hour inactivity warning</h2><p>Your club will forfeit its next scheduled league match if no qualifying game action is made within the next 24 hours.</p></section>':'';
+ const inactivityWarning=inactivity?.warningLevel===2?'<section class="panel" style="border:1px solid #d97706"><div class="eyebrow">OWNER ACTIVITY WARNING</div><h2>Less than 2 hours until automatic forfeit</h2><p>Your club must make a qualifying game action before the 48-hour inactivity limit. Background refreshes do not count.</p></section>':inactivity?.warningLevel===24?'<section class="panel" style="border:1px solid #d97706"><div class="eyebrow">OWNER ACTIVITY WARNING</div><h2>24-hour inactivity warning</h2><p>Your club will forfeit its next scheduled league match if no qualifying game action is made within the next 24 hours.</p></section>':'';
  // Keep the next scheduled fixture visible from the dashboard; the server remains the source of match timing and status.
  const nextFixture=state.fixtures.filter(f=>f.phase==='upcoming'||f.phase==='live').sort((a,b)=>Date.parse(a.kickoff_at)-Date.parse(b.kickoff_at))[0];
  const nextMatchPanel=nextFixture
