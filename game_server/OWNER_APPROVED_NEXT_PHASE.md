@@ -81,7 +81,7 @@ Formations must alter the actual match simulation, not only the pitch display. E
 1. Re-run the pending price-rebalance migrations and complete test suite on the current isolated branch.
 2. Finalize the open inactivity edge cases and top-three prize amounts.
 3. Implement and balance all 12 formations.
-4. Peer-to-peer player listings and purchases implemented on `zamin-management-isolated`; test verification and adversarial concurrency coverage remain pending.
+4. Peer-to-peer player listings and purchases implemented and CI verified on `zamin-management-isolated` (85 unit/default passed, 1 skipped; PostgreSQL integration 37/37 passed). Adversarial concurrency tests remain pending.
 5. Implement sole-super-admin backend authorization, audit log and admin panel.
 6. Implement match bonuses, inactivity forfeits and season top-three payouts.
 7. Run adversarial tests for concurrent transfers, duplicate rewards, scheduler restarts, inactive owners, both owners inactive, and economy balance.
