@@ -67,7 +67,14 @@ The starters array must contain exactly 11 player UUIDs.
 - POST /api/clubs/:clubId/players/sell — body: { "playerId": "<uuid>" }.
 - POST /api/clubs/:clubId/players/upgrade — body: { "playerId": "<uuid>", "attribute": "pace", "levels": 1 }.
 
-Money, transfers, upgrade costs and DP balances are recalculated server-side. The client cannot submit a price or a match result.
+### Club-to-club transfer market (migration 007)
+- GET /api/transfers?limit=50&offset=0 — authenticated public listings from other clubs, with player data, asking price, seller identity and market value. Page size is bounded to 100.
+- GET /api/clubs/:clubId/transfers — listing history for the authenticated user's own club.
+- POST /api/clubs/:clubId/transfers — create a listing. Body: { "playerId": "<uuid>", "askingPriceUzs": "1250000" }. Asking price must be a positive whole-number UZS string.
+- POST /api/clubs/:clubId/transfers/:listingId/buy — buy the active listing at its displayed asking price; empty JSON body.
+- POST /api/clubs/:clubId/transfers/:listingId/cancel — cancel the seller's active listing; empty JSON body.
+
+The server validates seller/buyer ownership, different managers, listing and player state, buyer affordability, squad maximum/minimum and goalkeeper retention. Purchase atomically updates both budgets, player ownership, paired UZS ledger entries, transfer history and both lineups. A partial unique index prevents duplicate active listings; purchase and cancel lock the listing first. An active P2P listing blocks the separate sell-to-free-agent route until cancelled. All prices and accounting are server-side; the client cannot submit match results.
 
 ## Missions, matches and league
 
