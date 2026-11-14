@@ -114,7 +114,11 @@ async function handle(req,res){
    const cleanReason=safeString(reason,500,'Reason');
    await client.query('INSERT INTO admin_audit_log(actor_user_id,actor_telegram_user_id,target_type,target_id,action,before_after,reason) VALUES($1,$2,$3,$4,$5,$6::jsonb,$7)',[user.id,String(user.telegramUserId),targetType,String(targetId),action,JSON.stringify({before:before??null,after:after??null}),cleanReason]);
   };
-  if(req.method==='GET'&&path==='/api/admin/overview'){
+  if(req.method==='GET'&&path==='/api/admin/analytics'){
+  const summary=(await db().query("SELECT event_name,COUNT(*)::int AS events,COUNT(DISTINCT user_id)::int AS users,MAX(created_at) AS last_seen FROM analytics_events WHERE created_at>=NOW()-interval '30 days' GROUP BY event_name ORDER BY events DESC")).rows;
+  return json(res,200,{periodDays:30,summary});
+ }
+ if(req.method==='GET'&&path==='/api/admin/overview'){
    const clubs=(await db().query('SELECT c.id,c.name,c.short_name,c.budget_uzs,c.development_points,c.created_at,u.id AS owner_user_id,u.telegram_user_id,u.username,u.first_name,u.last_name,(SELECT COUNT(*)::int FROM players p WHERE p.club_id=c.id) AS squad_size FROM clubs c JOIN game_users u ON u.id=c.owner_user_id ORDER BY c.created_at DESC LIMIT 250')).rows;
    const users=(await db().query('SELECT u.id,u.telegram_user_id,u.username,u.first_name,u.last_name,u.created_at,u.last_seen_at,(SELECT COUNT(*)::int FROM clubs c WHERE c.owner_user_id=u.id) AS club_count FROM game_users u ORDER BY u.created_at DESC LIMIT 250')).rows;
    return json(res,200,{clubs,users});
@@ -185,6 +189,20 @@ async function handle(req,res){
   throw new HttpError(404,'Admin route not found');
  }
  if(req.method==='GET'&&path==='/api/account/entitlements')return json(res,200,{entitlements:(await db().query('SELECT feature,granted_at,reason FROM user_entitlements WHERE user_id=$1 AND revoked_at IS NULL ORDER BY feature',[user.id])).rows});
+ if(req.method==='GET'&&path==='/api/account/invite'){
+  const account=(await db().query('SELECT referral_code FROM game_users WHERE id=$1',[user.id])).rows[0];
+  return json(res,200,{referralCode:account.referral_code,inviteUrl:'https://t.me/zamingame_bot?start=ref_'+account.referral_code});
+ }
+ if(req.method==='POST'&&path==='/api/analytics'){
+  if(!rateLimit(String(user.id)+':analytics',60))throw new HttpError(429,'Too many analytics events');
+  const body=await readJson(req,12000),eventName=safeString(body.eventName,48,'Event name');
+  const allowed=new Set(['app_open','tab_open','match_report_open','match_result_shared','invite_shared','market_search']);
+  if(!allowed.has(eventName))throw new HttpError(400,'Unsupported analytics event');
+  const data=body.data&&typeof body.data==='object'&&!Array.isArray(body.data)?JSON.stringify(body.data):'{}';
+  const club=(await db().query('SELECT id FROM clubs WHERE owner_user_id=$1 ORDER BY created_at LIMIT 1',[user.id])).rows[0];
+  await db().query('INSERT INTO analytics_events(user_id,club_id,event_name,event_data) VALUES($1,$2,$3,$4::jsonb)',[user.id,club?.id||null,eventName,data]);
+  return json(res,202,{recorded:true});
+ }
 
  if(req.method==='POST'&&path==='/api/uploads/crest'){if(!rateLimit(clientIp(req)+':crest',10))throw new HttpError(429,'Too many crest uploads');const body=await readJson(req,3_100_000);const crestUrl=await saveCrest(body.dataUrl);return json(res,201,{crestUrl});}
  if(req.method==='GET'&&path==='/api/market'){
@@ -458,7 +476,7 @@ const server=http.createServer(async(req,res)=>{
 });
 server.listen(config.port,'0.0.0.0',()=>console.log('ZAMIN FK isolated game server listening on '+config.port));
 // The dedicated Management Game bot only opens this isolated Mini App; it never touches the City bot.
-const telegramBot=startTelegramBot({token:config.telegramBotToken,webAppUrl:config.webAppUrl});
+const telegramBot=startTelegramBot({token:config.telegramBotToken,webAppUrl:config.webAppUrl,db:()=>requireDb()});
 // League and friendly matches are settled here, by the server alone, whether or not anyone is online.
 const scheduler=pool?startScheduler({maxIdleMs:config.schedulerMaxIdleMs}):null;
 let shuttingDown=false;
