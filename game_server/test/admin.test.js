@@ -16,7 +16,7 @@ test('super-admin migration includes audit, entitlements and competition setting
  for(const name of ['admin_audit_log','user_entitlements','competition_settings'])assert.match(sql,new RegExp('CREATE TABLE IF NOT EXISTS '+name));
  assert.match(sql,/actor_telegram_user_id/);
  assert.match(sql,/before_after JSONB/);
- assert.match(sql,/feature IN \\(\'gold\',\'vip\\)/);
+ assert.match(sql,/feature IN \('gold','vip'\)/);
 });
 test('admin static page and backend authorization are wired',async()=>{
  const server=await (await import('node:fs/promises')).readFile(path.join(root,'src/server.js'),'utf8');
