@@ -363,6 +363,10 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const sellerSquad=(await ok(users[0],'GET',clubPath(0)+'/squad')).players;
   const player=sellerSquad.find(p=>p.position!=='GK');
   assert.ok(player,'seller has an outfield player to list');
+  // Snapshot seeded clubs because this integration scenario must not affect later baseline tests.
+  const sellerLineupBefore=await one('SELECT formation,starters,substitutes FROM lineups WHERE club_id=$1',[sellerId]);
+  const buyerLineupBefore=await one('SELECT formation,starters,substitutes FROM lineups WHERE club_id=$1',[buyerId]);
+  const playerBefore=await one('SELECT club_id,first_sale_done FROM players WHERE id=$1',[player.id]);
   const price='1000000',sellerBefore=await budgetOf(0),buyerBefore=await budgetOf(1);
   const created=await ok(users[0],'POST',sellerRoute,{playerId:player.id,askingPriceUzs:price});
   assert.equal(created.listing.status,'listed');assert.equal(created.listing.asking_price_uzs,price);
@@ -371,7 +375,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const market=(await ok(users[1],'GET','/api/transfers?limit=100')).listings;
   const visible=market.find(l=>l.listing_id===created.listing.id);
   assert.ok(visible,'other club can browse the listing');
-  assert.equal(visible.seller_club_id,sellerId);assert.equal(visible.seller_club_short_name,clubs[0].short_name);
+  assert.equal(visible.seller_club_id,sellerId);assert.equal(visible.seller_club_short_name,(await one('SELECT short_name FROM clubs WHERE id=$1',[sellerId])).short_name);
   assert.equal((await call(users[2],'GET',sellerRoute)).status,404,'another manager cannot inspect seller-owned listings');
   const bought=await ok(users[1],'POST',buyerRoute+'/'+created.listing.id+'/buy',{});
   assert.equal(bought.priceUzs,price);assert.equal(bought.buyerBalanceUzs,(buyerBefore-BigInt(price)).toString());assert.equal(bought.sellerBalanceUzs,(sellerBefore+BigInt(price)).toString());
@@ -385,6 +389,15 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal((await ok(users[0],'GET',clubPath(0)+'/squad')).players.length,sellerSquad.length-1);
   assert.equal((await ok(users[1],'GET',clubPath(1)+'/squad')).players.length,19);
   await assertLineupValid(0);await assertLineupValid(1);
+  // Restore fixture data after asserting the completed transaction, keeping unrelated integration tests independent.
+  await db.query('UPDATE players SET club_id=$2,first_sale_done=$3 WHERE id=$1',[player.id,playerBefore.club_id,playerBefore.first_sale_done]);
+  await db.query('UPDATE clubs SET budget_uzs=$2 WHERE id=$1',[sellerId,sellerBefore.toString()]);
+  await db.query('UPDATE clubs SET budget_uzs=$2 WHERE id=$1',[buyerId,buyerBefore.toString()]);
+  await db.query('UPDATE lineups SET formation=$2,starters=$3,substitutes=$4 WHERE club_id=$1',[sellerId,sellerLineupBefore.formation,sellerLineupBefore.starters,sellerLineupBefore.substitutes]);
+  await db.query('UPDATE lineups SET formation=$2,starters=$3,substitutes=$4 WHERE club_id=$1',[buyerId,buyerLineupBefore.formation,buyerLineupBefore.starters,buyerLineupBefore.substitutes]);
+  await db.query("DELETE FROM money_ledger WHERE reference_id=$1 AND reason IN ('player_transfer_purchase','player_transfer_sale')",[player.id]);
+  await db.query('DELETE FROM player_transfer_history WHERE listing_id=$1',[created.listing.id]);
+  await db.query('DELETE FROM player_transfer_listings WHERE id=$1',[created.listing.id]);
   await assertLedgersConsistent();
  });
  
