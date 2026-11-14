@@ -138,7 +138,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   await run('src/seed.js');await run('src/seed.js');
   // Integration-only fixture: mark the seeded catalogue as test Super League inventory so the new real-player market can be exercised offline.
   await db.query("UPDATE players SET real_club_name='Integration Test FC',real_club_key='integration-test-fc',real_roster_source='integration fixture',real_roster_checked_at='2026-11-14' WHERE origin='market'");
-  assert.match(first,/Applied migration 003_league_schedule/);assert.match(first,/Applied migration 004_economy/);assert.match(first,/Applied migration 005_price_rebalance/);assert.match(first,/Applied migration 006_rating_profiles/);assert.match(second,/Skipped migration 004_economy/);assert.match(second,/Skipped migration 005_price_rebalance/);assert.match(second,/Skipped migration 006_rating_profiles/);
+  assert.match(first,/Applied migration 003_league_schedule/);assert.match(first,/Applied migration 004_economy/);assert.match(first,/Applied migration 005_price_rebalance/);assert.match(first,/Applied migration 006_rating_profiles/);assert.match(first,/Applied migration 010_real_player_club_metadata/);assert.match(second,/Skipped migration 004_economy/);assert.match(second,/Skipped migration 005_price_rebalance/);assert.match(second,/Skipped migration 006_rating_profiles/);
   const counts=(await db.query("SELECT (SELECT COUNT(*)::int FROM players WHERE origin='market') AS market,(SELECT COUNT(*)::int FROM players WHERE origin='generated') AS generated,(SELECT COUNT(*)::int FROM players WHERE origin='academy') AS academy,(SELECT COUNT(DISTINCT catalog_key)::int FROM players) AS keys,(SELECT COUNT(*)::int FROM missions) AS missions")).rows[0];
   assert.deepEqual(counts,{market:360,generated:12,academy:0,keys:360,missions:5},'seeding twice creates nothing twice');
   // The migration's SQL price formula and the server's JavaScript formula agree for every rating.
@@ -244,11 +244,12 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   // Position mapping: an eleven with six attackers cannot play 5-4-1 (one striker's place), and the saved lineup is left alone.
   const pick=(position,n)=>squad.filter(p=>p.position===position).slice(0,n).map(p=>p.id);
   const attacking=[...pick('GK',1),...pick('CB',3),...pick('CM',1),...pick('AM',1),...pick('LW',1),...pick('RW',1),...pick('ST',3)];assert.equal(attacking.length,11);
-  const wrongShape=await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking,substitutes:lineup.substitutes});
+  const attackingBench=squad.filter(p=>!attacking.includes(p.id)).slice(0,7).map(p=>p.id);
+  const wrongShape=await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking,substitutes:attackingBench});
   assert.equal(wrongShape.status,400);assert.match(wrongShape.data.error,/5-4-1 cannot be filled.*ST.*out of position/);
   assert.deepEqual((await ok(users[0],'GET',route)).lineup,lineup);
   // The very same eleven is a legitimate, if poorly suited, 4-3-3: wingers cover at full-back, strikers on the wings.
-  const asFront=await ok(users[0],'POST',route,{formation:'4-3-3',starters:attacking,substitutes:lineup.substitutes});
+  const asFront=await ok(users[0],'POST',route,{formation:'4-3-3',starters:attacking,substitutes:attackingBench});
   assert.equal(asFront.analysis.valid,true);assert.ok(asFront.analysis.cover>=5);assert.ok(asFront.analysis.fitBonus<1&&asFront.analysis.fitBonus>=-4);
   await ok(users[0],'POST',route,{formation:'4-4-2',starters:lineup.starters,substitutes:lineup.substitutes});
   assert.equal((await ok(users[0],'GET',route)).lineup.formation,'4-4-2');
@@ -310,20 +311,21 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   // Backward compatibility: a lineup stored before roles were validated (the old rules took any eleven with a goalkeeper).
   // The club must be able to save it again unchanged and to improve it, but not to make it worse.
   await db.query("UPDATE lineups SET formation='4-1-4-1',starters=$2 WHERE club_id=$1",[id,attacking]);
-  const legacy={formation:'4-1-4-1',starters:attacking,substitutes:original.substitutes},team=ids=>ids.map(x=>byId.get(x)),wrongBefore=analyseLineup(team(attacking),'4-1-4-1');
+  const attackingBench=squad.filter(p=>!attacking.includes(p.id)).slice(0,7).map(p=>p.id);
+  const legacy={formation:'4-1-4-1',starters:attacking,substitutes:attackingBench},team=ids=>ids.map(x=>byId.get(x)),wrongBefore=analyseLineup(team(attacking),'4-1-4-1');
   assert.equal(wrongBefore.valid,false);
   const legacyInfo=await ok(users[0],'GET','/api/clubs/'+id+'/formations');
   assert.equal(legacyInfo.current.valid,false);assert.equal(legacyInfo.current.outOfPosition,wrongBefore.outOfPosition);
   assert.equal((await call(users[0],'POST',route,legacy)).status,200,'the legacy lineup can be saved again unchanged');
-  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:attacking.slice().reverse(),substitutes:original.substitutes})).status,200,'in any order');
-  assert.equal((await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking,substitutes:original.substitutes})).status,400,'the allowance does not carry to another formation');
+  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:attacking.slice().reverse(),substitutes:attackingBench})).status,200,'in any order');
+  assert.equal((await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking,substitutes:attackingBench})).status,400,'the allowance does not carry to another formation');
   // Improving it: the first XI with a spare striker for a centre-back has fewer players out of position, though still not none.
   const firstCb=xi.find(x=>byId.get(x).position==='CB'),spareStriker=squad.find(p=>p.position==='ST'&&!xi.includes(p.id)).id,mild=xi.map(x=>x===firstCb?spareStriker:x);
   const mildWrong=analyseLineup(team(mild),'4-1-4-1').outOfPosition;
   assert.ok(mildWrong>0&&mildWrong<wrongBefore.outOfPosition);
   assert.match(lineupProblem('4-1-4-1',mild,squad),/cannot be filled/,'not acceptable for a club without the legacy lineup');
   assert.equal(lineupProblem('4-1-4-1',mild,squad,legacy),null);
-  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:mild,substitutes:original.substitutes})).status,200,'the legacy lineup can be improved step by step');
+  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:mild,substitutes:attackingBench})).status,200,'the legacy lineup can be improved step by step');
   // Making it worse again is refused, and the stored lineup stays as it was.
   const kept=await stored(),refused=await call(users[0],'POST',route,legacy);
   assert.equal(refused.status,400);assert.match(refused.data.error,/cannot be filled/);assert.equal(await stored(),kept);
@@ -535,7 +537,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   let budget=await budgetOf(0);
   // 1. Academy player, first sale: 50%.
   const cb=bench('CB'),first=await sell(cb.id);
-  assert.equal(first.status,200);assert.equal(first.data.resaleRatePercent,50);assert.equal(first.data.feeUzs,saleValueUzs(cb.market_value_uzs,50).toString());assert.equal(first.data.feeUzs,saleValueUzs(cb.market_value_uzs,50).toString());
+  assert.equal(first.status,200);assert.equal(first.data.resaleRatePercent,50);assert.equal(first.data.feeUzs,saleValueUzs(cb.market_value_uzs,50).toString());
   budget+=BigInt(first.data.feeUzs);assert.equal(first.data.budgetUzs,budget.toString());assert.deepEqual(first.data.promoted,[],'selling a substitute promotes nobody');
   assert.equal((await sell(cb.id)).status,404);
   const listed=await one('SELECT club_id,origin,first_sale_done,market_value_uzs FROM players WHERE id=$1',[cb.id]);
