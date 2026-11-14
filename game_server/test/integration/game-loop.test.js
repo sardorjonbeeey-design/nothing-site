@@ -101,14 +101,22 @@ async function assertLineupValid(i){
  return {players,lineup};
 }
 async function buildSquad(i,user){
- const clubId=clubs[i].id,market=(await ok(user,'GET','/api/market')).players,used=new Set(),chosen=[];
- const choose=(positions,count)=>{
-  const candidates=market.filter(p=>positions.includes(p.position)&&!used.has(p.id)).sort((a,b)=>BigInt(a.market_value_uzs)<BigInt(b.market_value_uzs)?-1:BigInt(a.market_value_uzs)>BigInt(b.market_value_uzs)?1:a.overall-b.overall);
-  assert.ok(candidates.length>=count,'test catalogue has enough players for '+positions.join('/'));
-  for(const p of candidates.slice(0,count)){used.add(p.id);chosen.push(p);}
+ const clubId=clubs[i].id,used=new Set(),chosen=[];let realSigned=0;
+ const choose=async(positions,count)=>{
+  for(let n=0;n<count;n++){
+   const market=await ok(user,'GET','/api/market');
+   const sortByPrice=(a,b)=>BigInt(a.market_value_uzs)<BigInt(b.market_value_uzs)?-1:BigInt(a.market_value_uzs)>BigInt(b.market_value_uzs)?1:a.overall-b.overall;
+   const real=market.players.filter(p=>positions.includes(p.position)&&!used.has(p.id)).sort(sortByPrice);
+   const youth=market.youth.filter(p=>positions.includes(p.position)&&!used.has(p.id)).sort(sortByPrice);
+   const p=realSigned<8&&real.length?real[0]:(youth[0]||real[0]);
+   assert.ok(p,'real market or academy supply has a player for '+positions.join('/'));
+   await ok(user,'POST','/api/clubs/'+clubId+'/players/sign',{playerId:p.id});
+   used.add(p.id);chosen.push(p);if(p.origin==='market')realSigned++;
+  }
  };
- choose(['GK'],2);choose(['CB'],3);choose(['LB'],1);choose(['RB'],1);choose(['DM'],1);choose(['CM'],3);choose(['AM'],2);choose(['ST'],3);choose(['LW'],1);choose(['RW'],1);
- for(const p of chosen)await ok(user,'POST','/api/clubs/'+clubId+'/players/sign',{playerId:p.id});
+ // First take a balanced spread of real players; use replenishing academy prospects for the remaining slots.
+ await choose(['GK'],1);await choose(['CB'],1);await choose(['LB'],1);await choose(['RB'],1);await choose(['DM'],1);await choose(['CM'],1);await choose(['AM'],1);await choose(['ST'],1);await choose(['LW'],1);await choose(['RW'],1);
+ await choose(['GK'],1);await choose(['CB'],2);await choose(['CM'],2);await choose(['AM'],1);await choose(['ST'],2);
  const info=await ok(user,'GET','/api/clubs/'+clubId+'/formations'),best=info.formations.find(f=>f.id==='4-3-3').best;
  assert.equal(best.valid,true,'test squad can field a valid 4-3-3');
  await ok(user,'POST','/api/clubs/'+clubId+'/lineup',{formation:'4-3-3',starters:best.starters,substitutes:best.substitutes});
@@ -136,11 +144,9 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const second=await run('src/migrate.js');
   assert.match(second,/Skipped migration 001_initial/);assert.match(second,/Skipped migration 002_development_ledger/);
   await run('src/seed.js');await run('src/seed.js');
-  // Integration-only fixture: mark the seeded catalogue as test Super League inventory so the new real-player market can be exercised offline.
-  await db.query("UPDATE players SET real_club_name='Integration Test FC',real_club_key='integration-test-fc',real_roster_source='integration fixture',real_roster_checked_at='2026-11-14' WHERE origin='market'");
-  assert.match(first,/Applied migration 003_league_schedule/);assert.match(first,/Applied migration 004_economy/);assert.match(first,/Applied migration 005_price_rebalance/);assert.match(first,/Applied migration 006_rating_profiles/);assert.match(first,/Applied migration 010_real_player_club_metadata/);assert.match(second,/Skipped migration 004_economy/);assert.match(second,/Skipped migration 005_price_rebalance/);assert.match(second,/Skipped migration 006_rating_profiles/);
-  const counts=(await db.query("SELECT (SELECT COUNT(*)::int FROM players WHERE origin='market') AS market,(SELECT COUNT(*)::int FROM players WHERE origin='generated') AS generated,(SELECT COUNT(*)::int FROM players WHERE origin='academy') AS academy,(SELECT COUNT(DISTINCT catalog_key)::int FROM players) AS keys,(SELECT COUNT(*)::int FROM missions) AS missions")).rows[0];
-  assert.deepEqual(counts,{market:360,generated:12,academy:0,keys:360,missions:5},'seeding twice creates nothing twice');
+  assert.match(first,/Applied migration 003_league_schedule/);assert.match(first,/Applied migration 004_economy/);assert.match(first,/Applied migration 005_price_rebalance/);assert.match(first,/Applied migration 006_rating_profiles/);assert.match(first,/Applied migration 010_real_player_club_metadata/);assert.match(first,/Applied migration 011_real_player_date_of_birth/);assert.match(second,/Skipped migration 011_real_player_date_of_birth/);assert.match(second,/Skipped migration 004_economy/);assert.match(second,/Skipped migration 005_price_rebalance/);assert.match(second,/Skipped migration 006_rating_profiles/);
+  const counts=(await db.query("SELECT (SELECT COUNT(*)::int FROM players WHERE origin='market') AS market,(SELECT COUNT(*)::int FROM players WHERE origin='generated') AS generated,(SELECT COUNT(*)::int FROM players WHERE origin='academy') AS academy,(SELECT COUNT(DISTINCT catalog_key)::int FROM players) AS keys,(SELECT COUNT(*)::int FROM missions) AS missions,(SELECT COUNT(DISTINCT real_club_key)::int FROM players WHERE origin='market') AS clubs,(SELECT COUNT(*)::int FROM players WHERE origin='market' AND real_player_dob IS NOT NULL AND real_club_crest_url IS NOT NULL) AS verified")).rows[0];
+  assert.deepEqual(counts,{market:68,generated:12,academy:0,keys:68,missions:5,clubs:16,verified:68},'real catalogue and youth supply seed once');
   // The migration's SQL price formula and the server's JavaScript formula agree for every rating.
   const sqlPrices=(await db.query("SELECT o::int AS overall,(ROUND(11000000*POWER(1.112::numeric,o-80)/10000)*10000)::bigint AS price FROM generate_series(1,100) o")).rows;
   for(const r of sqlPrices)assert.equal(Number(r.price),marketValueUzs(r.overall),'overall '+r.overall);
@@ -338,6 +344,9 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const market=await ok(users[0],'GET','/api/market');
   assert.deepEqual(market.squadLimits,{min:13,max:26,required:18,minimumGoalkeepers:2});
   assert.ok(market.players.length>0&&market.players.length<=500);
+  assert.equal(market.players.length,68,'the compact real-player catalogue is loaded');
+  assert.equal(new Set(market.players.map(p=>p.real_club_key)).size,16,'all 16 Super League clubs are represented');
+  assert.ok(market.players.every(p=>p.real_club_name&&p.real_club_crest_url&&Number.isInteger(p.age)&&p.age>=16),'real market entries include club, crest and current age');
   for(const p of market.players.concat(market.youth))assert.equal(Number(p.market_value_uzs),marketValueUzs(p.overall),'price follows the curve');
   assert.ok(market.players.every(p=>p.origin==='market'),'the top of the market is the seeded catalogue');
   // Generated youth: every slot is covered, all rated 45-50, none of them from the catalogue.
