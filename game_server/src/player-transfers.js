@@ -23,7 +23,15 @@ async function keeperCount(client,clubId){
 
 export async function createPlayerListing(client,{clubId,userId,playerId,askingPriceUzs}){
  const price=positiveUzs(askingPriceUzs);
+ // Check active listing without taking its row lock before locking the seller club.
+ // This avoids a lock inversion with buyers (listing row -> club rows).
+ const existing=(await client.query("SELECT id FROM player_transfer_listings WHERE player_id=$1 AND status='listed'",[playerId])).rows[0];
+ if(existing)throw new HttpError(409,'Player already has an active listing');
  const seller=await ownedClub(client,clubId,userId,true);
+ // Recheck after the club lock to serialize concurrent listing creation by the same owner.
+ // This is a plain read: do not wait on a listing row while holding the club lock.
+ const raced=(await client.query("SELECT id FROM player_transfer_listings WHERE player_id=$1 AND status='listed'",[playerId])).rows[0];
+ if(raced)throw new HttpError(409,'Player already has an active listing');
  const p=(await client.query('SELECT id,club_id,position,full_name FROM players WHERE id=$1 AND club_id=$2 FOR UPDATE',[playerId,clubId])).rows[0];
  if(!p)throw new HttpError(404,'Player not found in your club');
  if(await squadCount(client,clubId)<=MIN_SQUAD_SIZE)throw new HttpError(400,'A club must keep at least '+MIN_SQUAD_SIZE+' players');
