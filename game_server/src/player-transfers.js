@@ -84,7 +84,7 @@ export async function purchasePlayerListing(client,{buyerClubId,userId,listingId
  if(!closed.rowCount)throw new HttpError(409,'Listing was purchased by another club');
  await client.query('UPDATE clubs SET budget_uzs=budget_uzs-$2 WHERE id=$1',[buyerClubId,price.toString()]);
  await client.query('UPDATE clubs SET budget_uzs=budget_uzs+$2 WHERE id=$1',[listing.seller_club_id,price.toString()]);
- const moved=await client.query('UPDATE players SET club_id=$2 WHERE id=$1 AND club_id=$3',[player.id,buyerClubId,listing.seller_club_id]);
+ const moved=await client.query('UPDATE players SET club_id=$2,first_sale_done=TRUE WHERE id=$1 AND club_id=$3',[player.id,buyerClubId,listing.seller_club_id]);
  if(!moved.rowCount)throw new HttpError(409,'Player ownership changed during transfer');
  const buyerAfter=(buyerBalance-price).toString(),sellerAfter=(sellerBalance+price).toString();
  await client.query("INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,'player_transfer_purchase',$4),($5,$6,$7,'player_transfer_sale',$4)",[buyerClubId,(-price).toString(),buyerAfter,player.id,listing.seller_club_id,price.toString(),sellerAfter]);
