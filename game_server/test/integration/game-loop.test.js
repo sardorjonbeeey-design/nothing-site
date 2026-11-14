@@ -778,7 +778,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
  });
 
  await t.test('the whole season is settled automatically, pays income, result bonuses and top-three prizes',async()=>{
-  const before=await assets(),budgetsBefore=await Promise.all(clubs.map((_,i)=>budgetOf(i)));
+  const before=await assets();
   server2=await startServer(childEnv({PORT:String(PORT+1)}));logs.push(server2.log);
   // Seed qualifying actions at the accelerated fixture times before making fixtures overdue,
   // so the live scheduler cannot race between the timestamp shift and the activity inserts.
