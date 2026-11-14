@@ -3,12 +3,11 @@
 import {requireDb,inTransaction,assertIsolatedDatabase} from './db.js';
 import {simulateMatch} from './simulation.js';
 import {MATCH_DURATION_SECONDS} from './league.js';
-import {LEAGUE_MATCH_INCOME_UZS} from './economy.js';
+import {LEAGUE_MATCH_INCOME_UZS,MATCH_WIN_BONUS_UZS,MATCH_DRAW_BONUS_UZS} from './economy.js';
 import {repairClubLineup} from './lineup.js';
 import {ensureNextSeasons,payWaitingStipends} from './seasons.js';
 import {ensureYouthSupply} from './players.js';
 import {ownerActivity,payCompletedSeasonPrizes} from './competition.js';
-import {MATCH_WIN_BONUS_UZS,MATCH_DRAW_BONUS_UZS} from './economy.js';
 
 export async function awardDevelopmentPoints(client,clubId,amount,reason,referenceId=null){
  const r=await client.query('UPDATE clubs SET development_points=development_points+$2 WHERE id=$1 RETURNING development_points',[clubId,amount]);
