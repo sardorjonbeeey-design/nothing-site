@@ -25,13 +25,15 @@ test('templates average exactly to overall at every rating, including the clampe
  assert.deepEqual(attributesFor(90,'GK'),{pace:93,shooting:86,passing:86,dribbling:86,defending:90,physical:99});
  assert.equal(Math.max(...Object.values(attributesFor(90,'CB'))),99);
 });
-test('market catalogue: 360 fictional players, consistent price, tier, attributes and unique keys',()=>{
- assert.equal(starterPlayers.length,360);
- assert.equal(new Set(starterPlayers.map(p=>p.catalogKey)).size,360);
+test('real-player catalogue: 68 current Super League players, 16 clubs, DOBs and crests',()=>{
+ assert.equal(starterPlayers.length,68);
+ assert.equal(new Set(starterPlayers.map(p=>p.catalogKey)).size,68);
+ assert.equal(new Set(starterPlayers.map(p=>p.realClubKey)).size,16);
  for(const p of starterPlayers){
   assert.equal(p.origin,'market');assert.equal(p.marketValueUzs,marketValueUzs(p.overall));assert.equal(p.quality,qualityForOverall(p.overall));
-  assert.equal(sum(p.attributes),p.overall*6);assert.ok(p.potential>=p.overall&&p.potential<=90);assert.ok(p.overall>=46&&p.overall<=74);
-  assert.equal(p.category,'uzbek_league');assert.equal(p.nationality,'UZ');assert.doesNotThrow(()=>assertValidRating(p));
+  assert.equal(sum(p.attributes),p.overall*6);assert.ok(p.potential>=p.overall&&p.potential<=90);assert.ok(p.overall>=54&&p.overall<=64);
+  assert.equal(p.category,'uzbek_league');assert.match(p.nationality,/^[A-Z]{2}$/);assert.match(p.realPlayerDob,/^\\d{4}-\\d{2}-\\d{2}$/);
+  assert.ok(p.realClubName&&p.realClubCrestUrl&&p.realRosterSource&&p.realRosterCheckedAt);assert.doesNotThrow(()=>assertValidRating(p));
  }
 });
 test('academy squad: the approved 18-player distribution, identical for every club',()=>{
@@ -64,11 +66,11 @@ test('generated youth players are always rated 45-50 and priced by the curve',()
  }
  assert.deepEqual([...seen].sort(),[45,46,47,48,49,50]);
 });
-test('the catalogue keeps its approved rating spread: nothing was added to fill 75-90',()=>{
+test('real-player OVRs use the curated 54-64 game-balancing range and age-based potential',()=>{
  const overalls=starterPlayers.map(p=>p.overall);
- assert.equal(Math.min(...overalls),46);assert.equal(Math.max(...overalls),74);
- // The nine catalogue players whose potential used to be 91 or 92 are now capped at 90.
- const raw=starterPlayers.map((p,i)=>p.overall+8+(i%13));
- assert.equal(raw.filter(x=>x>90).length,9);
- starterPlayers.forEach((p,i)=>assert.equal(p.potential,Math.min(90,raw[i])));
+ assert.equal(Math.min(...overalls),54);assert.equal(Math.max(...overalls),64);
+ starterPlayers.forEach(p=>{
+  const bonus=p.age<=21?16:p.age<=26?12:p.age<=31?8:5;
+  assert.equal(p.potential,Math.min(90,p.overall+bonus));
+ });
 });

@@ -40,13 +40,14 @@ test('attributes may reach 99 while overall stays capped at 90',()=>{
  assert.equal(overallFromAttributes(flat(99),90,90),90);
  assert.equal(overallFromAttributes(flat(99),74,clampPotential(92)),90);
 });
-test('every generated Uzbek player complies with the profile',()=>{
+test('real market players and generated Uzbek players comply with the league profile',()=>{
  const players=[...starterPlayers];
  for(let i=0;i<50;i++)players.push(...generateAcademySquad());
  for(let i=0;i<1200;i++)players.push(generateYouthPlayer(youthSlots[i%12]));
- assert.ok(players.length>2400);
+ assert.ok(players.length>2100);
  for(const p of players){
-  assert.equal(p.category,'uzbek_league');assert.equal(p.nationality,'UZ');
+  assert.equal(p.category,'uzbek_league');
+  if(p.origin==='market')assert.match(p.nationality,/^[A-Z]{2}$/);else assert.equal(p.nationality,'UZ');
   assert.doesNotThrow(()=>assertValidRating(p));
   assert.ok(p.overall>=40&&p.overall<=90&&p.potential>=p.overall&&p.potential<=90);
   assert.equal(overallFromAttributes(p.attributes,p.overall,p.potential),p.overall,'attributes and overall agree');
