@@ -29,7 +29,7 @@ function crest(club,large){const style='style="--accent:'+esc(club.primary_colou
 function miniCrest(club){return '<span class="mini-crest" style="--accent:'+esc(club.primary_colour||'#167a55')+'">'+(club.crest_url?'<img src="'+esc((cfg.apiBase||'')+club.crest_url)+'" alt="">':esc(club.short_name||'ZFK'))+'</span>';}
 function overview(){
  const c=state.club, count=state.squad.length, required=state.squadLimits.required||18, minKeepers=state.squadLimits.minimumGoalkeepers||2, keepers=state.squad.filter(p=>p.position==='GK').length;
- const complete=count>=required&&keepers>=minKeepers&&state.lineup&&state.lineup.starters?.length===11&&state.lineup.substitutes?.length===7;
+ const complete=state.fixtures.some(f=>f.kind==='league')||(count>=required&&keepers>=minKeepers&&state.lineup&&state.lineup.starters?.length===11&&state.lineup.substitutes?.length===7);
  const next=state.fixtures.filter(f=>f.phase==='upcoming'||f.phase==='live').sort((a,b)=>Date.parse(a.kickoff_at)-Date.parse(b.kickoff_at))[0];
  const filters=[['squad','SQUAD'],['matches','MATCHES'],['finances','FINANCES']];
  const tabs='<div class="game-filters">'+filters.map(([id,label])=>'<button class="btn '+(state.overviewFilter===id?'':'secondary')+'" data-action="overview-filter" data-filter="'+id+'">'+label+'</button>').join('')+'</div>';
