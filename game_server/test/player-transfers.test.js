@@ -80,5 +80,5 @@ test('purchase transfers ownership and records paired ledger entries and history
  assert.equal(result.sellerBalanceUzs,'3500000');
  assert.ok(seen.some(sql=>sql.includes('INSERT INTO money_ledger')));
  assert.ok(seen.some(sql=>sql.includes('INSERT INTO player_transfer_history')));
- assert.ok(seen.some(sql=>sql.includes('UPDATE players SET club_id=$2 WHERE id=$1 AND club_id=$3')));
+ assert.ok(seen.some(sql=>sql.includes('UPDATE players SET club_id=$2,first_sale_done=TRUE WHERE id=$1 AND club_id=$3')));
 });
