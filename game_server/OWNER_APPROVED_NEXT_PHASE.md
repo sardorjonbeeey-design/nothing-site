@@ -1,6 +1,6 @@
 # Owner-approved next phase — competition, transfers and administration
 
-Status: Phase 3A formation matchup model implemented and CI verified on `zamin-management-isolated`; longer full-season balance review remains. Other Phase 3 systems are not implemented.
+Status: Phase 3A formation matchup model, Phase 3B player-to-player transfer market, and Phase 3C sole-owner super-admin are implemented on `zamin-management-isolated`; longer formation balance review and remaining competition rules/rewards are pending.
 Scope: isolated ZAMIN FK Management game only. Do not connect to the live Mini App, production backend, bot, or live database.
 
 ## 1. Competition integrity and match outcomes
@@ -62,6 +62,13 @@ Formations must alter the actual match simulation, not only the pitch display. E
 - Every admin mutation must be audited with actor, timestamp, target club/player, action, before/after values and reason.
 - Build the data model so more admin roles could be added later, but do not build multi-admin workflows now.
 
+### Phase 3C implementation note (2026-11-14) — COMPLETE, CI VERIFIED
+- Separate dashboard at /admin; owner-only Telegram ID gate is enforced server-side using SUPER_ADMIN_TELEGRAM_ID (numeric in production).
+- Implemented club/user/player inspection, ledgered funds adjustments, player gifts with transactional squad validation and lineup repair, Gold/VIP grant/revoke, account entitlement read, persistent JSON competition settings/rewards and audit log.
+- Migration 008 adds admin audit, entitlements and settings. Audit entries are required-reason, actor/target/action/time/before-after recorded and DB-enforced append-only.
+- CI run 43587396857: 88 unit/default passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. Latest production Telegram ID validation test is being rerun in CI.
+
+
 ## 6. Match and season rewards
 
 ### Match rewards — owner-approved
@@ -76,15 +83,14 @@ Formations must alter the actual match simulation, not only the pitch display. E
 - Exact prize amounts and tie-breaker policy need owner confirmation before implementation.
 - Pay once after the final standings are settled; use an idempotent season-reward record.
 
-## 7. Delivery order
+## 7. Remaining delivery order
 
-1. Re-run the pending price-rebalance migrations and complete test suite on the current isolated branch.
-2. Finalize the open inactivity edge cases and top-three prize amounts.
-3. Implement and balance all 12 formations.
-4. Peer-to-peer player listings and purchases implemented and CI verified on `zamin-management-isolated` (85 unit/default passed, 1 skipped; PostgreSQL integration 37/37 passed). Adversarial concurrency tests remain pending.
-5. Implement sole-super-admin backend authorization, audit log and admin panel.
-6. Implement match bonuses, inactivity forfeits and season top-three payouts.
-7. Run adversarial tests for concurrent transfers, duplicate rewards, scheduler restarts, inactive owners, both owners inactive, and economy balance.
+1. Re-run the pending price-rebalance migrations and complete test suite on the current isolated branch; review proposed formation coefficients and perform longer realistic full-season balance simulations.
+2. Finalize the remaining inactivity edge cases and top-three prize amounts/tie-break policy.
+3. Implement the owner-approved match bonuses and finalized inactivity forfeits/season payouts.
+4. Run adversarial tests for concurrent transfers, duplicate rewards, scheduler restarts, inactive owners, both owners inactive, and economy balance.
+
+Completed Phase 3 systems: formation tactical matchup model (3A), player-to-player market (3B), sole-owner super-admin (3C).
 
 ## Safety boundary
 
