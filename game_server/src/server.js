@@ -188,10 +188,10 @@ async function handle(req,res){
 
  if(req.method==='POST'&&path==='/api/uploads/crest'){if(!rateLimit(clientIp(req)+':crest',10))throw new HttpError(429,'Too many crest uploads');const body=await readJson(req,3_100_000);const crestUrl=await saveCrest(body.dataUrl);return json(res,201,{crestUrl});}
  if(req.method==='GET'&&path==='/api/market'){
-  const columns='id,full_name,nationality,age,position,quality,overall,potential,market_value_uzs,attributes,origin';
+  const columns='id,full_name,nationality,age,position,quality,overall,potential,market_value_uzs,attributes,origin,real_club_name,real_club_key,real_club_crest_url,real_roster_source,real_roster_checked_at';
   const maxValue=url.searchParams.get('maxValue');
   if(maxValue!==null&&!/^\d{1,15}$/.test(maxValue))throw new HttpError(400,'maxValue is invalid');
-  const r=await db().query('SELECT '+columns+' FROM players WHERE club_id IS NULL AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 100',[maxValue]);
+  const r=await db().query('SELECT '+columns+' FROM players WHERE club_id IS NULL AND real_club_key IS NOT NULL AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 500',[maxValue]);
   // The generated 45–50 players are listed separately so they are never pushed out by the 100-row limit.
   const youth=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND origin='generated' AND overall BETWEEN $1 AND $2 ORDER BY position,overall DESC,id LIMIT 60",[YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL]);
   return json(res,200,{players:r.rows,youth:youth.rows,squadLimits:{min:MIN_SQUAD_SIZE,max:MAX_SQUAD_SIZE}});
