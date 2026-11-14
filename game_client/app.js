@@ -236,7 +236,12 @@ async function openSample(){
  state.replay={home:side(data.home,'#167a55'),away:side(data.away,'#7c8b84'),homeGoals:data.result.homeGoals,awayGoals:data.result.awayGoals,events:data.result.events,title:'Sample match · one-minute preview',demo:true};
  render();
 }
-function clearReplay(){const m=state.replay;if(m&&m.timers){m.timers.forEach(clearTimeout);m.timers=[];}}
+// Telegram Main Button: the single primary action on the full-time card.
+let mainButtonHandler=null;
+function tgWebApp(){return window.Telegram&&window.Telegram.WebApp;}
+function hideMainButton(){const tg=tgWebApp();if(!tg||!tg.MainButton)return;if(mainButtonHandler){tg.MainButton.offClick(mainButtonHandler);mainButtonHandler=null;}tg.MainButton.hide();}
+function showMainButton(text,onTap){const tg=tgWebApp();if(!tg||!tg.MainButton)return;hideMainButton();mainButtonHandler=onTap;tg.MainButton.setText(text);tg.MainButton.onClick(onTap);tg.MainButton.show();}
+function clearReplay(){const m=state.replay;if(m&&m.timers){m.timers.forEach(clearTimeout);m.timers=[];}hideMainButton();}
 function replayScreen(){
  const m=state.replay,home=m.home,away=m.away;
  const dots=[...placeOnPitch(home.players||[],false).map(d=>dotMarkup(d,home.colour)),...placeOnPitch(away.players||[],true).map(d=>dotMarkup(d,away.colour))].join('');
@@ -280,6 +285,7 @@ function startReplay(){
  at(REPLAY_MS,()=>{
   score.textContent=m.homeGoals+' — '+m.awayGoals;
   const end=$('#replay-end');
+  if(m.demo)showMainButton('Build your squad',()=>root.querySelector('[data-action="replay-build"]')?.click());
   end.innerHTML='<section class="panel replay-final"><div class="eyebrow">FULL TIME</div><h2>'+esc(m.home.name)+' '+m.homeGoals+' — '+m.awayGoals+' '+esc(m.away.name)+'</h2>'+(m.demo?'<p class="sub">This was a sample match. Build your squad to play for real.</p>':'')+'<div class="actions">'+(m.demo?'<button class="btn" data-action="replay-build">Build your squad →</button>':'')+'<button class="btn secondary" data-action="replay-again">Watch again</button><button class="btn ghost" data-action="replay-close">Close</button></div></section>';
  });
 }

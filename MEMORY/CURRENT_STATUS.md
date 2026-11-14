@@ -94,3 +94,11 @@ Do not connect the live Telegram Mini App, live bot, existing backend, productio
 
 ## Remaining Phase 3 work
 - Before release, run the mobile smoke test in the isolated runtime and review the still-proposed formation coefficients. No deployment is authorized.
+
+## Season redesign and real-player safeguards (2026-11-14) — IMPLEMENTED, LOCALLY VERIFIED
+- Client: four bottom destinations (Match, Squad, Transfers, Season); match home; full-screen replay of settled matches and of a one-minute sample; squad starting XI on a pitch; Season segments (Table, Fixtures and results, Objectives, Challenges); Telegram Main Button on the sample full-time card.
+- Server: goals name scorer and assist; each settled fixture stores its Starting XIs (migration 012_match_lineups.sql); GET /api/demo-match runs an in-memory sample and stores nothing.
+- Real players: REAL_PLAYERS_ENABLED switch (default on; set false until written permission exists); club crests are no longer served; unofficial notice in the market; dates of birth are never returned by the API.
+- Verified locally: npm test 98 passed, 0 failed, 1 skipped; integration 37 passed, 3 failed (two checks fail on the original commit as well; the third is a consequence of the same test-state issue, not a regression); browser replay of a stored settled match: 22 players on pitch, correct score, all events, no console errors.
+- Not done: production deploy and migration 012 (requires owner approval); real iPhone/Telegram test; lineup editor on the pitch; Transfers and Objectives layout redesign; sound.
+- Known test-state issues (pre-existing): integration check 20 expects an 18-player squad but earlier subtests leave 19; check 12 finds no lineup replacement for its squad.
