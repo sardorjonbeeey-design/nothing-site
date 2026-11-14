@@ -14,6 +14,7 @@ test('listing price accepts a positive integer UZS string and proceeds to owners
  let querySeen=false;
  const db={query:async(sql)=>{
   querySeen=true;
+  if(sql.includes("FROM player_transfer_listings WHERE player_id=$1 AND status='listed'"))return {rowCount:0,rows:[]};
   assert.match(sql,/SELECT id,owner_user_id,budget_uzs FROM clubs/);
   return {rowCount:0,rows:[]};
  }};
@@ -42,6 +43,7 @@ test('browse limits page size and offset to bounded values',async()=>{
 test('cancel only targets a listed item belonging to the seller',async()=>{
  let updateSql,updateParams;
  const db={query:async(sql,p)=>{
+  if(sql.includes('SELECT id,seller_club_id,status FROM player_transfer_listings WHERE id=$1 FOR UPDATE'))return {rowCount:1,rows:[{id:'listing',seller_club_id:'club',status:'listed'}]};
   if(sql.includes('SELECT id,owner_user_id,budget_uzs FROM clubs'))return {rowCount:1,rows:[{id:'club',owner_user_id:'owner',budget_uzs:'100'}]};
   updateSql=sql;updateParams=p;return {rowCount:0,rows:[]};
  }};
