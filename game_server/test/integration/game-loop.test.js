@@ -347,6 +347,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(market.players.length,61,'seven real players have already been recruited by the first club');
   assert.equal(new Set(market.players.map(p=>p.real_club_key)).size,16,'all 16 Super League clubs are represented');
   assert.ok(market.players.every(p=>p.real_club_name&&p.real_club_crest_url&&Number.isInteger(p.age)&&p.age>=16),'real market entries include club, crest and current age');
+  assert.ok(Array.isArray(market.academy),'resold academy players are returned separately from real players');
   for(const p of market.players.concat(market.youth))assert.equal(Number(p.market_value_uzs),marketValueUzs(p.overall),'price follows the curve');
   assert.ok(market.players.every(p=>p.origin==='market'),'the top of the market is the seeded catalogue');
   // Generated youth: every slot is covered, all rated 45-50, none of them from the catalogue.
@@ -554,7 +555,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal((await sell(cb.id)).status,404);
   const listed=await one('SELECT club_id,origin,first_sale_done,market_value_uzs FROM players WHERE id=$1',[cb.id]);
   assert.deepEqual(listed,{club_id:null,origin:'academy',first_sale_done:true,market_value_uzs:String(cb.market_value_uzs)},'the sold academy player stays on the market at full price');
-  assert.ok((await ok(users[0],'GET','/api/market?maxValue=1000000')).players.some(p=>p.id===cb.id));
+  assert.ok((await ok(users[0],'GET','/api/market?maxValue=1000000')).academy.some(p=>p.id===cb.id));
   // 2. Buying him back costs the full price; selling him again pays 80%: the 50% rate applies once only.
   assert.equal((await sign(cb.id)).status,200);budget-=BigInt(cb.market_value_uzs);
   const again=await sell(cb.id);assert.equal(again.data.resaleRatePercent,80);assert.equal(again.data.feeUzs,saleValueUzs(cb.market_value_uzs,80).toString());budget+=BigInt(again.data.feeUzs);

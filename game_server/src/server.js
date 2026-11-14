@@ -194,7 +194,8 @@ async function handle(req,res){
   const r=await db().query('SELECT '+columns+' FROM players WHERE club_id IS NULL AND real_club_key IS NOT NULL AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 500',[maxValue]);
   // The generated 45–50 players are listed separately so they are never pushed out by the 100-row limit.
   const youth=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND origin='generated' AND overall BETWEEN $1 AND $2 ORDER BY position,overall DESC,id LIMIT 60",[YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL]);
-  return json(res,200,{players:r.rows,youth:youth.rows,squadLimits:{min:MIN_SQUAD_SIZE,max:MAX_SQUAD_SIZE,required:STARTING_SQUAD_SIZE,minimumGoalkeepers:MINIMUM_GOALKEEPERS}});
+  const academy=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND origin='academy' AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 100",[maxValue]);
+  return json(res,200,{players:r.rows,youth:youth.rows,academy:academy.rows,squadLimits:{min:MIN_SQUAD_SIZE,max:MAX_SQUAD_SIZE,required:STARTING_SQUAD_SIZE,minimumGoalkeepers:MINIMUM_GOALKEEPERS}});
  }
  if(req.method==='GET'&&path==='/api/transfers'){
   const limit=Math.max(1,Math.min(100,Number(url.searchParams.get('limit'))||50));
