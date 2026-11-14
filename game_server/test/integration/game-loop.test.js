@@ -115,7 +115,7 @@ async function buildSquad(i,user){
   }
  };
  // First take a balanced spread of real players; use replenishing academy prospects for the remaining slots.
- await choose(['GK'],1);await choose(['CB'],1);await choose(['LB'],1);await choose(['RB'],1);await choose(['DM'],1);await choose(['CM'],1);await choose(['ST'],1);await choose(['AM'],1);await choose(['LW'],1);await choose(['RW'],1);
+ await choose(['GK'],1);await choose(['CB'],1);await choose(['LB'],1);await choose(['RB'],1);await choose(['DM'],1);await choose(['CM'],1);await choose(['ST'],1);await choose(['CM'],1);await choose(['LW'],1);await choose(['RW'],1);
  await choose(['GK'],1);await choose(['CB'],2);await choose(['DM'],1);await choose(['CM'],2);await choose(['ST'],2);
  const info=await ok(user,'GET','/api/clubs/'+clubId+'/formations'),best=info.formations.find(f=>f.id==='4-3-3').best;
  assert.equal(best.valid,true,'test squad can field a valid 4-3-3');
@@ -583,7 +583,8 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(lastKeeper.status,400);assert.match(lastKeeper.data.error,/at least one goalkeeper/);
   // 7. Minimum squad of 13: two more sales are allowed, the next is refused. The XI is valid after every sale.
   assert.equal(state.players.length,15);
-  for(const p of [bench('CM'),bench('AM')]){assert.equal((await sell(p.id)).status,200);await assertLineupValid(0);}
+  const cm=bench('CM');assert.equal((await sell(cm.id)).status,200);await assertLineupValid(0);
+  const secondCm=bench('CM');assert.equal((await sell(secondCm.id)).status,200);await assertLineupValid(0);
   state=await assertLineupValid(0);assert.equal(state.players.length,13);
   const tooFew=await sell(state.lineup.substitutes[0]||state.lineup.starters[10]);
   assert.equal(tooFew.status,400);assert.match(tooFew.data.error,/at least 13 players/);
