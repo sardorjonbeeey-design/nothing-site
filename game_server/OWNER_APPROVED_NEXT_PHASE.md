@@ -66,7 +66,7 @@ Formations must alter the actual match simulation, not only the pitch display. E
 - Separate dashboard at /admin; owner-only Telegram ID gate is enforced server-side using SUPER_ADMIN_TELEGRAM_ID (numeric in production).
 - Implemented club/user/player inspection, ledgered funds adjustments, player gifts with transactional squad validation and lineup repair, Gold/VIP grant/revoke, account entitlement read, persistent JSON competition settings/rewards and audit log.
 - Migration 008 adds admin audit, entitlements and settings. Audit entries are required-reason, actor/target/action/time/before-after recorded and DB-enforced append-only.
-- CI run 43587396857: 88 unit/default passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. Latest production Telegram ID validation test is being rerun in CI.
+- CI run 43587396857: 88 unit/default passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. Follow-up CI run 43587550239 passed, including production Telegram ID format validation: 88 unit/default passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed.
 
 
 ## 6. Match and season rewards
