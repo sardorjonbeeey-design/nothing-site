@@ -358,6 +358,36 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.deepEqual(await ok(users[0],'POST',clubPath(0)+'/leagues/ensure',{}),{leagueId:null,created:false});
  });
 
+ await t.test('peer-to-peer transfer market: list, browse, purchase atomically and preserve club lineups/ledgers',async()=>{
+  const sellerId=clubs[0].id,buyerId=clubs[1].id,sellerRoute=clubPath(0)+'/transfers',buyerRoute=clubPath(1)+'/transfers';
+  const sellerSquad=(await ok(users[0],'GET',clubPath(0)+'/squad')).players;
+  const player=sellerSquad.find(p=>p.position!=='GK');
+  assert.ok(player,'seller has an outfield player to list');
+  const price='1000000',sellerBefore=await budgetOf(0),buyerBefore=await budgetOf(1);
+  const created=await ok(users[0],'POST',sellerRoute,{playerId:player.id,askingPriceUzs:price});
+  assert.equal(created.listing.status,'listed');assert.equal(created.listing.asking_price_uzs,price);
+  assert.equal((await call(users[0],'POST',sellerRoute,{playerId:player.id,askingPriceUzs:'2000000'})).status,409,'same player cannot be listed twice');
+  assert.equal((await call(users[0],'POST',clubPath(0)+'/players/sell',{playerId:player.id})).status,409,'listed player cannot be sold to free-agent market');
+  const market=(await ok(users[1],'GET','/api/transfers?limit=100')).listings;
+  const visible=market.find(l=>l.listing_id===created.listing.id);
+  assert.ok(visible,'other club can browse the listing');
+  assert.equal(visible.seller_club_id,sellerId);assert.equal(visible.seller_club_short_name,clubs[0].short_name);
+  assert.equal((await call(users[2],'GET',sellerRoute)).status,404,'another manager cannot inspect seller-owned listings');
+  const bought=await ok(users[1],'POST',buyerRoute+'/'+created.listing.id+'/buy',{});
+  assert.equal(bought.priceUzs,price);assert.equal(bought.buyerBalanceUzs,(buyerBefore-BigInt(price)).toString());assert.equal(bought.sellerBalanceUzs,(sellerBefore+BigInt(price)).toString());
+  assert.equal((await call(users[1],'POST',buyerRoute+'/'+created.listing.id+'/buy',{})).status,409,'duplicate purchase is refused');
+  assert.equal((await one('SELECT club_id FROM players WHERE id=$1',[player.id])).club_id,buyerId,'ownership changed to buyer');
+  assert.equal((await one("SELECT status,buyer_club_id FROM player_transfer_listings WHERE id=$1",[created.listing.id])).status,'sold');
+  assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM player_transfer_history WHERE listing_id=$1',[created.listing.id])).n),1,'transfer history is exactly once');
+  assert.equal((await ok(users[0],'GET',sellerRoute)).listings.find(l=>l.listing_id===created.listing.id).status,'sold');
+  assert.equal((await call(users[0],'POST',sellerRoute+'/'+created.listing.id+'/cancel',{})).status,404,'sold listing cannot be cancelled');
+  assert.equal((await ok(users[0],'GET','/api/transfers?limit=100')).listings.some(l=>l.listing_id===created.listing.id),false,'sold listing is removed from public market');
+  assert.equal((await ok(users[0],'GET',clubPath(0)+'/squad')).players.length,sellerSquad.length-1);
+  assert.equal((await ok(users[1],'GET',clubPath(1)+'/squad')).players.length,19);
+  await assertLineupValid(0);await assertLineupValid(1);
+  await assertLedgersConsistent();
+ });
+ 
  await t.test('friendly challenges: validation, one-minute slots, accept, decline and cancel',async()=>{
   leagueSlot=iso((await one("SELECT (((NOW() AT TIME ZONE 'Asia/Tashkent')::date+1)+time '20:00') AT TIME ZONE 'Asia/Tashkent' AS k")).k);
   const post=(i,body)=>call(users[i],'POST',clubPath(i)+'/friendlies',body);
