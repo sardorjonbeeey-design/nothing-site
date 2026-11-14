@@ -102,7 +102,7 @@ Chronological record. Append entries; do not erase earlier history.
 - Added a PostgreSQL end-to-end P2P integration case to `game_server/test/integration/game-loop.test.js` covering list, browse, purchase, duplicate prevention, ownership, seller/buyer squad-lineup repair and ledger consistency.
 - CI run `43585008300` completed successfully: `npm test` — 85 passed, 0 failed, 1 skipped; PostgreSQL integration — 37 passed, 0 failed, 0 skipped. The transfer integration test snapshots and restores seeded clubs, budgets, player ownership/resale flag, lineups, ledger rows and transfer records so unrelated tests remain isolated.
 - Fixed test-only issues revealed by CI: mock query order/409 conflict expectation, actual club short-name lookup, and fixture cleanup between integration cases.
-- Adversarial simultaneous purchase/spend/list/cancel DB concurrency tests remain outstanding. No production DB, live Mini App, bot, merge or deployment.
+- Adversarial concurrency tests were added in Phase 3D for simultaneous purchases against one listing, concurrent buyer-budget contention, and cancel-versus-buy. No production DB, live Mini App, bot, merge or deployment.
 
 
 
@@ -116,3 +116,13 @@ Chronological record. Append entries; do not erase earlier history.
 - CI run 43587396857 passed: unit/default 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. CI run 43587550239 passed including production Telegram ID format validation: unit/default 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed.
 - Competition setting values are persisted and audited; a stored key only affects game behavior after the related gameplay system explicitly consumes it.
 - No merge, deployment, production DB, bot or live Mini App connection.
+
+## 2026-11-14 — Phase 3D competition rules and rewards
+- Added migration game_server/db/009_competition_rewards.sql for timestamped owner activity events and unique season prize payment records; readiness now requires both tables.
+- Owner inactivity is based only on successful authenticated state-changing game requests. Passive GET/background polling and rejected requests do not count. Activity is evaluated as of scheduled kick-off.
+- Added in-app 24h and 46h idle warnings; one inactive owner forfeits 0–3, while both inactive owners produce a 0–0 double forfeit, both record a loss, and neither gets league points or a match-result bonus.
+- Added server-ledgered result bonuses: 250,000 UZS for a win, 100,000 UZS per club for a draw, 0 for a loss; these are additional to 750,000 UZS league income.
+- Added season prizes: 10M / 7M / 5M UZS for 1st / 2nd / 3rd. Final table uses points, GD, GF, head-to-head points, head-to-head GD. Tied places share the combined occupied prize slots equally; remainder distribution is deterministic. Unique payment rows and money ledger prevent duplicate rewards.
+- Added tests for inactivity thresholds and forfeits, result bonus accounting, top-three prize pool and tie splitting, scheduler restart idempotency, concurrent transfer double-buy, concurrent buyer overspend, cancel-versus-buy race, and a 120-season 10-club formation balance simulation using balanced 18-player squads.
+- Latest verified CI run before the final cancel-versus-buy addition: 43590707653 — 93 passed, 0 failed, 1 skipped; PostgreSQL integration 40/40 passed. A fresh run is in progress for the last concurrency test.
+- No merge, deployment, production database, Telegram bot or live Mini App connection. Admin activation remains blocked until the isolated runtime has SUPER_ADMIN_TELEGRAM_ID set to the owner's numeric Telegram user ID and migrations 008 and 009 are applied. A Phase 3 mobile smoke run remains outstanding.
