@@ -40,9 +40,12 @@ export async function browsePlayerListings(client,{limit=50,offset=0}={}){
 }
 
 export async function cancelPlayerListing(client,{clubId,userId,listingId}){
+ // Lock the listing before the club, matching purchasePlayerListing's lock order.
+ const listing=(await client.query("SELECT id,seller_club_id,status FROM player_transfer_listings WHERE id=$1 FOR UPDATE",[listingId])).rows[0];
+ if(!listing||listing.seller_club_id!==clubId||listing.status!=='listed')throw new HttpError(404,'Active listing not found');
  await ownedClub(client,clubId,userId,true);
  const r=await client.query("UPDATE player_transfer_listings SET status='cancelled',closed_at=NOW() WHERE id=$1 AND seller_club_id=$2 AND status='listed' RETURNING *",[listingId,clubId]);
- if(!r.rowCount)throw new HttpError(404,'Active listing not found');
+ if(!r.rowCount)throw new HttpError(409,'Listing state changed');
  return r.rows[0];
 }
 
@@ -58,6 +61,7 @@ export async function purchasePlayerListing(client,{buyerClubId,userId,listingId
  const buyer=clubs.find(c=>c.id===buyerClubId);
  const seller=clubs.find(c=>c.id===listing.seller_club_id);
  if(!buyer||buyer.owner_user_id!==userId)throw new HttpError(404,'Buyer club not found');
+ if(!seller||seller.owner_user_id===buyer.owner_user_id)throw new HttpError(400,'A manager cannot transfer a player between their own clubs');
  const player=(await client.query('SELECT id,club_id,position,full_name FROM players WHERE id=$1 FOR UPDATE',[listing.player_id])).rows[0];
  if(!player||player.club_id!==listing.seller_club_id)throw new HttpError(409,'Listing is stale: player ownership changed');
  const buyerCount=await squadCount(client,buyerClubId),sellerCount=await squadCount(client,listing.seller_club_id);
@@ -71,7 +75,8 @@ export async function purchasePlayerListing(client,{buyerClubId,userId,listingId
  if(!closed.rowCount)throw new HttpError(409,'Listing was purchased by another club');
  await client.query('UPDATE clubs SET budget_uzs=budget_uzs-$2 WHERE id=$1',[buyerClubId,price.toString()]);
  await client.query('UPDATE clubs SET budget_uzs=budget_uzs+$2 WHERE id=$1',[listing.seller_club_id,price.toString()]);
- await client.query('UPDATE players SET club_id=$2 WHERE id=$1 AND club_id=$3',[player.id,buyerClubId,listing.seller_club_id]);
+ const moved=await client.query('UPDATE players SET club_id=$2 WHERE id=$1 AND club_id=$3',[player.id,buyerClubId,listing.seller_club_id]);
+ if(!moved.rowCount)throw new HttpError(409,'Player ownership changed during transfer');
  const buyerAfter=(buyerBalance-price).toString(),sellerAfter=(sellerBalance+price).toString();
  await client.query("INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,'player_transfer_purchase',$4),($5,$6,$7,'player_transfer_sale',$4)",[buyerClubId,(-price).toString(),buyerAfter,player.id,listing.seller_club_id,price.toString(),sellerAfter]);
  await client.query('INSERT INTO player_transfer_history(listing_id,player_id,seller_club_id,buyer_club_id,price_uzs) VALUES($1,$2,$3,$4,$5)',[listingId,player.id,listing.seller_club_id,buyerClubId,price.toString()]);
