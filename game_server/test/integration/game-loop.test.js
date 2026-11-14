@@ -660,7 +660,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   await db.query("UPDATE fixtures SET kickoff_at=NOW()-make_interval(hours=>(6-day_number)) WHERE kind='league' AND day_number IN (3,4,5)");
   await sleep(500);
   assert.equal(await playedCount(),10,'nothing is settled while no server is running');
-  server=await startServer(childEnv());logs.push(server.log);
+  server=await startServer(childEnv({SUPER_ADMIN_TELEGRAM_ID:'dev-1'}));logs.push(server.log);
   await waitFor(async()=>await playedCount()===25,'catch-up settlement');
   const order=(await db.query("SELECT day_number FROM fixtures WHERE kind='league' AND day_number IN (3,4,5) ORDER BY played_at,kickoff_at")).rows.map(r=>r.day_number);
   assert.deepEqual(order,order.slice().sort((a,b)=>a-b));
@@ -786,7 +786,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(new Set(fixtures.map(f=>f.home_club_id+'>'+f.away_club_id)).size,90);
   // Idempotent: two running schedulers, a restart, the ensure route and a direct duplicate insert create nothing more.
   const assetsBefore=await assets(),wealthBefore=await wealth();
-  server.child.kill();await sleep(300);server=await startServer(childEnv());logs.push(server.log);
+  server.child.kill();await sleep(300);server=await startServer(childEnv({SUPER_ADMIN_TELEGRAM_ID:'dev-1'}));logs.push(server.log);
   await ok(users[0],'POST',clubPath(0)+'/leagues/ensure',{});await ok(users[10],'POST',clubPath(10)+'/leagues/ensure',{});
   await sleep(1500);
   assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM leagues')).n),2);
