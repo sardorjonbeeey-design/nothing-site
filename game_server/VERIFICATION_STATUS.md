@@ -198,5 +198,5 @@ Price rebalance and the 40–90 Uzbek League rating profile are verified on the 
 - Separate admin page /admin, Telegram session auth and server-side exact owner ID gate.
 - Migration 008: admin audit, Gold/VIP entitlements, competition settings; audit DB trigger blocks update/delete.
 - Verified APIs for club/user/player inspection, funds adjustments and ledger, player gifting and lineup repair, entitlements, settings, and audit.
-- CI run 43587396857: unit/default 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. The production owner-ID validation assertion was added in a later commit and is currently under CI.
+- CI run 43587396857: unit/default 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. Follow-up CI run 43587550239 passed, including the production owner-ID validation assertion: unit/default 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed.
 - No live database, deployment, merge or live Mini App integration.
