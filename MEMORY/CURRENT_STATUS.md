@@ -80,8 +80,18 @@ Do not connect the live Telegram Mini App, live bot, existing backend, productio
 - GitHub Actions run 43587396857 passed: 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. Follow-up CI run 43587550239 also passed, including production Telegram ID config validation: 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed.
 - No merge, deployment, production DB, live Mini App or bot connection.
 
+## Phase 3D — competition rules, rewards and adversarial verification (2026-11-14)
+- Implemented migration 009: append-only owner activity event history plus unique season prize payment records. Readiness now requires both new tables.
+- Only successful authenticated state-changing POST requests count as owner activity. Passive GET, dashboard refresh and rejected requests do not. Activity is evaluated at scheduled kick-off; later actions cannot undo a forfeit.
+- In-app warning at 24h idle and final warning at 46h idle. One inactive owner loses 0–3; if both are inactive, result is 0–0, both record a loss, neither gets points or a match-result bonus.
+- Match result bonuses: win 250,000 UZS; draw 100,000 UZS each; loss 0. These are additional to 750,000 UZS league income. Double inactivity forfeit pays no result bonus.
+- Season prizes: 1st 10,000,000 UZS; 2nd 7,000,000 UZS; 3rd 5,000,000 UZS. Tie-breaks: points, GD, GF, head-to-head points, head-to-head GD. Remaining ties share occupied top-three prize slots equally; payout is idempotent.
+- Added tests for warning thresholds, single/double forfeits, result bonus ledger entries, 22M UZS prize pool, tie splits, scheduler-restart duplicate protection, concurrent transfer double-buy, concurrent buyer overspend, cancel-vs-buy races, and 120 full 10-club seasons using balanced 18-player squads.
+- Latest successful CI run before the final cancel-vs-buy test addition: 43590707653 — 93 passed, 0 failed, 1 skipped; PostgreSQL integration 40/40 passed. A fresh run is in progress for the final concurrency test.
+- All work remains on zamin-management-isolated; no merge, deployment, production DB, bot or live Mini App connection.
+- Admin access remains closed until isolated runtime has SUPER_ADMIN_TELEGRAM_ID set to the owner's numeric Telegram user ID and migration 008_super_admin.sql is applied. Migration 009_competition_rewards.sql is also required for these competition features.
+- A separate Phase 3 iPhone/Telegram mobile smoke run has not been performed. Phase 2 mobile smoke figures were owner-reported.
+
 ## Remaining Phase 3 work
-1. Re-run pending price-rebalance migrations/full suite; review proposed formation tactical coefficients and run longer full-season balance simulations with realistic squads.
-2. Finalize inactivity-forfeit edge cases, top-three prize amounts and tie-break policy.
-3. Implement approved match bonuses and finalized inactivity/season rewards.
-4. Run adversarial tests for concurrent transfers, duplicate rewards, scheduler restarts, inactivity and economy balance.
+- Wait for the final CI run covering the concurrent cancel-vs-buy race test.
+- Before release, run the mobile smoke test in the isolated runtime and review the still-proposed formation coefficients. No deployment is authorized.
