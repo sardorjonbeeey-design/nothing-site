@@ -25,6 +25,20 @@ function poisson(lambda,rng) {
  do{k++;product*=rng();}while(product>limit&&k<8);
  return Math.max(0,k-1);
 }
+// Who scores and who assists. Strikers and wide attackers score most; goalkeepers almost never do.
+const SCORING_POSITION_WEIGHT={ST:6,LW:4,RW:4,AM:3,CM:2,DM:0.8,LB:0.8,RB:0.8,CB:0.6,GK:0.02};
+const scoringWeight=p=>(SCORING_POSITION_WEIGHT[p.position]??1)*(0.5+Number(p.attributes?.shooting??p.overall??50)/100);
+const assistWeight=p=>(0.5+Number(p.attributes?.passing??p.overall??50)/100);
+const playerName=p=>p?String(p.full_name??p.fullName??p.name??''):null;
+const playerKey=(p,side)=>p?String(p.id??side+':'+playerName(p)):null;
+function weightedPick(list,weightOf,rng){
+ const weights=list.map(p=>Math.max(0,weightOf(p)));
+ const total=weights.reduce((a,b)=>a+b,0);
+ if(!list.length||total<=0)return null;
+ let r=rng()*total;
+ for(let i=0;i<list.length;i++){r-=weights[i];if(r<0)return list[i];}
+ return list[list.length-1];
+}
 export function simulateMatch(homePlayers,awayPlayers,options={}) {
  const rng=options.random||Math.random;
  const homeFormation=options.homeFormation||'4-3-3',awayFormation=options.awayFormation||'4-3-3';
@@ -46,7 +60,13 @@ export function simulateMatch(homePlayers,awayPlayers,options={}) {
   const minute=4+Math.floor(rng()*87);
   const side=(hg<homeGoals&&ag<awayGoals)?(rng()<share?'home':'away'):(hg<homeGoals?'home':'away');
   if(side==='home')hg++;else ag++;
-  events.push({minute,type:'goal',side,homeScore:hg,awayScore:ag,text:side==='home'?'Home team scores':'Away team scores'});
+  const attackers=side==='home'?homePlayers:awayPlayers;
+  const scorer=weightedPick(attackers,scoringWeight,rng);
+  // About 70% of goals have an assist, from another outfield player of the same side.
+  const assister=rng()<0.7?weightedPick(attackers.filter(p=>p!==scorer&&p.position!=='GK'),assistWeight,rng):null;
+  events.push({minute,type:'goal',side,homeScore:hg,awayScore:ag,text:side==='home'?'Home team scores':'Away team scores',
+   scorerId:playerKey(scorer,side),scorerName:playerName(scorer),scorerPosition:scorer?.position??null,
+   assistId:assister?playerKey(assister,side):null,assistName:assister?playerName(assister):null});
  }
  for(const item of [[12,'chance','A dangerous attack'],[28,'save','A goalkeeper makes a save'],[43,'chance','A late first-half chance'],[61,'attack','Pressure builds in the final third'],[76,'chance','A chance opens up'],[89,'attack','Last-minute pressure']]){
   if(rng()>0.42)events.push({minute:item[0],type:item[1],side:rng()<share?'home':'away',text:item[2]});

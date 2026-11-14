@@ -104,3 +104,42 @@
  .market-actions{grid-column:2;grid-row:2;justify-content:flex-end}
  .build-reminder{align-items:flex-start;flex-direction:column}
 }
+
+/* ---- Season redesign: bottom navigation, match-first screens, pitch and replay ---- */
+.layout{display:block!important}
+.nav{position:fixed!important;left:0;right:0;bottom:0;top:auto!important;z-index:20;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:0!important;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:rgba(16,26,23,.97);border-top:1px solid var(--line);backdrop-filter:blur(8px);overflow:visible!important}
+.nav button{border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:700;padding:10px 4px;border-radius:12px}
+.nav button.active{background:var(--panel2);color:var(--text);box-shadow:inset 0 -2px 0 var(--accent)}
+.nav-foot{display:none!important}
+.content{padding-bottom:96px}
+.budget-chip{font:600 12px 'DM Mono',monospace;color:var(--gold);border:1px solid var(--line);border-radius:99px;padding:6px 10px;white-space:nowrap}
+.match-hero{background:linear-gradient(160deg,#1f3d31,#14231d);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin-bottom:14px}
+.match-hero h2{margin:6px 0}
+.entrance{border-color:var(--gold)}
+.segments{display:flex;gap:6px;overflow-x:auto;margin:0 0 14px;padding-bottom:4px}
+.segments button{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:99px;padding:8px 14px;font-size:13px;font-weight:700}
+.segments button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pitch-panel{padding:14px}
+.match-pitch{position:relative;width:100%;max-width:440px;aspect-ratio:68/100;height:auto;margin:12px auto 22px;border-radius:16px;border:1px solid #2f5c48;overflow:visible;background:repeating-linear-gradient(180deg,#1f5a40 0 12.5%,#1b4f38 12.5% 25%)}
+.match-pitch::before{content:"";position:absolute;inset:6px;border:2px solid rgba(255,255,255,.35);border-radius:12px;pointer-events:none}
+.match-pitch .pitch-centre{position:absolute;left:50%;top:50%;width:28%;aspect-ratio:1;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,.35);border-radius:50%;pointer-events:none}
+.match-pitch .pitch-centre::before{content:"";position:absolute;left:-60%;right:-60%;top:50%;border-top:2px solid rgba(255,255,255,.35)}
+.dot{position:absolute;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 2px 6px #0008;transition:left .6s ease,top .6s ease;z-index:2}
+.dot span{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:3px;white-space:nowrap;font:700 9px 'DM Mono',monospace;color:#fff;text-shadow:0 1px 2px #000}
+.dot.pulse{animation:goal-pulse .9s ease 2}
+@keyframes goal-pulse{0%,100%{box-shadow:0 0 0 0 #e5c46b}50%{box-shadow:0 0 0 12px #e5c46b00}}
+.ball{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px #0007;left:50%;top:50%;transition:left .7s ease,top .7s ease;z-index:3}
+.replay{position:fixed;inset:0;z-index:50;background:#0b1511;padding:12px 14px calc(14px + env(safe-area-inset-bottom));overflow:auto;display:flex;flex-direction:column;gap:6px}
+.replay-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.replay-score{display:flex;align-items:center;justify-content:center;gap:14px}
+.replay-score strong{font:700 34px 'DM Mono',monospace;letter-spacing:-.02em}
+.replay-pitch{margin:8px auto 12px}
+.team-tag{background:var(--accent);color:#fff;border-radius:10px;padding:6px 10px;font:700 12px 'DM Mono',monospace}
+.timeline{height:6px;background:var(--panel2);border-radius:99px;overflow:hidden;margin:4px 0 10px}
+.timeline i{display:block;height:100%;width:0;background:var(--gold)}
+.feed{max-height:30vh;overflow:auto;display:grid;gap:6px}
+.feed-line{font-size:13px;padding:8px 10px;border-radius:12px;background:var(--panel);border:1px solid var(--line)}
+.feed-line.goal{border-color:var(--gold)}
+.feed-line.gold{color:var(--gold)}
+.replay-final{margin-top:12px;text-align:center}
+@media(prefers-reduced-motion:reduce){.dot,.ball,.timeline i{transition:none!important}.dot.pulse{animation:none}}

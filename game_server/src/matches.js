@@ -24,11 +24,16 @@ export async function progressMission(client,clubId,metric,amount){
  }
 }
 const lineupSql='SELECT p.*,l.formation FROM lineups l CROSS JOIN LATERAL unnest(l.starters) WITH ORDINALITY s(id,ord) JOIN players p ON p.id=s.id WHERE l.club_id=$1 ORDER BY s.ord';
+// Starting XI snapshot stored with a settled fixture: id, name, position and overall only, in lineup order.
+export function matchLineupSnapshot(homeRows,awayRows){
+ const side=rows=>rows.map(p=>({id:p.id,full_name:p.full_name,position:p.position,overall:p.overall}));
+ return {homeFormation:homeRows[0]?.formation||'4-3-3',awayFormation:awayRows[0]?.formation||'4-3-3',home:side(homeRows),away:side(awayRows)};
+}
 // The caller holds a row lock on the fixture and has verified that it is scheduled and due.
 async function settleFixture(client,f){
  await client.query('SELECT id FROM clubs WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE',[[f.home_club_id,f.away_club_id]]);
  const [homeActivity,awayActivity]=await Promise.all([ownerActivity(client,f.home_club_id,f.kickoff_at),ownerActivity(client,f.away_club_id,f.kickoff_at)]);
- let result,forfeit=null;
+ let result,forfeit=null,lineups=null;
  if(f.kind==='league'&&(homeActivity.inactive||awayActivity.inactive)){
   if(homeActivity.inactive&&awayActivity.inactive){result={homeGoals:0,awayGoals:0,events:[{type:'forfeit',forfeit:'double',reason:'owner_inactivity'}]};forfeit='double';}
   else if(homeActivity.inactive){result={homeGoals:0,awayGoals:3,events:[{type:'forfeit',forfeit:'single',reason:'owner_inactivity',inactiveClubId:f.home_club_id}]};forfeit='home';}
@@ -38,8 +43,10 @@ async function settleFixture(client,f){
   await repairClubLineup(client,f.home_club_id);await repairClubLineup(client,f.away_club_id);
   const hl=await client.query(lineupSql,[f.home_club_id]),al=await client.query(lineupSql,[f.away_club_id]);
   result=simulateMatch(hl.rows,al.rows,{homeFormation:hl.rows[0]?.formation||'4-3-3',awayFormation:al.rows[0]?.formation||'4-3-3'});
+  // The Starting XIs as they were at settlement, so the replay can place every player on the pitch.
+  lineups=matchLineupSnapshot(hl.rows,al.rows);
  }
- const played=await client.query("UPDATE fixtures SET status='played',home_goals=$2,away_goals=$3,events=$4::jsonb,played_at=NOW() WHERE id=$1 AND status='scheduled'",[f.id,result.homeGoals,result.awayGoals,JSON.stringify(result.events)]);
+ const played=await client.query("UPDATE fixtures SET status='played',home_goals=$2,away_goals=$3,events=$4::jsonb,match_lineups=$5::jsonb,played_at=NOW() WHERE id=$1 AND status='scheduled'",[f.id,result.homeGoals,result.awayGoals,JSON.stringify(result.events),lineups?JSON.stringify(lineups):null]);
  if(!played.rowCount)return;
  // Friendlies never touch standings, league rewards, Development Points or missions.
  if(f.kind!=='league')return;

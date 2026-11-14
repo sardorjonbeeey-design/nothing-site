@@ -7,6 +7,8 @@ const esc=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':
 const money=(v)=>{try{return new Intl.NumberFormat('en-US').format(BigInt(v||0))+' UZS';}catch{return '0 UZS';}};
 const $=(s)=>root.querySelector(s);
 const TZ='Asia/Tashkent';
+// Tabs that belong to the Season destination (table, fixtures, objectives, challenges).
+const SEASON_TABS=['league','fixtures','missions','friendlies','results'];
 const whenFormat=new Intl.DateTimeFormat('en-GB',{timeZone:TZ,day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
 const when=(v)=>v?whenFormat.format(new Date(v))+' · Tashkent time':'Date not recorded';
 function toast(msg){const el=document.createElement('div');el.className='toast';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2600);}
@@ -20,27 +22,13 @@ async function api(path,options={}){
  return data;
 }
 function shell(body){
- root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><div class="top-right">'+(state.clubs.length>1?'<select id="club-switcher">'+state.clubs.map(x=>'<option value="'+x.id+'" '+(x.id===state.club.id?'selected':'')+'>'+esc(x.short_name)+' · '+esc(x.name)+'</option>').join('')+'</select>':'')+'<div class="club-context">'+miniCrest(state.club)+'<span>'+esc(state.club.name)+'</span></div><span class="tag">FOOTBALL MANAGER</span></div></header><div class="layout"><nav class="nav">'+
- [['overview','Matchday'],['squad','My team'],['market','Scout players'],['missions','Objectives'],['fixtures','Schedule'],['results','Results'],['friendlies','Challenges'],['league','League']].map(x=>'<button data-tab="'+x[0]+'" class="'+(state.tab===x[0]?'active':'')+'">'+x[1]+'</button>').join('')+
+ root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><div class="top-right">'+(state.clubs.length>1?'<select id="club-switcher">'+state.clubs.map(x=>'<option value="'+x.id+'" '+(x.id===state.club.id?'selected':'')+'>'+esc(x.short_name)+' · '+esc(x.name)+'</option>').join('')+'</select>':'')+'<div class="club-context">'+miniCrest(state.club)+'<span>'+esc(state.club.name)+'</span></div><span class="budget-chip">'+money(state.club.budget_uzs)+'</span></div></header><div class="layout"><nav class="nav">'+
+ [['overview','Match'],['squad','Squad'],['market','Transfers'],['league','Season']].map(x=>'<button data-tab="'+x[0]+'" class="'+(state.tab===x[0]||(x[0]==='league'&&SEASON_TABS.includes(state.tab))?'active':'')+'">'+x[1]+'</button>').join('')+
  '<div class="nav-foot">ISOLATED GAME CLIENT<br>NOT CONNECTED TO LIVE SYSTEMS</div></nav><main class="content">'+body+'</main></div><footer class="footer"><span>ZAMIN FK · MANAGEMENT GAME</span><span>ISOLATED BUILD 0.1</span></footer></div>';
 }
 function pageHead(kicker,title,sub,action){return '<div class="hero"><div><div class="eyebrow">'+kicker+'</div><h1>'+title+'</h1><p class="sub">'+sub+'</p></div>'+(action||'')+'</div>';}
 function crest(club,large){const style='style="--accent:'+esc(club.primary_colour||'#167a55')+'"';return '<div class="crest" '+style+'>'+(club.crest_url?'<img src="'+esc((cfg.apiBase||'')+club.crest_url)+'" alt="Club crest">':esc(club.short_name||'ZFK'))+'</div>';}
 function miniCrest(club){return '<span class="mini-crest" style="--accent:'+esc(club.primary_colour||'#167a55')+'">'+(club.crest_url?'<img src="'+esc((cfg.apiBase||'')+club.crest_url)+'" alt="">':esc(club.short_name||'ZFK'))+'</span>';}
-function overview(){
- const c=state.club, count=state.squad.length, required=state.squadLimits.required||18, minKeepers=state.squadLimits.minimumGoalkeepers||2, keepers=state.squad.filter(p=>p.position==='GK').length;
- const complete=state.fixtures.some(f=>f.kind==='league')||(count>=required&&keepers>=minKeepers&&state.lineup&&state.lineup.starters?.length===11&&state.lineup.substitutes?.length===7);
- const next=state.fixtures.filter(f=>f.phase==='upcoming'||f.phase==='live').sort((a,b)=>Date.parse(a.kickoff_at)-Date.parse(b.kickoff_at))[0];
- const filters=[['squad','SQUAD'],['matches','MATCHES'],['finances','FINANCES']];
- const tabs='<div class="game-filters">'+filters.map(([id,label])=>'<button class="btn '+(state.overviewFilter===id?'':'secondary')+'" data-action="overview-filter" data-filter="'+id+'">'+label+'</button>').join('')+'</div>';
- const build='<section class="panel build-panel"><div class="build-copy"><div class="eyebrow">YOUR FIRST OBJECTIVE</div><h2>Build your '+required+'-player team</h2><p>Recruit your players with the 20,000,000 UZS starting budget. Include at least '+minKeepers+' goalkeepers, then choose your Starting XI and seven substitutes to qualify for the league.</p><div class="build-progress"><span>'+Math.min(count,required)+' / '+required+' players recruited</span><div class="progress"><i style="width:'+Math.min(100,count/required*100)+'%"></i></div><small>'+keepers+' / '+minKeepers+' goalkeepers · '+(state.lineup?'Lineup saved':'Lineup not confirmed')+'</small></div><div class="actions"><button class="btn" data-tab="market">Recruit players →</button><button class="btn secondary" data-tab="squad">Manage team</button></div></div><div class="build-budget"><div class="eyebrow">TRANSFER BUDGET</div><strong>'+money(c.budget_uzs)+'</strong><div class="meta">Available to build your squad</div></div></section>';
- if(!complete)return pageHead('CLUB START','Welcome to football management',esc(c.name)+' · Start with 20,000,000 UZS and build your own team.')+build;
- let content='';
- if(state.overviewFilter==='matches')content=next?'<section class="panel"><div class="eyebrow">NEXT MATCH</div>'+teamsMarkup(next)+'<p class="meta">'+competition(next)+' · '+when(next.kickoff_at)+'</p><button class="btn secondary" data-tab="fixtures">Open fixtures →</button></section>':'<section class="panel"><h2>No upcoming match</h2><p>Your club is ready. The league schedule will appear here.</p></section>';
- else if(state.overviewFilter==='finances')content='<section class="panel"><div class="eyebrow">CLUB FINANCES</div><h2>'+money(c.budget_uzs)+'</h2><p>Transfer budget</p>'+(state.ledger.slice(0,6).map(t=>'<div class="fixture"><div><strong>'+esc(t.reason.replaceAll('_',' '))+'</strong><div class="meta">'+new Date(t.created_at).toLocaleDateString()+'</div></div><div class="score">'+(BigInt(t.amount_uzs)>=0n?'+':'')+money(t.amount_uzs)+'</div></div>').join('')||'<div class="empty">No transfers or income recorded yet.</div>')+'</section>';
- else content='<section class="panel"><div class="eyebrow">FIRST TEAM</div><h2>'+count+' players registered</h2><p>Starting XI · '+(state.lineup?.formation||'Formation not set')+' · '+(state.lineup?.starters?.length||0)+'/11 starters</p><div class="actions"><button class="btn secondary" data-tab="squad">Open squad →</button><button class="btn secondary" data-tab="market">Transfer market →</button></div></section><section class="panel"><div class="eyebrow">LATEST RESULT</div>'+(state.results[0]?'<h2>'+esc(state.results[0].home_name)+' '+state.results[0].home_goals+' — '+state.results[0].away_goals+' '+esc(state.results[0].away_name)+'</h2><p>'+when(state.results[0].kickoff_at)+'</p>':'<p>Your match results will appear here.</p>')+'</section>';
- return pageHead('MATCHDAY CENTRE',esc(c.name),'Your club. Your players. Your decisions.')+'<div class="stats"><div class="stat"><div class="label">TRANSFER BUDGET</div><strong>'+money(c.budget_uzs)+'</strong><p>Available funds</p></div><div class="stat"><div class="label">SQUAD</div><strong>'+count+'/26</strong><p>Registered players</p></div><div class="stat"><div class="label">LEAGUE</div><strong>'+(state.season?'S'+state.season.number:'—')+'</strong><p>'+(state.season?state.season.status:'Not qualified')+'</p></div></div>'+tabs+content;
-}
 const tierNames={academy:'PROSPECT',developing:'DEVELOPING',established:'ESTABLISHED',elite:'ELITE'};
 function tier(p){return esc(tierNames[p.quality]||p.quality);}
 function resaleRate(p){return p.origin==='academy'&&!p.first_sale_done?50:80;}
@@ -105,7 +93,7 @@ function squadPage(){
  const players=state.squad;
  const starterIds=state.lineupDraft;
  const cards=players.map(p=>'<article class="player"><div class="player-top"><span class="pill">'+tier(p)+'</span><span class="rating">'+esc(p.overall)+'</span></div><h3>'+esc(p.full_name)+'</h3><div class="meta">'+esc(p.position)+' · '+esc(p.age)+' yrs · Potential '+esc(p.potential)+'</div><div class="bars">'+['pace','shooting','passing','defending','physical','dribbling'].map(k=>'<div><div class="attr">'+k.slice(0,3).toUpperCase()+' '+esc(p.attributes[k])+'</div><div class="bar"><i style="width:'+Math.min(100,Number(p.attributes[k]))+'%"></i></div></div>').join('')+'</div><div class="meta">'+(starterIds.includes(p.id)?'STARTING XI':'SQUAD')+' · Value '+money(p.market_value_uzs)+'</div><div class="meta">'+(resaleRate(p)===50?'ACADEMY PRODUCT · first sale pays 50%':'Sale pays 80%')+'</div><div class="actions"><button class="btn '+(starterIds.includes(p.id)?'gold':'secondary')+'" data-action="toggle-starter" data-player="'+p.id+'">'+(starterIds.includes(p.id)?'Remove XI':'Add to XI')+'</button>'+['pace','shooting','passing','dribbling','defending','physical'].map(k=>'<button class="btn secondary" data-action="upgrade" data-player="'+p.id+'" data-attr="'+k+'">+'+k.slice(0,3)+'</button>').join('')+'<button class="btn secondary" data-action="list-transfer" data-player="'+p.id+'">List for transfer</button><button class="btn danger" data-action="sell" data-player="'+p.id+'" data-rate="'+resaleRate(p)+'">Sell</button></div></article>').join('');
- return pageHead('THE SQUAD','Build your team','Upgrade attributes with Development Points. Potential limits each attribute.')+
+ return pageHead('THE SQUAD','Build your team','Upgrade attributes with Development Points. Potential limits each attribute.')+squadPitch()+
  lineupPanel()+
  '<div class="row" style="margin:18px 0 10px"><div class="eyebrow">REGISTERED PLAYERS · '+players.length+' · MIN '+state.squadLimits.min+' · MAX '+state.squadLimits.max+'</div><div class="meta">Upgrade cost increases with attribute level</div></div><div class="players">'+(cards||'<div class="empty">No players in the squad yet.</div>')+'</div>';
 }
@@ -150,11 +138,11 @@ function openingPage(){
  markViewed(r);
  const report=state.report&&state.report.id===r.id?'<div class="eyebrow" style="margin-top:18px">MATCH REPORT</div>'+eventList(state.report):'';
  return '<div class="create opening">'+pageHead(fresh?'NEW RESULT':'LATEST RESULT',fresh?'Your match has been played':'Your last match',state.newResults>1?state.newResults+' results came in while you were away. Newest first.':'Matches are played automatically by the server at their kick-off time.')+
- '<section class="panel">'+resultCard(r)+'<div class="actions result-actions">'+(report?'':'<button class="btn secondary" data-action="open-report" data-fixture="'+r.id+'">Full match report</button>')+(i<n-1?'<button class="btn ghost" data-action="result-older">← Previous result</button>':'')+(i>0?'<button class="btn ghost" data-action="result-newer">Newer result →</button>':'')+'</div>'+report+'<div class="meta result-count">Result '+(i+1)+' of '+n+'</div></section><button class="btn" data-action="continue-dashboard">Continue to dashboard →</button></div>';
+ '<section class="panel">'+resultCard(r)+'<div class="actions result-actions">'+(report?'':'<button class="btn" data-action="watch-replay" data-fixture="'+r.id+'">Watch replay</button><button class="btn secondary" data-action="open-report" data-fixture="'+r.id+'">Full match report</button>')+(i<n-1?'<button class="btn ghost" data-action="result-older">← Previous result</button>':'')+(i>0?'<button class="btn ghost" data-action="result-newer">Newer result →</button>':'')+'</div>'+report+'<div class="meta result-count">Result '+(i+1)+' of '+n+'</div></section><button class="btn" data-action="continue-dashboard">Continue to dashboard →</button></div>';
 }
 function fixturesPage(){
  const cards=state.fixtures.map(f=>'<div class="fixture"><div>'+teamsMarkup(f)+'<div class="meta">'+competition(f)+' · '+when(f.kickoff_at)+'</div></div><div class="row">'+(f.phase==='played'?'<span class="score">'+f.home_goals+' : '+f.away_goals+'</span><button class="btn secondary" data-action="open-report" data-fixture="'+f.id+'">Report</button>':f.phase==='live'?'<span class="pill live">LIVE</span>':f.phase==='cancelled'?'<span class="pill">CANCELLED</span>':'<span class="pill">UPCOMING</span>')+'</div></div>').join('');
- return pageHead('COMPETITION','Fixtures','League matches kick off at 20:00 Tashkent time, last one minute and are settled automatically by the server.','<button class="btn secondary" data-action="refresh">Refresh</button>')+reportPanel()+'<section class="panel">'+(cards||'<div class="empty">The league starts after at least 10 clubs have been created. Your fixtures will appear here.</div>')+'</section>';
+ return pageHead('COMPETITION','Fixtures','League matches kick off at 20:00 Tashkent time, last one minute and are settled automatically by the server.','<button class="btn secondary" data-action="refresh">Refresh</button>')+reportPanel()+'<section class="panel">'+(cards||'<div class="empty">The league starts after at least 10 clubs have been created. Your fixtures will appear here.</div>')+'</section>'+resultRowsSection();
 }
 function resultsPage(){
  const cards=state.results.map(r=>'<div class="fixture"><div>'+teamsMarkup(r)+'<div class="meta">'+competition(r)+' · '+when(r.kickoff_at||r.played_at)+(r.viewed?'':' · NEW')+'</div></div><div class="row"><span class="pill outcome '+esc(r.outcome)+'">'+esc(String(r.outcome).toUpperCase())+'</span><span class="score">'+r.home_goals+' : '+r.away_goals+'</span><button class="btn secondary" data-action="open-report" data-fixture="'+r.id+'">Report</button></div></div>').join('');
@@ -187,10 +175,120 @@ function identityPage(){
  const c=state.club;
  return '<div class="create">'+pageHead('CLUB SETTINGS','Edit identity','Update your name, colours and club crest.')+'<form id="identity-form" class="panel"><div class="field"><label>CLUB NAME</label><input name="name" maxlength="28" required value="'+esc(c.name)+'"></div><div class="grid2"><div class="field"><label>SHORT NAME</label><input name="shortName" maxlength="5" required value="'+esc(c.short_name)+'"></div><div class="field"><label>PRIMARY COLOUR</label><input name="primaryColour" type="color" value="'+esc(c.primary_colour)+'"></div></div><div class="field"><label>SECONDARY COLOUR</label><input name="secondaryColour" type="color" value="'+esc(c.secondary_colour)+'"></div><div class="field"><label>REPLACE CREST · OPTIONAL</label><input id="crest-file" type="file" accept="image/png,image/jpeg,image/webp"><small class="meta">Leave empty to keep the current crest.</small></div><div class="field"><label>EDITABLE CREST GENERATION PROMPT</label><textarea id="crest-prompt" rows="4">Create an original professional football club crest for [club name]. Use [primary colour] as the main colour and [secondary colour] as the accent. Design a distinctive shield with a memorable central symbol, clean vector geometry, strong contrast and readable initials. Do not copy any existing club badge. Transparent background, flat colours, suitable for a mobile football management game.</textarea><button class="btn secondary" type="button" data-action="copy-prompt">Copy prompt</button></div><div class="actions"><button class="btn" type="submit">Save identity</button><button class="btn ghost" type="button" data-tab="overview">Cancel</button></div></form></div>';
 }
+// ---- Match home: the next kick-off, the last result with its replay, and a first-run sample match.
+function matchHome(){
+ const c=state.club,required=state.squadLimits.required||18,minKeepers=state.squadLimits.minimumGoalkeepers||2;
+ const keepers=state.squad.filter(p=>p.position==='GK').length,xi=state.lineup?.starters?.length||0;
+ const ready=state.squad.length>=required&&keepers>=minKeepers&&xi===11;
+ const next=state.fixtures.filter(f=>f.phase==='upcoming'||f.phase==='live').sort((a,b)=>Date.parse(a.kickoff_at)-Date.parse(b.kickoff_at))[0];
+ const last=state.results[0];
+ const hero=next?'<section class="match-hero"><div class="eyebrow">'+(next.phase==='live'?'LIVE NOW':'NEXT KICK-OFF')+'</div>'+teamsMarkup(next)+'<p class="meta">'+competition(next)+' · '+when(next.kickoff_at)+'</p></section>'
+  :'<section class="match-hero"><div class="eyebrow">'+(last?'NO FIXTURE YET':'YOUR FIRST MATCH')+'</div><h2>'+(last?'Next match is being scheduled':'Build your team to play')+'</h2><p class="sub">'+(ready?'Your team is ready. The league starts when ten clubs exist; fixtures appear here automatically.':'Recruit '+Math.max(0,required-state.squad.length)+' more players'+(keepers<minKeepers?' and '+(minKeepers-keepers)+' goalkeeper(s)':'')+', then name your XI.')+'</p></section>';
+ const lastCard=last?'<section class="panel"><div class="eyebrow">LAST RESULT</div>'+resultCard(last)+'<div class="actions"><button class="btn" data-action="watch-replay" data-fixture="'+last.id+'">Watch replay</button><button class="btn secondary" data-action="open-report" data-fixture="'+last.id+'">Full report</button></div></section>':'';
+ const sample=!last&&!ready?'<section class="panel entrance"><div class="eyebrow">WATCH FIRST</div><h2>See how a match plays out</h2><p class="sub">A one-minute sample match between two generated sides. Nothing is saved or paid.</p><button class="btn" data-action="watch-sample">Watch sample match</button></section>':'';
+ const squad='<section class="panel"><div class="row"><div><div class="eyebrow">SQUAD</div><h2>'+state.squad.length+' / '+required+' players · '+xi+'/11 in XI</h2><p class="sub">Budget '+money(c.budget_uzs)+'</p></div><button class="btn secondary" data-tab="squad">Manage</button></div></section>';
+ return pageHead('MATCHDAY',esc(c.name),'Watch every match. Shape your team between them.')+hero+lastCard+sample+squad+reportPanel();
+}
+// ---- Season: one destination with segments for table, fixtures, objectives and challenges.
+function resultRowsSection(){
+ const rows=state.results.map(r=>'<div class="fixture"><div>'+teamsMarkup(r)+'<div class="meta">'+competition(r)+' · '+when(r.kickoff_at||r.played_at)+(r.viewed?'':' · NEW')+'</div></div><div class="row"><span class="pill outcome '+esc(r.outcome)+'">'+esc(String(r.outcome).toUpperCase())+'</span><span class="score">'+r.home_goals+' : '+r.away_goals+'</span><button class="btn secondary" data-action="watch-replay" data-fixture="'+r.id+'">Replay</button></div></div>').join('');
+ return '<section class="panel"><div class="eyebrow">RESULTS</div>'+(rows||'<div class="empty">Your club has not played a match yet.</div>')+'</section>';
+}
+function seasonPage(){
+ const subs=[['league','Table'],['fixtures','Fixtures'],['missions','Objectives'],['friendlies','Challenges']];
+ const active=state.tab==='results'?'fixtures':state.tab;
+ const seg='<nav class="segments" aria-label="Season sections">'+subs.map(([k,l])=>'<button data-tab="'+k+'" class="'+(active===k?'active':'')+'">'+l+'</button>').join('')+'</nav>';
+ const body=active==='fixtures'?fixturesPage():active==='missions'?missionsPage():active==='friendlies'?friendliesPage():leaguePage();
+ return seg+body;
+}
+// ---- Pitch: positions come from the formation's position codes; the away side is mirrored to face the home side.
+const SLOT_POSITIONS={GK:[[50,90]],CB:[[36,76],[64,76],[50,78]],LB:[[12,64]],RB:[[88,64]],DM:[[38,60],[62,60],[50,58]],CM:[[30,46],[70,46],[50,46]],AM:[[50,36],[28,34],[72,34]],LW:[[14,22]],RW:[[86,22]],ST:[[38,16],[62,16],[50,12]]};
+function placeOnPitch(list,flip){
+ const used={};
+ return list.map(p=>{const slots=SLOT_POSITIONS[p.position]||[[50,50]],k=used[p.position]||0;used[p.position]=k+1;const [x,y]=slots[k%slots.length];return {p,x,y:flip?100-y:y};});
+}
+function dotMarkup(placed,colour){
+ const p=placed.p,parts=String(p.full_name||p.fullName||'').trim().split(/\s+/),label=esc((parts[parts.length-1]||'').slice(0,4).toUpperCase());
+ return '<div class="dot" data-pid="'+esc(p.id)+'" style="left:'+placed.x+'%;top:'+placed.y+'%;--accent:'+esc(colour||'#167a55')+'"><span>'+label+'</span></div>';
+}
+function squadPitch(){
+ const ids=state.lineup?.starters||[];
+ if(ids.length!==11)return '<section class="panel pitch-panel"><div class="eyebrow">PITCH</div><p class="sub">Name 11 starters below to see your team on the pitch.</p></section>';
+ const players=ids.map(id=>state.squad.find(p=>p.id===id)).filter(Boolean);
+ return '<section class="panel pitch-panel"><div class="eyebrow">STARTING XI · '+esc(state.lineup.formation)+'</div><div class="match-pitch">'+placeOnPitch(players,false).map(d=>dotMarkup(d,state.club.primary_colour)).join('')+'</div></section>';
+}
+// ---- Replay: a stored match played back on the pitch in about fourteen seconds.
+const REPLAY_MS=14000;
+function matchFromReport(r){
+ const L=r.lineups||{};
+ const side=s=>({name:r[s+'_name'],short:r[s+'_short_name'],colour:r[s+'_colour'],formation:s==='home'?L.homeFormation:L.awayFormation,players:(s==='home'?L.home:L.away)||[]});
+ return {home:side('home'),away:side('away'),homeGoals:r.home_goals,awayGoals:r.away_goals,events:r.events||[],title:competition(r)+' · '+when(r.kickoff_at||r.played_at),demo:false};
+}
+async function openReplay(fixtureId){
+ const data=await api('/api/clubs/'+state.club.id+'/results/'+fixtureId);
+ const r=data.result;markViewed(state.results.find(x=>x.id===r.id));
+ clearReplay();state.replay=matchFromReport(r);render();
+}
+async function openSample(){
+ const data=await api('/api/demo-match');
+ const side=(s,colour)=>({name:s.name,short:s.short_name,colour,formation:s.formation,players:s.players});
+ clearReplay();
+ state.replay={home:side(data.home,'#167a55'),away:side(data.away,'#7c8b84'),homeGoals:data.result.homeGoals,awayGoals:data.result.awayGoals,events:data.result.events,title:'Sample match · one-minute preview',demo:true};
+ render();
+}
+function clearReplay(){const m=state.replay;if(m&&m.timers){m.timers.forEach(clearTimeout);m.timers=[];}}
+function replayScreen(){
+ const m=state.replay,home=m.home,away=m.away;
+ const dots=[...placeOnPitch(home.players||[],false).map(d=>dotMarkup(d,home.colour)),...placeOnPitch(away.players||[],true).map(d=>dotMarkup(d,away.colour))].join('');
+ return '<div class="replay"><header class="replay-top"><button class="btn ghost" data-action="replay-close">Close</button><span class="eyebrow">'+esc(m.title)+'</span><span></span></header>'+
+  '<div class="replay-score"><span class="team-tag" style="--accent:'+esc(home.colour||'#167a55')+'">'+esc(home.short||home.name)+'</span><strong id="replay-score">0 — 0</strong><span class="team-tag" style="--accent:'+esc(away.colour||'#7c8b84')+'">'+esc(away.short||away.name)+'</span></div>'+
+  '<div class="match-pitch replay-pitch"><div class="pitch-centre"></div>'+dots+'<div class="ball" id="replay-ball"></div></div>'+
+  '<div class="timeline"><i id="replay-progress"></i></div><div class="feed" id="replay-feed"><div class="feed-line">Kick-off</div></div><div id="replay-end"></div></div>';
+}
+function haptic(type){const h=window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.HapticFeedback;if(h&&h.notificationOccurred)h.notificationOccurred(type);}
+function startReplay(){
+ const m=state.replay;if(!m)return;
+ m.timers=[];
+ const at=(ms,fn)=>{m.timers.push(setTimeout(fn,ms));};
+ const ball=$('#replay-ball'),feed=$('#replay-feed'),score=$('#replay-score'),bar=$('#replay-progress');
+ if(!ball)return;
+ const dotAt=pid=>{const el=root.querySelector('[data-pid="'+CSS.escape(String(pid))+'"]');return el?{x:parseFloat(el.style.left),y:parseFloat(el.style.top),el}:null;};
+ const moveBall=(x,y)=>{ball.style.left=x+'%';ball.style.top=y+'%';};
+ const line=(cls,html)=>{feed.insertAdjacentHTML('beforeend','<div class="feed-line '+cls+'">'+html+'</div>');feed.scrollTop=feed.scrollHeight;};
+ let hg=0,ag=0;
+ const play=e=>{
+  const minute=Number(e.minute)||0;
+  if(e.type==='forfeit'){line('gold','Forfeit · owner inactivity');return;}
+  if(e.type==='goal'){
+   if(e.side==='home')hg++;else ag++;
+   const goalY=e.side==='home'?8:92,scorer=dotAt(e.scorerId);
+   if(scorer){moveBall(scorer.x,scorer.y);scorer.el.classList.add('pulse');at(700,()=>moveBall(50,goalY));}
+   else moveBall(50,goalY);
+   score.textContent=hg+' — '+ag;
+   line('goal','<b>'+minute+"'</b> ⚽ "+esc(e.scorerName||'Goal')+(e.assistName?' <span class="muted">· assist '+esc(e.assistName)+'</span>':''));
+   haptic('success');
+   return;
+  }
+  moveBall(50,e.side==='away'?78:22);
+  line('','<b>'+minute+"'</b> "+esc(e.text||''));
+ };
+ const events=(m.events||[]).slice().sort((a,b)=>(Number(a.minute)||0)-(Number(b.minute)||0));
+ for(const e of events)at(Math.min(REPLAY_MS-900,(Number(e.minute)||0)/90*REPLAY_MS),()=>play(e));
+ const started=Date.now();
+ const tick=()=>{const f=Math.min(1,(Date.now()-started)/REPLAY_MS);bar.style.width=(f*100)+'%';if(f<1)at(100,tick);};
+ tick();
+ at(REPLAY_MS,()=>{
+  score.textContent=m.homeGoals+' — '+m.awayGoals;
+  const end=$('#replay-end');
+  end.innerHTML='<section class="panel replay-final"><div class="eyebrow">FULL TIME</div><h2>'+esc(m.home.name)+' '+m.homeGoals+' — '+m.awayGoals+' '+esc(m.away.name)+'</h2>'+(m.demo?'<p class="sub">This was a sample match. Build your squad to play for real.</p>':'')+'<div class="actions">'+(m.demo?'<button class="btn" data-action="replay-build">Build your squad →</button>':'')+'<button class="btn secondary" data-action="replay-again">Watch again</button><button class="btn ghost" data-action="replay-close">Close</button></div></section>';
+ });
+}
 function render(){
+ // While a replay is open it owns the screen. Background refreshes must not restart it.
+ if(state.replay){if(!state.replay.started){state.replay.started=true;root.innerHTML=replayScreen();startReplay();}return;}
  if(!state.club){root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><span class="tag">ISOLATED BUILD</span></header>'+createPage()+'</div>';return;}
  if(state.opening&&state.results.length){root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><div class="club-context">'+miniCrest(state.club)+'<span>'+esc(state.club.name)+'</span></div></header>'+openingPage()+'</div>';return;}
- let body=state.tab==='identity'?identityPage():state.tab==='overview'?overview():state.tab==='squad'?squadPage():state.tab==='market'?marketPage():state.tab==='missions'?missionsPage():state.tab==='fixtures'?fixturesPage():state.tab==='results'?resultsPage():state.tab==='friendlies'?friendliesPage():leaguePage();
+ let body=state.tab==='identity'?identityPage():state.tab==='overview'?matchHome():state.tab==='squad'?squadPage():state.tab==='market'?marketPage():seasonPage();
  shell(body);
 }
 async function loadAll(){
@@ -222,7 +320,7 @@ function startAutoRefresh(){
  if(refreshTimer)clearInterval(refreshTimer);
  // Refresh only while the app is visible and the manager is not editing a form. Hidden/background polling is avoided.
  const refresh=()=>{
-  if(document.visibilityState!=='visible'||state.opening)return;
+  if(document.visibilityState!=='visible'||state.opening||state.replay)return;
   if(document.activeElement?.closest?.('form'))return;
   void loadAll().catch(()=>{});
  };
@@ -266,6 +364,11 @@ root.addEventListener('click',async e=>{
   if(action==='buy-transfer'){if(!confirm('Buy this player at the displayed asking price?'))return;await api('/api/clubs/'+state.club.id+'/transfers/'+b.dataset.listing+'/buy',{method:'POST',body:{}});toast('Player transferred to your club');await loadAll();return;}
   if(action==='cancel-transfer'){if(!confirm('Cancel this player listing?'))return;await api('/api/clubs/'+state.club.id+'/transfers/'+b.dataset.listing+'/cancel',{method:'POST',body:{}});toast('Listing cancelled');await loadAll();return;}
   if(action==='sign'){await api('/api/clubs/'+state.club.id+'/players/sign',{method:'POST',body:{playerId:b.dataset.player}});state.profilePlayer=null;toast('Player signed');await loadAll();return;}
+  if(action==='watch-replay'){await openReplay(b.dataset.fixture);return;}
+  if(action==='watch-sample'){await openSample();return;}
+  if(action==='replay-close'){clearReplay();state.replay=null;render();return;}
+  if(action==='replay-again'){clearReplay();state.replay.started=false;render();return;}
+  if(action==='replay-build'){clearReplay();state.replay=null;state.tab='market';render();return;}
   if(action==='refresh'){await loadAll();toast('Updated');return;}
   if(action==='open-report'){const data=await api('/api/clubs/'+state.club.id+'/results/'+b.dataset.fixture);state.report=data.result;markViewed(state.results.find(x=>x.id===data.result.id));render();$('#match-report')?.scrollIntoView({block:'start'});return;}
   if(action==='close-report'){state.report=null;render();return;}

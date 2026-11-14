@@ -11,10 +11,10 @@ import {saveCrest,readCrest} from './uploads.js';
 import {LEAGUE_TIMEZONE,MATCH_DURATION_SECONDS} from './league.js';
 import {ensureLeague,LEAGUE_LOCK} from './seasons.js';
 import {ensureYouthSupply} from './players.js';
-import {YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL} from './catalog.js';
+import {YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL,generateAcademySquad} from './catalog.js';
 import {repairClubLineup,lineupProblem} from './lineup.js';
 import {formations,FORMATION_IDS,isFormation,bestLineup,FIT_BONUS_MAX,FIT_BONUS_PER_PLAYER} from './formations.js';
-import {lineupStrength} from './simulation.js';
+import {lineupStrength,simulateMatch} from './simulation.js';
 import {awardDevelopmentPoints,startScheduler} from './matches.js';
 import {createPlayerListing,browsePlayerListings,cancelPlayerListing,purchasePlayerListing} from './player-transfers.js';
 import {ratingProfileFor,assertValidRating} from './ratings.js';
@@ -78,7 +78,7 @@ const fixtureColumns="f.id,f.kind,f.league_id,f.round_number,f.day_number,f.kick
 const fixtureJoins=' FROM fixtures f JOIN clubs h ON h.id=f.home_club_id JOIN clubs a ON a.id=f.away_club_id';
 // Completed matches of one club, newest first, with the result from that club's side and its server-side viewed flag.
 function resultsSql(withEvents,filter){
- return "SELECT x.*,CASE WHEN x.home_goals=x.away_goals THEN 'draw' WHEN (x.home_club_id=$1::uuid)=(x.home_goals>x.away_goals) THEN 'win' ELSE 'loss' END AS outcome,(v.fixture_id IS NOT NULL) AS viewed FROM (SELECT "+fixtureColumns+(withEvents?',f.events':'')+fixtureJoins+" WHERE f.status='played' AND (f.home_club_id=$1::uuid OR f.away_club_id=$1::uuid)"+filter+') x LEFT JOIN fixture_result_views v ON v.fixture_id=x.id AND v.club_id=$1::uuid ORDER BY x.kickoff_at DESC NULLS LAST,x.played_at DESC,x.id';
+ return "SELECT x.*,CASE WHEN x.home_goals=x.away_goals THEN 'draw' WHEN (x.home_club_id=$1::uuid)=(x.home_goals>x.away_goals) THEN 'win' ELSE 'loss' END AS outcome,(v.fixture_id IS NOT NULL) AS viewed FROM (SELECT "+fixtureColumns+(withEvents?',f.events,f.match_lineups AS lineups':'')+fixtureJoins+" WHERE f.status='played' AND (f.home_club_id=$1::uuid OR f.away_club_id=$1::uuid)"+filter+') x LEFT JOIN fixture_result_views v ON v.fixture_id=x.id AND v.club_id=$1::uuid ORDER BY x.kickoff_at DESC NULLS LAST,x.played_at DESC,x.id';
 }
 async function unviewedCount(clientOrDb,clubId){
  const r=await clientOrDb.query("SELECT COUNT(*)::int AS count FROM fixtures f WHERE f.status='played' AND (f.home_club_id=$1 OR f.away_club_id=$1) AND NOT EXISTS(SELECT 1 FROM fixture_result_views v WHERE v.fixture_id=f.id AND v.club_id=$1)",[clubId]);
@@ -198,6 +198,14 @@ async function handle(req,res){
   const youth=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND origin='generated' AND overall BETWEEN $1 AND $2 ORDER BY position,overall DESC,id LIMIT 60",[YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL]);
   const academy=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND origin='academy' AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 100",[maxValue]);
   return json(res,200,{players:r.rows,youth:youth.rows,academy:academy.rows,squadLimits:{min:MIN_SQUAD_SIZE,max:MAX_SQUAD_SIZE,required:STARTING_SQUAD_SIZE,minimumGoalkeepers:MINIMUM_GOALKEEPERS}});
+ }
+ // First-run sample match: two generated 4-3-3 sides, simulated in memory. Nothing is stored, scheduled or paid.
+ if(req.method==='GET'&&path==='/api/demo-match'){
+  const side=(prefix)=>generateAcademySquad().slice(0,11).map((p,i)=>({id:prefix+i,full_name:p.fullName,position:p.position,overall:p.overall,attributes:p.attributes}));
+  const home=side('h'),away=side('a');
+  const result=simulateMatch(home,away,{homeFormation:'4-3-3',awayFormation:'4-3-3'});
+  const strip=p=>({id:p.id,full_name:p.full_name,position:p.position,overall:p.overall});
+  return json(res,200,{demo:true,home:{name:'Sample XI',short_name:'SAM',formation:'4-3-3',players:home.map(strip)},away:{name:'Academy XI',short_name:'ACA',formation:'4-3-3',players:away.map(strip)},result:{homeGoals:result.homeGoals,awayGoals:result.awayGoals,events:result.events}});
  }
  if(req.method==='GET'&&path==='/api/transfers'){
   const limit=Math.max(1,Math.min(100,Number(url.searchParams.get('limit'))||50));
