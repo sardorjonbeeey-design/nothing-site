@@ -44,7 +44,7 @@ export async function createPlayerListing(client,{clubId,userId,playerId,askingP
 
 export async function browsePlayerListings(client,{limit=50,offset=0}={}){
  const safeLimit=Math.max(1,Math.min(100,Number(limit)||50)),safeOffset=Math.max(0,Math.min(100000,Number(offset)||0));
- const r=await client.query("SELECT l.id AS listing_id,l.asking_price_uzs,l.listed_at,p.id AS player_id,p.full_name,p.nationality,p.age,p.position,p.quality,p.overall,p.potential,p.market_value_uzs,p.attributes,s.id AS seller_club_id,s.name AS seller_club_name,s.short_name AS seller_short_name,s.primary_colour AS seller_colour FROM player_transfer_listings l JOIN players p ON p.id=l.player_id JOIN clubs s ON s.id=l.seller_club_id WHERE l.status='listed' AND p.club_id=l.seller_club_id ORDER BY l.listed_at,l.id LIMIT $1 OFFSET $2",[safeLimit,safeOffset]);
+ const r=await client.query("SELECT l.id AS listing_id,l.asking_price_uzs,l.listed_at,p.id AS player_id,p.full_name,p.nationality,p.age,p.position,p.quality,p.overall,p.potential,p.market_value_uzs,p.attributes,s.id AS seller_club_id,s.name AS seller_club_name,s.short_name AS seller_club_short_name,s.primary_colour AS seller_colour FROM player_transfer_listings l JOIN players p ON p.id=l.player_id JOIN clubs s ON s.id=l.seller_club_id WHERE l.status='listed' AND p.club_id=l.seller_club_id ORDER BY l.listed_at,l.id LIMIT $1 OFFSET $2",[safeLimit,safeOffset]);
  return r.rows;
 }
 
