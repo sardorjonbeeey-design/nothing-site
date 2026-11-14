@@ -376,7 +376,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const bought=await ok(users[1],'POST',buyerRoute+'/'+created.listing.id+'/buy',{});
   assert.equal(bought.priceUzs,price);assert.equal(bought.buyerBalanceUzs,(buyerBefore-BigInt(price)).toString());assert.equal(bought.sellerBalanceUzs,(sellerBefore+BigInt(price)).toString());
   assert.equal((await call(users[1],'POST',buyerRoute+'/'+created.listing.id+'/buy',{})).status,409,'duplicate purchase is refused');
-  assert.equal((await one('SELECT club_id FROM players WHERE id=$1',[player.id])).club_id,buyerId,'ownership changed to buyer');
+  assert.deepEqual(await one('SELECT club_id,first_sale_done FROM players WHERE id=$1',[player.id]),{club_id:buyerId,first_sale_done:true},'ownership and resale history changed to buyer');
   assert.equal((await one("SELECT status,buyer_club_id FROM player_transfer_listings WHERE id=$1",[created.listing.id])).status,'sold');
   assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM player_transfer_history WHERE listing_id=$1',[created.listing.id])).n),1,'transfer history is exactly once');
   assert.equal((await ok(users[0],'GET',sellerRoute)).listings.find(l=>l.listing_id===created.listing.id).status,'sold');
