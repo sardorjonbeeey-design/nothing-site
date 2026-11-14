@@ -20,6 +20,18 @@ export function lineupStrength(players,formation='4-3-3') {
  return {strength:clamp(base*(0.9+fitness/1000)+analysis.fitBonus,25,100),fit:analysis.fit,analysis};
 }
 export function squadStrength(players,formation='4-3-3') {return lineupStrength(players,formation).strength;}
+function chooseScorer(players,rng){
+ const candidates=players.filter(p=>p.position!=='GK');
+ if(!candidates.length)return null;
+ const weights=candidates.map(p=>{
+  const shooting=Number(p.attributes?.shooting??p.shooting??p.overall??45);
+  const role=['ST','LW','RW'].includes(p.position)?3:['AM','CM'].includes(p.position)?2:1;
+  return Math.max(1,shooting)*role;
+ });
+ const total=weights.reduce((a,b)=>a+b,0);let pick=rng()*total;
+ for(let i=0;i<candidates.length;i++){pick-=weights[i];if(pick<=0)return candidates[i];}
+ return candidates.at(-1);
+}
 function poisson(lambda,rng) {
  const limit=Math.exp(-lambda);let k=0,product=1;
  do{k++;product*=rng();}while(product>limit&&k<8);
@@ -46,7 +58,7 @@ export function simulateMatch(homePlayers,awayPlayers,options={}) {
   const minute=4+Math.floor(rng()*87);
   const side=(hg<homeGoals&&ag<awayGoals)?(rng()<share?'home':'away'):(hg<homeGoals?'home':'away');
   if(side==='home')hg++;else ag++;
-  events.push({minute,type:'goal',side,homeScore:hg,awayScore:ag,text:side==='home'?'Home team scores':'Away team scores'});
+  const scorer=chooseScorer(side==='home'?homePlayers:awayPlayers,rng);\n  const scorerName=scorer?.full_name||scorer?.fullName||null;\n  events.push({minute,type:'goal',side,homeScore:hg,awayScore:ag,scorerId:scorer?.id||null,scorerName,text:scorerName?scorerName+' scores!':(side==='home'?'Home team scores':'Away team scores')});
  }
  for(const item of [[12,'chance','A dangerous attack'],[28,'save','A goalkeeper makes a save'],[43,'chance','A late first-half chance'],[61,'attack','Pressure builds in the final third'],[76,'chance','A chance opens up'],[89,'attack','Last-minute pressure']]){
   if(rng()>0.42)events.push({minute:item[0],type:item[1],side:rng()<share?'home':'away',text:item[2]});
