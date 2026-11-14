@@ -243,13 +243,13 @@ function seasonPage(){
 }
 // ---- Pitch: positions come from the formation's position codes; the away side is mirrored to face the home side.
 const SLOT_POSITIONS={GK:[[50,90]],CB:[[36,76],[64,76],[50,78]],LB:[[12,64]],RB:[[88,64]],DM:[[38,60],[62,60],[50,58]],CM:[[30,46],[70,46],[50,46]],AM:[[50,36],[28,34],[72,34]],LW:[[14,22]],RW:[[86,22]],ST:[[38,16],[62,16],[50,12]]};
-function placeOnPitch(list,flip){
+function placeOnPitch(list,flip,side){
  const used={};
- return list.map(p=>{const slots=SLOT_POSITIONS[p.position]||[[50,50]],k=used[p.position]||0;used[p.position]=k+1;const [x,y]=slots[k%slots.length];return {p,x,y:flip?100-y:y};});
+ return list.map(p=>{const slots=SLOT_POSITIONS[p.position]||[[50,50]],k=used[p.position]||0;used[p.position]=k+1;const [x,y]=slots[k%slots.length];const yy=flip?100-y:y;return {p,x,y:yy,bx:x,by:yy,side:side||(flip?'away':'home'),role:p.position};});
 }
 function dotMarkup(placed,colour){
  const p=placed.p,parts=String(p.full_name||p.fullName||'').trim().split(/\s+/),label=esc((parts[parts.length-1]||'').slice(0,4).toUpperCase());
- return '<div class="dot" data-pid="'+esc(p.id)+'" style="left:'+placed.x+'%;top:'+placed.y+'%;--accent:'+esc(colour||'#167a55')+'"><span>'+label+'</span></div>';
+ return '<div class="dot" data-pid="'+esc(p.id)+'" data-bx="'+placed.bx+'" data-by="'+placed.y+'" data-role="'+esc(placed.role)+'" data-side="'+placed.side+'" style="left:'+placed.x+'%;top:'+placed.y+'%;--accent:'+esc(colour||'#167a55')+'"><span>'+label+'</span></div>';
 }
 function squadPitch(){
  const ids=state.lineup?.starters||[];
@@ -284,52 +284,70 @@ function showMainButton(text,onTap){const tg=tgWebApp();if(!tg||!tg.MainButton)r
 function clearReplay(){const m=state.replay;if(m&&m.timers){m.timers.forEach(clearTimeout);m.timers=[];}hideMainButton();}
 function replayScreen(){
  const m=state.replay,home=m.home,away=m.away;
- const dots=[...placeOnPitch(home.players||[],false).map(d=>dotMarkup(d,home.colour)),...placeOnPitch(away.players||[],true).map(d=>dotMarkup(d,away.colour))].join('');
+ const dots=[...placeOnPitch(home.players||[],false,'home').map(d=>dotMarkup(d,home.colour)),...placeOnPitch(away.players||[],true,'away').map(d=>dotMarkup(d,away.colour))].join('');
  return '<div class="replay"><header class="replay-top"><button class="btn ghost" data-action="replay-close">Close</button><span class="eyebrow">'+esc(m.title)+'</span><span></span></header>'+
   '<div class="replay-score"><span class="team-tag" style="--accent:'+esc(home.colour||'#167a55')+'">'+esc(home.short||home.name)+'</span><strong id="replay-score">0 — 0</strong><span class="team-tag" style="--accent:'+esc(away.colour||'#7c8b84')+'">'+esc(away.short||away.name)+'</span></div>'+
   '<div class="match-pitch replay-pitch"><div class="pitch-centre"></div>'+dots+'<div class="ball" id="replay-ball"></div></div>'+
   '<div class="timeline"><i id="replay-progress"></i></div><div class="feed" id="replay-feed"><div class="feed-line">'+t('Kick-off')+'</div></div><div id="replay-end"></div></div>';
 }
 function haptic(type){const h=window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.HapticFeedback;if(h&&h.notificationOccurred)h.notificationOccurred(type);}
+// How strongly each position follows the ball: strikers and wingers move the most, goalkeepers stay.
+const ROLE_FOLLOW={GK:.03,CB:.22,LB:.36,RB:.36,DM:.42,CM:.58,AM:.7,LW:.8,RW:.8,ST:.9};
 function startReplay(){
  const m=state.replay;if(!m)return;
  m.timers=[];
  const at=(ms,fn)=>{m.timers.push(setTimeout(fn,ms));};
  const ball=$('#replay-ball'),feed=$('#replay-feed'),score=$('#replay-score'),bar=$('#replay-progress');
  if(!ball)return;
+ const dots=[...root.querySelectorAll('.replay .dot')];
+ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+ const pos={bx:50,by:50};
+ // Every player moves on his own: he follows the ball by role, the line shifts forward or back with play, and a small wobble keeps no two players in step.
+ const layout=()=>{
+  for(const d of dots){
+   const home=d.dataset.side==='home',f=ROLE_FOLLOW[d.dataset.role]??.4;
+   const lineShift=home?-Math.max(0,50-pos.by)*.15:Math.max(0,pos.by-50)*.15;
+   const x=+d.dataset.bx+(pos.bx-50)*.45*f+(Math.random()-.5)*4;
+   const y=+d.dataset.by+(pos.by-(+d.dataset.by))*.3*f+lineShift+(Math.random()-.5)*4;
+   d.style.left=clamp(x,5,95)+'%';d.style.top=clamp(y,5,95)+'%';
+  }
+ };
+ const moveBall=(x,y)=>{pos.bx=x;pos.by=y;ball.style.left=x+'%';ball.style.top=y+'%';layout();};
  const dotAt=pid=>{const el=root.querySelector('[data-pid="'+CSS.escape(String(pid))+'"]');return el?{x:parseFloat(el.style.left),y:parseFloat(el.style.top),el}:null;};
- const moveBall=(x,y)=>{ball.style.left=x+'%';ball.style.top=y+'%';};
  const line=(cls,html)=>{feed.insertAdjacentHTML('beforeend','<div class="feed-line '+cls+'">'+html+'</div>');feed.scrollTop=feed.scrollHeight;};
  let hg=0,ag=0;
  const play=e=>{
   const minute=Number(e.minute)||0;
-  if(e.type==='forfeit'){line('gold','Forfeit · owner inactivity');return;}
+  if(e.type==='forfeit'){line('gold',t('Forfeit · owner inactivity'));return;}
   if(e.type==='goal'){
    if(e.side==='home')hg++;else ag++;
    const goalY=e.side==='home'?8:92,scorer=dotAt(e.scorerId);
    if(scorer){moveBall(scorer.x,scorer.y);scorer.el.classList.add('pulse');at(700,()=>moveBall(50,goalY));}
    else moveBall(50,goalY);
    score.textContent=hg+' — '+ag;
-   line('goal','<b>'+minute+"'</b> ⚽ "+esc(e.scorerName||'Goal')+(e.assistName?' <span class="muted">· assist '+esc(e.assistName)+'</span>':''));
-   haptic('success');
+   const banner=document.createElement('div');banner.className='goal-banner';banner.innerHTML='<small>'+t('GOAL')+' · '+minute+"'</small><strong>"+esc(e.scorerName||t('Goal'))+'</strong>';root.querySelector('.replay')?.appendChild(banner);at(1800,()=>banner.remove());
    const flash=document.createElement('div');flash.className='goal-flash';root.querySelector('.replay')?.appendChild(flash);at(1100,()=>flash.remove());
-   const banner=document.createElement('div');banner.className='goal-banner';banner.innerHTML='<small>GOAL · '+minute+"'</small><strong>"+esc(e.scorerName||'Goal')+'</strong>';root.querySelector('.replay')?.appendChild(banner);at(1800,()=>banner.remove());
    score.classList.remove('pop');void score.offsetWidth;score.classList.add('pop');
+   line('goal','<b>'+minute+"'</b> ⚽ "+esc(e.scorerName||t('Goal'))+(e.assistName?' <span class="muted">· '+t('assist')+' '+esc(e.assistName)+'</span>':''));
+   haptic('success');
    return;
   }
   moveBall(50,e.side==='away'?78:22);
   line('','<b>'+minute+"'</b> "+esc(t(e.text||'')));
  };
+ layout();
+ const started=Date.now();
+ const ticker=()=>{if(Date.now()-started>REPLAY_MS+500)return;layout();at(450,ticker);};
+ at(450,ticker);
  const events=(m.events||[]).slice().sort((a,b)=>(Number(a.minute)||0)-(Number(b.minute)||0));
  for(const e of events)at(Math.min(REPLAY_MS-900,(Number(e.minute)||0)/90*REPLAY_MS),()=>play(e));
- const started=Date.now();
  const tick=()=>{const f=Math.min(1,(Date.now()-started)/REPLAY_MS);bar.style.width=(f*100)+'%';if(f<1)at(100,tick);};
  tick();
  at(REPLAY_MS,()=>{
   score.textContent=m.homeGoals+' — '+m.awayGoals;
   const end=$('#replay-end');
   if(m.demo)showMainButton(t('Build your squad'),()=>root.querySelector('[data-action="replay-build"]')?.click());
-  end.innerHTML='<section class="panel replay-final"><div class="eyebrow">FULL TIME</div><h2>'+esc(m.home.name)+' '+m.homeGoals+' — '+m.awayGoals+' '+esc(m.away.name)+'</h2>'+(m.demo?'<p class="sub">This was a sample match. Build your squad to play for real.</p>':'')+'<div class="actions">'+(m.demo?'<button class="btn" data-action="replay-build">Build your squad →</button>':'')+'<button class="btn secondary" data-action="replay-again">Watch again</button><button class="btn ghost" data-action="replay-close">Close</button></div></section>';
+  end.innerHTML='<section class="panel replay-final"><div class="eyebrow">'+t('Full time')+'</div><h2>'+esc(m.home.name)+' '+m.homeGoals+' — '+m.awayGoals+' '+esc(m.away.name)+'</h2>'+(m.demo?'<p class="sub">'+t('Sample match · one-minute preview')+'</p>':'')+'<div class="actions">'+(m.demo?'<button class="btn" data-action="replay-build">'+t('Build your squad')+' →</button>':'')+'<button class="btn secondary" data-action="replay-again">'+t('Watch again')+'</button><button class="btn ghost" data-action="replay-close">'+t('Close')+'</button></div></section>';
  });
 }
 function render(){
