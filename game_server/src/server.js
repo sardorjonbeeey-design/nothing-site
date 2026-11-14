@@ -106,6 +106,82 @@ async function handle(req,res){
   const body=await readJson(req);return json(res,200,await telegramLogin(body.initData));
  }
  const user=await authenticate(req);
+ if(path.startsWith('/api/admin')){
+  if(!config.superAdminTelegramId||String(user.telegramUserId)!==String(config.superAdminTelegramId))throw new HttpError(403,'Super-admin access denied');
+  const audit=async(client,{targetType,targetId,action,before,after,reason})=>{
+   const cleanReason=safeString(reason,500,'Reason');
+   await client.query('INSERT INTO admin_audit_log(actor_user_id,actor_telegram_user_id,target_type,target_id,action,before_after,reason) VALUES($1,$2,$3,$4,$5,$6::jsonb,$7)',[user.id,String(user.telegramUserId),targetType,String(targetId),action,JSON.stringify({before:before??null,after:after??null}),cleanReason]);
+  };
+  if(req.method==='GET'&&path==='/api/admin/overview'){
+   const clubs=(await db().query('SELECT c.id,c.name,c.short_name,c.budget_uzs,c.development_points,c.created_at,u.id AS owner_user_id,u.telegram_user_id,u.username,u.first_name,u.last_name,(SELECT COUNT(*)::int FROM players p WHERE p.club_id=c.id) AS squad_size FROM clubs c JOIN game_users u ON u.id=c.owner_user_id ORDER BY c.created_at DESC LIMIT 250')).rows;
+   const users=(await db().query('SELECT u.id,u.telegram_user_id,u.username,u.first_name,u.last_name,u.created_at,u.last_seen_at,(SELECT COUNT(*)::int FROM clubs c WHERE c.owner_user_id=u.id) AS club_count FROM game_users u ORDER BY u.created_at DESC LIMIT 250')).rows;
+   return json(res,200,{clubs,users});
+  }
+  if(req.method==='GET'&&path==='/api/admin/players'){
+   const q=(url.searchParams.get('q')||'').trim().slice(0,80);
+   const rows=(await db().query("SELECT p.id,p.full_name,p.position,p.age,p.overall,p.potential,p.quality,p.origin,p.market_value_uzs,p.club_id,c.name AS club_name,c.short_name AS club_short_name,p.first_sale_done,p.attributes FROM players p LEFT JOIN clubs c ON c.id=p.club_id WHERE ($1='' OR p.full_name ILIKE '%'||$1||'%' OR p.id::text=$1 OR c.name ILIKE '%'||$1||'%') ORDER BY p.overall DESC,p.full_name LIMIT 100",[q])).rows;
+   return json(res,200,{players:rows});
+  }
+  if(req.method==='GET'&&path==='/api/admin/settings')return json(res,200,{settings:(await db().query('SELECT setting_key,setting_value,updated_at,reason FROM competition_settings ORDER BY setting_key')).rows});
+  if(req.method==='GET'&&path==='/api/admin/audit'){
+   const limit=Math.max(1,Math.min(100,Number(url.searchParams.get('limit'))||50));
+   return json(res,200,{entries:(await db().query('SELECT id,actor_telegram_user_id,target_type,target_id,action,before_after,reason,created_at FROM admin_audit_log ORDER BY created_at DESC,id DESC LIMIT $1',[limit])).rows});
+  }
+  if(req.method==='POST'&&path==='/api/admin/funds'){
+   const body=await readJson(req),clubId=uuid(body.clubId,'Club ID'),amount=body.amountUzs;
+   if(typeof amount!=='string'||! /^-?\d{1,15}$/.test(amount)||amount==='-0'||amount==='0')throw new HttpError(400,'amountUzs must be a non-zero signed whole UZS string');
+   const reason=safeString(body.reason,500,'Reason');
+   const result=await inTransaction(async client=>{
+    const club=(await client.query('SELECT id,budget_uzs FROM clubs WHERE id=$1 FOR UPDATE',[clubId])).rows[0];if(!club)throw new HttpError(404,'Club not found');
+    const before=String(club.budget_uzs),after=(BigInt(before)+BigInt(amount)).toString();if(BigInt(after)<0n)throw new HttpError(409,'Adjustment would make club budget negative');
+    const updated=(await client.query('UPDATE clubs SET budget_uzs=$2 WHERE id=$1 RETURNING budget_uzs',[clubId,after])).rows[0];
+    await client.query("INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason) VALUES($1,$2,$3,'admin_adjustment')",[clubId,amount,after]);
+    await audit(client,{targetType:'club',targetId:clubId,action:'funds_adjusted',before:{budgetUzs:before},after:{budgetUzs:String(updated.budget_uzs),deltaUzs:amount},reason});
+    return {clubId,budgetUzs:String(updated.budget_uzs)};
+   });return json(res,200,result);
+  }
+  if(req.method==='POST'&&path==='/api/admin/player-gift'){
+   const body=await readJson(req),playerId=uuid(body.playerId,'Player ID'),targetClubId=uuid(body.targetClubId,'Target club ID'),reason=safeString(body.reason,500,'Reason');
+   const result=await inTransaction(async client=>{
+    const p=(await client.query('SELECT id,full_name,club_id,position,overall FROM players WHERE id=$1 FOR UPDATE',[playerId])).rows[0];if(!p)throw new HttpError(404,'Player not found');
+    if(p.club_id===targetClubId)throw new HttpError(409,'Player already belongs to target club');
+    const ids=[targetClubId,...(p.club_id?[p.club_id]:[])].sort();
+    const clubs=(await client.query('SELECT id FROM clubs WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE',[ids])).rows;if(clubs.length!==ids.length)throw new HttpError(404,'Source or target club not found');
+    const targetCount=Number((await client.query('SELECT COUNT(*)::int AS n FROM players WHERE club_id=$1',[targetClubId])).rows[0].n);if(targetCount>=MAX_SQUAD_SIZE)throw new HttpError(409,'Target squad is at maximum size');
+    if(p.club_id){const sourceCount=Number((await client.query('SELECT COUNT(*)::int AS n FROM players WHERE club_id=$1',[p.club_id])).rows[0].n);if(sourceCount<=MIN_SQUAD_SIZE)throw new HttpError(409,'Source club must retain at least '+MIN_SQUAD_SIZE+' players');}
+    await client.query('UPDATE players SET club_id=$2 WHERE id=$1',[playerId,targetClubId]);if(p.club_id)await repairClubLineup(client,p.club_id);await repairClubLineup(client,targetClubId);
+    await audit(client,{targetType:'player',targetId:playerId,action:'player_gifted',before:{clubId:p.club_id},after:{clubId:targetClubId,fullName:p.full_name},reason});
+    return {playerId,fullName:p.full_name,fromClubId:p.club_id,toClubId:targetClubId};
+   });return json(res,200,result);
+  }
+  if(req.method==='POST'&&path==='/api/admin/entitlement'){
+   const body=await readJson(req),userId=uuid(body.userId,'User ID'),feature=body.feature,active=body.active,reason=safeString(body.reason,500,'Reason');
+   if(!['gold','vip'].includes(feature)||typeof active!=='boolean')throw new HttpError(400,'feature must be gold or vip and active must be boolean');
+   const result=await inTransaction(async client=>{
+    const account=(await client.query('SELECT id FROM game_users WHERE id=$1 FOR UPDATE',[userId])).rows[0];if(!account)throw new HttpError(404,'User not found');
+    const current=(await client.query('SELECT feature,granted_at,granted_by,reason,revoked_at FROM user_entitlements WHERE user_id=$1 AND feature=$2 FOR UPDATE',[userId,feature])).rows[0]||null;
+    if(active){
+     const row=(await client.query('INSERT INTO user_entitlements(user_id,feature,granted_by,reason,granted_at,revoked_at,revoked_by,revoke_reason) VALUES($1,$2,$3,$4,NOW(),NULL,NULL,NULL) ON CONFLICT(user_id,feature) DO UPDATE SET granted_by=EXCLUDED.granted_by,reason=EXCLUDED.reason,granted_at=NOW(),revoked_at=NULL,revoked_by=NULL,revoke_reason=NULL RETURNING *',[userId,feature,user.id,reason])).rows[0];
+     await audit(client,{targetType:'user',targetId:userId,action:feature+'_granted',before:current,after:{feature,active:true,grantedAt:row.granted_at},reason});return {userId,feature,active:true};
+    }
+    if(!current||current.revoked_at)throw new HttpError(409,'This entitlement is not active');
+    const row=(await client.query('UPDATE user_entitlements SET revoked_at=NOW(),revoked_by=$3,revoke_reason=$4 WHERE user_id=$1 AND feature=$2 RETURNING *',[userId,feature,user.id,reason])).rows[0];
+    await audit(client,{targetType:'user',targetId:userId,action:feature+'_revoked',before:{feature,active:true},after:{feature,active:false,revokedAt:row.revoked_at},reason});return {userId,feature,active:false};
+   });return json(res,200,result);
+  }
+  if(req.method==='POST'&&path==='/api/admin/competition-setting'){
+   const body=await readJson(req),key=safeString(body.key,80,'Setting key'),reason=safeString(body.reason,500,'Reason');
+   if(!/^[a-z][a-z0-9_.-]{1,79}$/.test(key))throw new HttpError(400,'Setting key must be lowercase and use letters, numbers, dot, dash or underscore');
+   if(!Object.prototype.hasOwnProperty.call(body,'value'))throw new HttpError(400,'JSON value is required');
+   const result=await inTransaction(async client=>{
+    const current=(await client.query('SELECT setting_value FROM competition_settings WHERE setting_key=$1 FOR UPDATE',[key])).rows[0]||null,before=current?.setting_value??null;
+    const row=(await client.query('INSERT INTO competition_settings(setting_key,setting_value,updated_by,reason) VALUES($1,$2::jsonb,$3,$4) ON CONFLICT(setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value,updated_by=EXCLUDED.updated_by,updated_at=NOW(),reason=EXCLUDED.reason RETURNING setting_key,setting_value,updated_at',[key,JSON.stringify(body.value),user.id,reason])).rows[0];
+    await audit(client,{targetType:'competition_setting',targetId:key,action:'setting_updated',before,after:row.setting_value,reason});return row;
+   });return json(res,200,result);
+  }
+  throw new HttpError(404,'Admin route not found');
+ }
+
  if(req.method==='POST'&&path==='/api/uploads/crest'){if(!rateLimit(clientIp(req)+':crest',10))throw new HttpError(429,'Too many crest uploads');const body=await readJson(req,3_100_000);const crestUrl=await saveCrest(body.dataUrl);return json(res,201,{crestUrl});}
  if(req.method==='GET'&&path==='/api/market'){
   const columns='id,full_name,nationality,age,position,quality,overall,potential,market_value_uzs,attributes,origin';
