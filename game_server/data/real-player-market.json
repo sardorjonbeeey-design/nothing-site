@@ -3,9 +3,9 @@
   "generatedAt": "2026-11-14",
   "description": "236-player 2026 Uzbekistan Super League squad catalogue. Player identity, club, age, position and market value are sourced from Transfermarkt squad pages where captured; game OVR is an approximate ZAMIN FK estimate, not an official EA FC rating.",
   "ratingMethod": {
-    "sourceData": "Transfermarkt 2026 club squad pages: player, listed age, position and market value where available. Existing PFL and league performance source details retained for the original seed set.",
-    "estimatedOVR": "New additions are estimated using market-value bands (higher market value = higher OVR) with small age adjustments; original 68 retain their previously calibrated ZAMIN FK game OVRs. These are game estimates, not official EA FC/FIFA ratings.",
-    "limitations": "Some entries have age but no verified exact date of birth; DOB remains null rather than being fabricated. Squad snapshot is a research snapshot, not a live roster feed."
+    "sourceData": "Transfermarkt 2026 club squad pages provide roster identity, age, position and market value where captured. The original 68 retain the existing PFL-based club/DOB records and ZAMIN FK balancing OVRs.",
+    "estimatedOVR": "ZAMIN FK game OVR is an approximation using market-value bands and age for added players; existing seed ratings are retained for the original 68. No values are presented as official EA FC/FIFA ratings.",
+    "limitations": "Some players have only an age, not an exact DOB. Those DOB fields are null. The catalogue is a 236-player research snapshot, not the full 393-player league registration list."
   },
   "sources": [
     {
@@ -130,13 +130,13 @@
       "overall": 57,
       "clubKey": "neftchi",
       "dobSource": "PFL profile",
-      "internetBaseRating": 70,
-      "internetRatingSource": "PlayFootballSim Uzbekistan squad ratings",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 57,
-      "seasonAverageMatchRating": 6.6,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 60,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -148,12 +148,12 @@
       "clubKey": "neftchi",
       "dobSource": "PFL / Neftchi",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 61,
-      "seasonAverageMatchRating": 6.9,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 63,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -165,12 +165,12 @@
       "clubKey": "neftchi",
       "dobSource": "PFL / Neftchi",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 60,
-      "seasonAverageMatchRating": 6.9,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 63,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -182,12 +182,12 @@
       "clubKey": "neftchi",
       "dobSource": "Transfermarkt",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 64,
-      "seasonAverageMatchRating": 6.9,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 63,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -199,12 +199,12 @@
       "clubKey": "neftchi",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 64,
-      "seasonAverageMatchRating": 6.8,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 62,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -216,10 +216,10 @@
       "clubKey": "okmk",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 55,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 55,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -233,12 +233,12 @@
       "clubKey": "okmk",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 58,
-      "seasonAverageMatchRating": 6.6,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 60,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -250,12 +250,12 @@
       "clubKey": "okmk",
       "dobSource": "Transfermarkt",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 63,
-      "seasonAverageMatchRating": 6.5,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 59,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -267,12 +267,12 @@
       "clubKey": "okmk",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 61,
-      "seasonAverageMatchRating": 6.4,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 58,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -284,12 +284,12 @@
       "clubKey": "okmk",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 60,
-      "seasonAverageMatchRating": 6.6,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 60,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -301,10 +301,10 @@
       "clubKey": "pakhtakor",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 59,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 59,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -318,10 +318,10 @@
       "clubKey": "pakhtakor",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 56,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 56,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -334,13 +334,13 @@
       "overall": 62,
       "clubKey": "pakhtakor",
       "dobSource": "UAE Pro League",
-      "internetBaseRating": 69,
-      "internetRatingSource": "PlayFootballSim Uzbekistan squad ratings",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 62,
-      "seasonAverageMatchRating": 6.8,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 62,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -352,10 +352,10 @@
       "clubKey": "pakhtakor",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 60,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 60,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -369,10 +369,10 @@
       "clubKey": "kokand",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 54,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 54,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -386,12 +386,12 @@
       "clubKey": "kokand",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 56,
-      "seasonAverageMatchRating": 6.5,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 59,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -403,12 +403,12 @@
       "clubKey": "kokand",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 58,
-      "seasonAverageMatchRating": 6.6,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 60,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -420,12 +420,12 @@
       "clubKey": "kokand",
       "dobSource": "Transfermarkt",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 57,
-      "seasonAverageMatchRating": 6.7,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 61,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -437,10 +437,10 @@
       "clubKey": "bukhara",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 56,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 56,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -454,10 +454,10 @@
       "clubKey": "bukhara",
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 57,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 57,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -470,13 +470,13 @@
       "overall": 55,
       "clubKey": "bukhara",
       "dobSource": "PFL / Transfermarkt",
-      "internetBaseRating": 68,
-      "internetRatingSource": "PlayFootballSim Uzbekistan squad ratings",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 55,
-      "seasonAverageMatchRating": 6.5,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 59,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -488,12 +488,12 @@
       "clubKey": "bukhara",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 58,
-      "seasonAverageMatchRating": 6.7,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 61,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -504,13 +504,13 @@
       "overall": 61,
       "clubKey": "nasaf",
       "dobSource": "PFL profile",
-      "internetBaseRating": 70,
-      "internetRatingSource": "PlayFootballSim Uzbekistan squad ratings",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 61,
-      "seasonAverageMatchRating": 6.7,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 61,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -522,10 +522,10 @@
       "clubKey": "nasaf",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 60,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 60,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -539,12 +539,12 @@
       "clubKey": "nasaf",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 61,
-      "seasonAverageMatchRating": 6.7,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 61,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -556,12 +556,12 @@
       "clubKey": "nasaf",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 63,
-      "seasonAverageMatchRating": 6.8,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 62,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -573,10 +573,10 @@
       "clubKey": "mashal",
       "dobSource": "PFL / Mash'al",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 55,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 55,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -590,10 +590,10 @@
       "clubKey": "mashal",
       "dobSource": "Mash'al / Transfermarkt",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 55,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 55,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -607,10 +607,10 @@
       "clubKey": "mashal",
       "dobSource": "Mash'al / PFL",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 58,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 58,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -624,10 +624,10 @@
       "clubKey": "mashal",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 54,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 54,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -641,10 +641,10 @@
       "clubKey": "surkhon",
       "dobSource": "Transfermarkt / PFL matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 58,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 58,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -658,10 +658,10 @@
       "clubKey": "surkhon",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 56,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 56,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -675,10 +675,10 @@
       "clubKey": "surkhon",
       "dobSource": "Sofascore / PFL matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 57,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 57,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -692,12 +692,12 @@
       "clubKey": "surkhon",
       "dobSource": "Transfermarkt / PFL matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 57,
-      "seasonAverageMatchRating": 6.6,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 60,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -709,10 +709,10 @@
       "clubKey": "sogdiana",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 56,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 56,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -726,10 +726,10 @@
       "clubKey": "sogdiana",
       "dobSource": "PFL / Transfermarkt",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 58,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 58,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -743,12 +743,12 @@
       "clubKey": "sogdiana",
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 57,
-      "seasonAverageMatchRating": 6.5,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 59,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -760,12 +760,12 @@
       "clubKey": "sogdiana",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 58,
-      "seasonAverageMatchRating": 7.3,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 67,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -777,12 +777,12 @@
       "clubKey": "dinamo",
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 54,
-      "seasonAverageMatchRating": 6.5,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 59,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -794,10 +794,10 @@
       "clubKey": "dinamo",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 55,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 55,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -811,12 +811,12 @@
       "clubKey": "dinamo",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 62,
-      "seasonAverageMatchRating": 6.8,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 62,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -827,11 +827,11 @@
       "overall": 62,
       "clubKey": "dinamo",
       "dobSource": "PFL / Transfermarkt",
-      "internetBaseRating": 68,
-      "internetRatingSource": "PlayFootballSim Uzbekistan squad ratings",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 62,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 62,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -845,10 +845,10 @@
       "clubKey": "qizilqum",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 57,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 57,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -862,10 +862,10 @@
       "clubKey": "qizilqum",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 56,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 56,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -879,10 +879,10 @@
       "clubKey": "qizilqum",
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 55,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 55,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -896,12 +896,12 @@
       "clubKey": "qizilqum",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 56,
-      "seasonAverageMatchRating": 6.8,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 62,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -913,10 +913,10 @@
       "clubKey": "qizilqum",
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 57,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 57,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -929,13 +929,13 @@
       "overall": 60,
       "clubKey": "navbahor",
       "dobSource": "PFL profile",
-      "internetBaseRating": 65,
-      "internetRatingSource": "PlayFootballSim Uzbekistan squad ratings",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 60,
-      "seasonAverageMatchRating": 6.5,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 59,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -947,10 +947,10 @@
       "clubKey": "navbahor",
       "dobSource": "Transfermarkt / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 57,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 57,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -964,12 +964,12 @@
       "clubKey": "navbahor",
       "dobSource": "Transfermarkt / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 59,
-      "seasonAverageMatchRating": 7,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 64,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -981,12 +981,12 @@
       "clubKey": "navbahor",
       "dobSource": "PFL / Transfermarkt",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 58,
-      "seasonAverageMatchRating": 7.5,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 69,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -998,10 +998,10 @@
       "clubKey": "andijon",
       "dobSource": "PFL / Andijon",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 56,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 56,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -1015,12 +1015,12 @@
       "clubKey": "andijon",
       "dobSource": "Andijon official squad",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 59,
-      "seasonAverageMatchRating": 6.8,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 62,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -1032,10 +1032,10 @@
       "clubKey": "andijon",
       "dobSource": "PFL / Andijon",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 56,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 56,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -1049,12 +1049,12 @@
       "clubKey": "andijon",
       "dobSource": "Transfermarkt / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 60,
-      "seasonAverageMatchRating": 6.8,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 62,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -1066,10 +1066,10 @@
       "clubKey": "lokomotiv",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 55,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 55,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -1083,10 +1083,10 @@
       "clubKey": "lokomotiv",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 58,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 58,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -1100,12 +1100,12 @@
       "clubKey": "lokomotiv",
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 59,
-      "seasonAverageMatchRating": 6.7,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 61,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -1117,12 +1117,12 @@
       "clubKey": "lokomotiv",
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 59,
-      "seasonAverageMatchRating": 6.9,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 63,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -1134,10 +1134,10 @@
       "clubKey": "lokomotiv",
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 58,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 58,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -1151,10 +1151,10 @@
       "clubKey": "bunyodkor",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 57,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 57,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -1168,10 +1168,10 @@
       "clubKey": "bunyodkor",
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 54,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 54,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -1185,12 +1185,12 @@
       "clubKey": "bunyodkor",
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 55,
-      "seasonAverageMatchRating": 6.8,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 62,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -1202,10 +1202,10 @@
       "clubKey": "bunyodkor",
       "dobSource": "PFL / matchday",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 56,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 56,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -1219,12 +1219,12 @@
       "clubKey": "xorazm",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 58,
-      "seasonAverageMatchRating": 7.5,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 69,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -1236,12 +1236,12 @@
       "clubKey": "xorazm",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 57,
-      "seasonAverageMatchRating": 6.7,
-      "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
+      "seasonAverageMatchRating": null,
+      "seasonRatingSource": null,
       "estimatedOVR": 61,
-      "ratingConfidence": "medium — based on published 2026 season match average",
+      "ratingConfidence": "medium — approximate ZAMIN FK estimate; not an official player rating",
       "age": null
     },
     {
@@ -1253,10 +1253,10 @@
       "clubKey": "xorazm",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 58,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 58,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -1270,10 +1270,10 @@
       "clubKey": "xorazm",
       "dobSource": "PFL profile",
       "internetBaseRating": null,
-      "internetRatingSource": "Not located in cited online rating source; no verified internet base rating",
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded",
       "gameOVR": 57,
       "seasonAverageMatchRating": null,
-      "seasonRatingSource": "No season-average rating found in the checked sources",
+      "seasonRatingSource": null,
       "estimatedOVR": 57,
       "ratingConfidence": "low — provisional estimate; no published player average located",
       "age": null
@@ -1298,7 +1298,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Islomzhon Kobilov",
@@ -1320,7 +1322,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Otabek Akhadov",
@@ -1342,7 +1346,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Filip Ivanovic",
@@ -1364,7 +1370,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Ollobergan Karimov",
@@ -1386,7 +1394,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Dilshod Misraliev",
@@ -1408,7 +1418,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Sardorbek Erkinov",
@@ -1430,7 +1442,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Jasurbek Jaloliddinov",
@@ -1452,7 +1466,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Nodir Soyibov",
@@ -1474,7 +1490,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Khondamir Mustafokulov",
@@ -1496,7 +1514,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Ulugbek Kenzhaev",
@@ -1518,7 +1538,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Oybek Nurmatov",
@@ -1540,7 +1562,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Abdulazizkhon Abdurashidov",
@@ -1562,7 +1586,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Amirbek Saidov",
@@ -1584,7 +1610,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Sardorbek Khoshimov",
@@ -1606,7 +1634,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Sogdiana",
       "rosterUrl": "https://www.transfermarkt.com/sogdiana-jizzakh/kader/verein/35157",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Federico Botti",
@@ -1628,7 +1658,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Mukhammadyusuf Sobirov",
@@ -1650,7 +1682,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Asadbek Rakhimzhonov",
@@ -1672,7 +1706,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Marko Bugarin",
@@ -1694,7 +1730,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Sardor Rakhmanov",
@@ -1716,7 +1754,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Nazhmiddin Normurodov",
@@ -1738,7 +1778,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Boburbek Yuldashov",
@@ -1760,7 +1802,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Aleksandr Zevadinov",
@@ -1782,7 +1826,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Mukhammad Khakimov",
@@ -1804,7 +1850,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Itsuki Urata",
@@ -1826,7 +1874,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Azizbek Tulkinbekov",
@@ -1848,7 +1898,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Amir Turakulov",
@@ -1870,7 +1922,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Shakhzod Nematzhonov",
@@ -1892,7 +1946,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Narimonjon Akhmadjonov",
@@ -1914,7 +1970,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Dmitriy Pletnev",
@@ -1936,7 +1994,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Nosirzhon Abdusalomov",
@@ -1958,7 +2018,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Fakhriddin Mukhammadov",
@@ -1980,7 +2042,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Bilolkhon Toshmirzaev",
@@ -2002,7 +2066,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Muzaffar Olimzhonov",
@@ -2024,7 +2090,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Sardor Abdunabiev",
@@ -2046,7 +2114,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Samandarzhon Mavlonkulov",
@@ -2068,7 +2138,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Bunyodkor",
       "rosterUrl": "https://www.transfermarkt.com/bunyodkor-tashkent/kader/verein/19401",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Shukron Yuldashev",
@@ -2090,7 +2162,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Valizhon Rakhimov",
@@ -2112,7 +2186,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Zafarbek Rakhimjonov",
@@ -2134,7 +2210,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Anri Chichinadze",
@@ -2156,7 +2234,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Dilshod Komilov",
@@ -2178,7 +2258,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Giorgi Jgerenaia",
@@ -2200,7 +2282,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Umar Adkhamzoda",
@@ -2222,7 +2306,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Jaloliddin Sodikov",
@@ -2244,7 +2330,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Saidazamat Mirsaidov",
@@ -2266,7 +2354,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Benjamin Teidi",
@@ -2288,7 +2378,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Shokhrukh Abdurakhmonov",
@@ -2310,7 +2402,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Shokhmalik Komilov",
@@ -2332,7 +2426,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Kuvondik Ruziev",
@@ -2354,7 +2450,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Ruslanbek Jiyanov",
@@ -2376,7 +2474,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Mukhammadali Usmonov",
@@ -2398,7 +2498,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Vanja Ilic",
@@ -2420,7 +2522,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Alex Fernandes",
@@ -2442,7 +2546,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Abbos Gulomov",
@@ -2464,7 +2570,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Joel Kojo",
@@ -2486,7 +2594,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Navbahor",
       "rosterUrl": "https://www.transfermarkt.com/navbahor-namangan/kader/verein/15310",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Ravshanbek Yagudin",
@@ -2508,7 +2618,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Sarvar Karimov",
@@ -2530,7 +2642,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Jakhongir Urozov",
@@ -2552,7 +2666,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Mihail Stefan",
@@ -2574,7 +2690,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Jaloliddin Jumaboev",
@@ -2596,7 +2714,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Salvador Sanchez",
@@ -2618,7 +2738,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Salim Mustafoev",
@@ -2640,7 +2762,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Ulugbek Abdullaev",
@@ -2662,7 +2786,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Kingsley Sarfo",
@@ -2684,7 +2810,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Til Mavretic",
@@ -2706,7 +2834,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Rasul Yuldoshev",
@@ -2728,7 +2858,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Bekhruzbek Oblakulov",
@@ -2750,7 +2882,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Marko Stanojevic",
@@ -2772,7 +2906,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Abdulakhadjon Khoshimov",
@@ -2794,7 +2930,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Khislat Khalilov",
@@ -2816,7 +2954,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Nurillo Tukhtasinov",
@@ -2838,7 +2978,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Jakhongir Abdusalomov",
@@ -2860,7 +3002,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Oybek Urmonjonov",
@@ -2882,7 +3026,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Oybek Khamrakulov",
@@ -2904,7 +3050,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Sanzhar Kodirkulov",
@@ -2926,7 +3074,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Anvar Khozhimirzaev",
@@ -2948,7 +3098,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Azizbek Amanov",
@@ -2970,7 +3122,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Firdavs Abdurakhmonov",
@@ -2992,7 +3146,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Dinamo Samarqand",
       "rosterUrl": "https://www.transfermarkt.com/dinamo-samarqand/kader/verein/15300",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Samandar Muratbaev",
@@ -3014,7 +3170,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Nasaf",
       "rosterUrl": "https://www.transfermarkt.com/nasaf-qarshi/kader/verein/20591",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Asilbek Numonov",
@@ -3036,7 +3194,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Nasaf",
       "rosterUrl": "https://www.transfermarkt.com/nasaf-qarshi/kader/verein/20591",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Umar Eshmurodov",
@@ -3058,7 +3218,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Nasaf",
       "rosterUrl": "https://www.transfermarkt.com/nasaf-qarshi/kader/verein/20591",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Dilshod Murtozoev",
@@ -3080,7 +3242,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Nasaf",
       "rosterUrl": "https://www.transfermarkt.com/nasaf-qarshi/kader/verein/20591",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Sardorbek Bakhromov",
@@ -3102,7 +3266,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Nasaf",
       "rosterUrl": "https://www.transfermarkt.com/nasaf-qarshi/kader/verein/20591",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Adenis Shala",
@@ -3124,7 +3290,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Nasaf",
       "rosterUrl": "https://www.transfermarkt.com/nasaf-qarshi/kader/verein/20591",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Yusuf Otubanjo",
@@ -3146,7 +3314,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Nasaf",
       "rosterUrl": "https://www.transfermarkt.com/nasaf-qarshi/kader/verein/20591",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Davronbek Usmonov",
@@ -3168,7 +3338,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Nasaf",
       "rosterUrl": "https://www.transfermarkt.com/nasaf-qarshi/kader/verein/20591",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Davron Merganov",
@@ -3190,7 +3362,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Artem Potapov",
@@ -3212,7 +3386,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Dilshod Yuldoshev",
@@ -3234,7 +3410,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Nodirkhon Nematkhonov",
@@ -3256,7 +3434,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Dzhamaldin Khodzhaniyazov",
@@ -3278,7 +3458,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Bekhruz Dzhumatov",
@@ -3300,7 +3482,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Bekhruz Shaydulov",
@@ -3322,7 +3506,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Mukhammadali Musakhonov",
@@ -3344,7 +3530,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Bekhruz Shukurullaev",
@@ -3366,7 +3554,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Bekhruz Karimov",
@@ -3388,7 +3578,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Javokhir Juraev",
@@ -3410,7 +3602,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Tornike Dzebniauri",
@@ -3432,7 +3626,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Tokhirjon Ashurboev",
@@ -3454,7 +3650,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Diyor Ramazonov",
@@ -3476,7 +3674,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Bekhruz Uktamov",
@@ -3498,7 +3698,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Dostonbek Tursunov",
@@ -3520,7 +3722,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Sarvar Abdukhamidov",
@@ -3542,7 +3746,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Sunnatilla Abdullajonov",
@@ -3564,7 +3770,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Asadbek Karimov",
@@ -3586,7 +3794,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Kamronbek Yusupov",
@@ -3608,7 +3818,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Farrukhjon Kodirov",
@@ -3630,7 +3842,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Surkhon",
       "rosterUrl": "https://www.transfermarkt.com/surkhon-termiz/kader/verein/65036",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Javokhir Ilyosov",
@@ -3652,7 +3866,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Umid Ergashev",
@@ -3674,7 +3890,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Shakhzod Toirov",
@@ -3696,7 +3914,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Saidafzalkhon Akhrorov",
@@ -3718,7 +3938,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Akhmadullo Mukimzhonov",
@@ -3740,7 +3962,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Dilshod Akhmadaliev",
@@ -3762,7 +3986,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Abror Karimov",
@@ -3784,7 +4010,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Eldorbek Begimov",
@@ -3806,7 +4034,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Abubakrrizo Turdialiev",
@@ -3828,7 +4058,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Abror Sarimsakov",
@@ -3850,7 +4082,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Mirzhamol Kosimov",
@@ -3872,7 +4106,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Khazrat Tursunkulov",
@@ -3894,7 +4130,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Rian Islamov",
@@ -3916,7 +4154,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Arihiro Sentoku",
@@ -3938,7 +4178,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Aziz Kholmurodov",
@@ -3960,7 +4202,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Asad Sobirzhonov",
@@ -3982,7 +4226,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Naoaki Senaga",
@@ -4004,7 +4250,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Nodir Abdurazzakov",
@@ -4026,7 +4274,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: OKMK",
       "rosterUrl": "https://www.transfermarkt.com/fc-okmk-olmaliq/kader/verein/31216",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Khumoyunshokh Sayyotov",
@@ -4048,7 +4298,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Nikola Kumburovic",
@@ -4070,7 +4322,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Samandar Shukurillaev",
@@ -4092,7 +4346,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Doston Tursunov",
@@ -4114,7 +4370,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Grigol Chabradze",
@@ -4136,7 +4394,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Giyosdzhon Rizakulov",
@@ -4158,7 +4418,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Farrukh Juraev",
@@ -4180,7 +4442,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Asror Gofurov",
@@ -4202,7 +4466,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Murodali Usmonov",
@@ -4224,7 +4490,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Jaba Jigauri",
@@ -4246,7 +4514,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Fayzullo Jumankuziev",
@@ -4268,7 +4538,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Islom Kenjaboev",
@@ -4290,7 +4562,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Bobomurod Bozorov",
@@ -4312,7 +4586,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Oleksiy Shchebetun",
@@ -4334,7 +4610,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Shokhruz Norkhonov",
@@ -4356,7 +4634,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Qizilqum",
       "rosterUrl": "https://www.transfermarkt.com/fc-qizilqum/kader/verein/20115",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Vladimir Nazarov",
@@ -4378,7 +4658,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Pakhtakor",
       "rosterUrl": "https://www.transfermarkt.com/pakhtakor-tashkent/kader/verein/3718",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Mukhammadkodir Khamraliev",
@@ -4400,7 +4682,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Pakhtakor",
       "rosterUrl": "https://www.transfermarkt.com/pakhtakor-tashkent/kader/verein/3718",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Zaid Tahseen",
@@ -4422,7 +4706,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Pakhtakor",
       "rosterUrl": "https://www.transfermarkt.com/pakhtakor-tashkent/kader/verein/3718",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Mukhammadrasul Abdumazhidov",
@@ -4444,7 +4730,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Pakhtakor",
       "rosterUrl": "https://www.transfermarkt.com/pakhtakor-tashkent/kader/verein/3718",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Abubakir Shukurullaev",
@@ -4466,7 +4754,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Pakhtakor",
       "rosterUrl": "https://www.transfermarkt.com/pakhtakor-tashkent/kader/verein/3718",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Khozhimat Erkinov",
@@ -4488,7 +4778,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Pakhtakor",
       "rosterUrl": "https://www.transfermarkt.com/pakhtakor-tashkent/kader/verein/3718",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Oybek Bozorov",
@@ -4510,7 +4802,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Pakhtakor",
       "rosterUrl": "https://www.transfermarkt.com/pakhtakor-tashkent/kader/verein/3718",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Dostonbek Khamdamov",
@@ -4532,7 +4826,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Pakhtakor",
       "rosterUrl": "https://www.transfermarkt.com/pakhtakor-tashkent/kader/verein/3718",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Flamarion",
@@ -4554,7 +4850,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Pakhtakor",
       "rosterUrl": "https://www.transfermarkt.com/pakhtakor-tashkent/kader/verein/3718",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Rustam Turdimurodov",
@@ -4576,7 +4874,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Pakhtakor",
       "rosterUrl": "https://www.transfermarkt.com/pakhtakor-tashkent/kader/verein/3718",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Piotr Parzyszek",
@@ -4598,7 +4898,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Pakhtakor",
       "rosterUrl": "https://www.transfermarkt.com/pakhtakor-tashkent/kader/verein/3718",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Eldor Adkhamov",
@@ -4620,7 +4922,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Andijon",
       "rosterUrl": "https://www.transfermarkt.com/fc-andijon/kader/verein/20099",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Rakhimzhon Davronov",
@@ -4642,7 +4946,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Andijon",
       "rosterUrl": "https://www.transfermarkt.com/fc-andijon/kader/verein/20099",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Nemanja Calasan",
@@ -4664,7 +4970,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Andijon",
       "rosterUrl": "https://www.transfermarkt.com/fc-andijon/kader/verein/20099",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Igor Golban",
@@ -4686,7 +4994,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Andijon",
       "rosterUrl": "https://www.transfermarkt.com/fc-andijon/kader/verein/20099",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Islom Tukhtakhuzhaev",
@@ -4708,7 +5018,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Andijon",
       "rosterUrl": "https://www.transfermarkt.com/fc-andijon/kader/verein/20099",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Makhmud Makhamadzhonov",
@@ -4730,7 +5042,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Andijon",
       "rosterUrl": "https://www.transfermarkt.com/fc-andijon/kader/verein/20099",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Bekzod Sulaymonov",
@@ -4752,7 +5066,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Andijon",
       "rosterUrl": "https://www.transfermarkt.com/fc-andijon/kader/verein/20099",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Abduvokhid Gulomov",
@@ -4774,7 +5090,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Andijon",
       "rosterUrl": "https://www.transfermarkt.com/fc-andijon/kader/verein/20099",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Abbosbek Abdugafforov",
@@ -4796,7 +5114,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Andijon",
       "rosterUrl": "https://www.transfermarkt.com/fc-andijon/kader/verein/20099",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Doniyor Abdumannopov",
@@ -4818,7 +5138,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Andijon",
       "rosterUrl": "https://www.transfermarkt.com/fc-andijon/kader/verein/20099",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Imeda Ashortia",
@@ -4840,7 +5162,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Andijon",
       "rosterUrl": "https://www.transfermarkt.com/fc-andijon/kader/verein/20099",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Sardorbek Azimov",
@@ -4862,7 +5186,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Andijon",
       "rosterUrl": "https://www.transfermarkt.com/fc-andijon/kader/verein/20099",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Akbar Turaev",
@@ -4884,7 +5210,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Neftchi",
       "rosterUrl": "https://www.transfermarkt.com/neftchi-fergana/kader/verein/13306",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Anvarjon Gofurov",
@@ -4906,7 +5234,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Neftchi",
       "rosterUrl": "https://www.transfermarkt.com/neftchi-fergana/kader/verein/13306",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Ibrokhimkhalil Yuldoshev",
@@ -4928,7 +5258,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Neftchi",
       "rosterUrl": "https://www.transfermarkt.com/neftchi-fergana/kader/verein/13306",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Farrukh Sayfiev",
@@ -4950,7 +5282,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Neftchi",
       "rosterUrl": "https://www.transfermarkt.com/neftchi-fergana/kader/verein/13306",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     },
     {
       "fullName": "Zoran Marusic",
@@ -4972,7 +5306,9 @@
       "ratingMethod": "Estimated from 2026 market-value band and age; not an official EA FC rating",
       "rosterSource": "Transfermarkt 2026 squad: Neftchi",
       "rosterUrl": "https://www.transfermarkt.com/neftchi-fergana/kader/verein/13306",
-      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured"
+      "dobSource": "Age from Transfermarkt 2026 squad listing; exact DOB not captured",
+      "internetBaseRating": null,
+      "internetRatingSource": "No verified EA FC/FIFA base rating recorded"
     }
   ]
 }
