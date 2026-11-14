@@ -32,7 +32,7 @@ test('real-player catalogue: 236 Super League players across 16 clubs with sourc
  assert.equal(new Set(starterPlayers.map(p=>p.realClubKey)).size,16);
  for(const p of starterPlayers){
   assert.equal(p.origin,'market');assert.equal(p.marketValueUzs,marketValueUzs(p.overall));assert.equal(p.quality,qualityForOverall(p.overall));
-  assert.equal(sum(p.attributes),p.overall*6);assert.ok(p.potential>=p.overall&&p.potential<=90);assert.ok(p.overall>=53&&p.overall<=69);
+  assert.equal(sum(p.attributes),p.overall*6);assert.ok(p.potential>=p.overall&&p.potential<=90);assert.ok(p.overall>=54&&p.overall<=69);
   assert.equal(p.category,'uzbek_league');assert.match(p.nationality,/^[A-Z]{2}$/);if(p.realPlayerDob!==null)assert.match(p.realPlayerDob,/^\d{4}-\d{2}-\d{2}$/);else assert.ok(p.age>=16&&p.age<=40,'age must be supplied when exact DOB is unavailable');
   assert.ok(p.realClubName&&p.realClubCrestUrl&&p.realRosterSource&&p.realRosterCheckedAt);assert.doesNotThrow(()=>assertValidRating(p));
  }
@@ -67,9 +67,9 @@ test('generated youth players are always rated 45-50 and priced by the curve',()
  }
  assert.deepEqual([...seen].sort(),[45,46,47,48,49,50]);
 });
-test('real-player OVRs use the curated 53-69 game-balancing range and age-based potential',()=>{
+test('real-player OVRs use the curated 54-69 game-balancing range and age-based potential',()=>{
  const overalls=starterPlayers.map(p=>p.overall);
- assert.equal(Math.min(...overalls),53);assert.equal(Math.max(...overalls),69);
+ assert.equal(Math.min(...overalls),54);assert.equal(Math.max(...overalls),69);
  starterPlayers.forEach(p=>{
   const bonus=p.age<=21?16:p.age<=26?12:p.age<=31?8:5;
   assert.equal(p.potential,Math.min(90,p.overall+bonus));
