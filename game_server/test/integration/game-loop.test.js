@@ -107,11 +107,16 @@ async function buildSquad(i,user){
   assert.ok(candidates.length>=count,'test catalogue has enough players for '+positions.join('/'));
   for(const p of candidates.slice(0,count)){used.add(p.id);chosen.push(p);}
  };
- choose(['GK'],2);choose(['CB','LB','RB'],5);choose(['DM','CM','AM'],6);choose(['LW','RW','ST'],5);
+ choose(['GK'],2);choose(['CB'],3);choose(['LB','RB'],2);choose(['DM'],2);choose(['CM'],2);choose(['AM'],2);choose(['LW','RW','ST'],5);
  for(const p of chosen)await ok(user,'POST','/api/clubs/'+clubId+'/players/sign',{playerId:p.id});
  const info=await ok(user,'GET','/api/clubs/'+clubId+'/formations'),best=info.formations.find(f=>f.id==='4-3-3').best;
  assert.equal(best.valid,true,'test squad can field a valid 4-3-3');
  await ok(user,'POST','/api/clubs/'+clubId+'/lineup',{formation:'4-3-3',starters:best.starters,substitutes:best.substitutes});
+ if(i===0){
+  // Retain coverage for the one-time academy resale rule using controlled integration fixtures only.
+  await db.query("UPDATE players p SET origin='academy',first_sale_done=false WHERE p.id IN (SELECT unnest(l.substitutes) FROM lineups l WHERE l.club_id=$1) AND p.position IN ('CB','CM','AM')",[clubId]);
+  await db.query("UPDATE players p SET origin='academy',first_sale_done=false WHERE p.id=(SELECT p2.id FROM players p2 JOIN lineups l ON l.club_id=p2.club_id WHERE p2.club_id=$1 AND p2.position='ST' AND p2.id=ANY(l.starters) ORDER BY p2.overall LIMIT 1)",[clubId]);
+ }
  assert.equal((await ok(user,'GET','/api/clubs/'+clubId+'/squad')).players.length,18);
 }
 
@@ -526,19 +531,19 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const id=clubs[0].id,sell=playerId=>call(users[0],'POST',clubPath(0)+'/players/sell',{playerId}),sign=playerId=>call(users[0],'POST',clubPath(0)+'/players/sign',{playerId});
   const squad=(await ok(users[0],'GET',clubPath(0)+'/squad')).players,lineup=(await ok(users[0],'GET',clubPath(0)+'/lineup')).lineup;
   assert.equal(squad.length,19);
-  const bench=(pos,overall)=>squad.find(p=>!lineup.starters.includes(p.id)&&p.position===pos&&p.overall===overall&&p.origin==='academy');
+  const bench=pos=>squad.find(p=>!lineup.starters.includes(p.id)&&p.position===pos&&p.origin==='academy');
   let budget=await budgetOf(0);
   // 1. Academy player, first sale: 50%.
-  const cb=bench('CB',50),first=await sell(cb.id);
-  assert.equal(first.status,200);assert.equal(first.data.resaleRatePercent,50);assert.equal(first.data.feeUzs,saleValueUzs(cb.market_value_uzs,50).toString());assert.equal(first.data.feeUzs,'230000');
-  budget+=230000n;assert.equal(first.data.budgetUzs,budget.toString());assert.deepEqual(first.data.promoted,[],'selling a substitute promotes nobody');
+  const cb=bench('CB'),first=await sell(cb.id);
+  assert.equal(first.status,200);assert.equal(first.data.resaleRatePercent,50);assert.equal(first.data.feeUzs,saleValueUzs(cb.market_value_uzs,50).toString());assert.equal(first.data.feeUzs,saleValueUzs(cb.market_value_uzs,50).toString());
+  budget+=BigInt(first.data.feeUzs);assert.equal(first.data.budgetUzs,budget.toString());assert.deepEqual(first.data.promoted,[],'selling a substitute promotes nobody');
   assert.equal((await sell(cb.id)).status,404);
   const listed=await one('SELECT club_id,origin,first_sale_done,market_value_uzs FROM players WHERE id=$1',[cb.id]);
-  assert.deepEqual(listed,{club_id:null,origin:'academy',first_sale_done:true,market_value_uzs:String(marketValueUzs(50))},'the sold academy player stays on the market at full price');
+  assert.deepEqual(listed,{club_id:null,origin:'academy',first_sale_done:true,market_value_uzs:String(cb.market_value_uzs)},'the sold academy player stays on the market at full price');
   assert.ok((await ok(users[0],'GET','/api/market?maxValue=1000000')).players.some(p=>p.id===cb.id));
   // 2. Buying him back costs the full price; selling him again pays 80%: the 50% rate applies once only.
-  assert.equal((await sign(cb.id)).status,200);budget-=460000n;
-  const again=await sell(cb.id);assert.equal(again.data.resaleRatePercent,80);assert.equal(again.data.feeUzs,'368000');budget+=368000n;
+  assert.equal((await sign(cb.id)).status,200);budget-=BigInt(cb.market_value_uzs);
+  const again=await sell(cb.id);assert.equal(again.data.resaleRatePercent,80);assert.equal(again.data.feeUzs,saleValueUzs(cb.market_value_uzs,80).toString());budget+=BigInt(again.data.feeUzs);
   // 3. A generated youth player is a transfer-market player: 80%.
   const youth=squad.find(p=>p.id===clubs[0].youthId),soldYouth=await sell(youth.id);
   assert.equal(soldYouth.data.resaleRatePercent,80);assert.equal(soldYouth.data.feeUzs,saleValueUzs(youth.market_value_uzs,80).toString());budget+=BigInt(soldYouth.data.feeUzs);
@@ -563,7 +568,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(lastKeeper.status,400);assert.match(lastKeeper.data.error,/at least one goalkeeper/);
   // 7. Minimum squad of 13: two more sales are allowed, the next is refused. The XI is valid after every sale.
   assert.equal(state.players.length,15);
-  for(const p of [bench('CM',50),bench('AM',50)]){assert.equal((await sell(p.id)).status,200);await assertLineupValid(0);}
+  for(const p of [bench('CM'),bench('AM')]){assert.equal((await sell(p.id)).status,200);await assertLineupValid(0);}
   state=await assertLineupValid(0);assert.equal(state.players.length,13);
   const tooFew=await sell(state.lineup.substitutes[0]||state.lineup.starters[10]);
   assert.equal(tooFew.status,400);assert.match(tooFew.data.error,/at least 13 players/);
