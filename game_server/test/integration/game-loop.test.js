@@ -121,6 +121,8 @@ async function buildSquad(i,user){
   // Keep the academy AM available for the deliberately out-of-position lineup test, but below the natural CM options in 4-3-3.
   const am=chosen.find(p=>p.position==='AM'&&p.origin==='generated');
   if(am){const attrs=JSON.stringify({pace:45,shooting:45,passing:45,dribbling:45,defending:45,physical:45});await db.query('UPDATE players SET overall=45,quality=$2,attributes=$3::jsonb,market_value_uzs=$4 WHERE id=$1',[am.id,qualityForOverall(45),attrs,marketValueUzs(45)]);}
+  const lowCb=chosen.filter(p=>p.position==='CB'&&p.origin==='generated').sort((a,b)=>a.overall-b.overall)[0];
+  if(lowCb){const attrs=JSON.stringify({pace:45,shooting:45,passing:45,dribbling:45,defending:45,physical:45});await db.query('UPDATE players SET overall=45,quality=$2,attributes=$3::jsonb,market_value_uzs=$4 WHERE id=$1',[lowCb.id,qualityForOverall(45),attrs,marketValueUzs(45)]);}
  }
  const info=await ok(user,'GET','/api/clubs/'+clubId+'/formations'),best=info.formations.find(f=>f.id==='4-3-3').best;
  assert.equal(best.valid,true,'test squad can field a valid 4-3-3');
@@ -332,12 +334,12 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:attacking.slice().reverse(),substitutes:attackingBench})).status,200,'in any order');
   assert.equal((await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking,substitutes:attackingBench})).status,400,'the allowance does not carry to another formation');
   // Improving it: the first XI with a spare striker for a centre-back has fewer players out of position, though still not none.
-  const firstCb=xi.find(x=>byId.get(x).position==='CB'),spareStriker=squad.find(p=>p.position==='ST'&&!xi.includes(p.id)).id,mild=xi.map(x=>x===firstCb?spareStriker:x);
+  const firstCb=attacking.find(x=>byId.get(x).position==='CB'),spareFullback=squad.find(p=>(p.position==='LB'||p.position==='RB')&&!attacking.includes(p.id)).id,mild=attacking.map(x=>x===firstCb?spareFullback:x),mildBench=attackingBench.filter(id=>id!==spareFullback).concat(firstCb);
   const mildWrong=analyseLineup(team(mild),'4-1-4-1').outOfPosition;
   assert.ok(mildWrong>0&&mildWrong<wrongBefore.outOfPosition);
   assert.match(lineupProblem('4-1-4-1',mild,squad),/cannot be filled/,'not acceptable for a club without the legacy lineup');
   assert.equal(lineupProblem('4-1-4-1',mild,squad,legacy),null);
-  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:mild,substitutes:attackingBench})).status,200,'the legacy lineup can be improved step by step');
+  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:mild,substitutes:mildBench})).status,200,'the legacy lineup can be improved step by step');
   // Making it worse again is refused, and the stored lineup stays as it was.
   const kept=await stored(),refused=await call(users[0],'POST',route,legacy);
   assert.equal(refused.status,400);assert.match(refused.data.error,/cannot be filled/);assert.equal(await stored(),kept);
@@ -372,7 +374,8 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.ok(budgetAfterRecruitment>0n&&budgetAfterRecruitment<20000000n);
   // Buying a youth player goes through the normal signing rules and is replaced by exactly one new youth player.
   const generatedBefore=Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n);
-  const youth=market.youth.find(p=>p.position==='CM');
+  const youth=market.youth.slice().sort((a,b)=>BigInt(a.market_value_uzs)<BigInt(b.market_value_uzs)?-1:BigInt(a.market_value_uzs)>BigInt(b.market_value_uzs)?1:0)[0];
+  assert.ok(budgetAfterRecruitment>BigInt(youth.market_value_uzs),'the completed squad leaves enough budget for one more academy prospect');
   const signed=await ok(users[0],'POST',clubPath(0)+'/players/sign',{playerId:youth.id});
   assert.equal(signed.budgetUzs,(budgetAfterRecruitment-BigInt(youth.market_value_uzs)).toString());
   const after=(await ok(users[0],'GET','/api/market')).youth;
