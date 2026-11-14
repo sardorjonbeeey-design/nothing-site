@@ -44,13 +44,13 @@ function ageOn(dob, asOf='2026-11-14') {
  return ay-y-((am<m||(am===m&&ad<d))?1:0);
 }
 export const starterPlayers=realPlayerSeeds.map((seed,index)=>{
- const age=ageOn(seed.dob);
+ const age=seed.dob?ageOn(seed.dob):seed.age;
  const potential=Math.min(90,seed.overall+(age<=21?16:age<=26?12:age<=31?8:5));
  return {
   ...card(seed.fullName,seed.position,seed.overall,age,potential,'market'),
   nationality:seed.nationality,
   catalogKey:'real-superleague-2026-'+seed.realClubKey+'-'+String(index+1).padStart(3,'0'),
-  realPlayerDob:seed.dob,
+  realPlayerDob:seed.dob??null,
   realClubName:seed.realClubName,
   realClubKey:seed.realClubKey,
   realClubCrestUrl:seed.realClubCrestUrl,
