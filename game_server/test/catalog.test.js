@@ -32,7 +32,7 @@ test('real-player catalogue: 68 current Super League players, 16 clubs, DOBs and
  for(const p of starterPlayers){
   assert.equal(p.origin,'market');assert.equal(p.marketValueUzs,marketValueUzs(p.overall));assert.equal(p.quality,qualityForOverall(p.overall));
   assert.equal(sum(p.attributes),p.overall*6);assert.ok(p.potential>=p.overall&&p.potential<=90);assert.ok(p.overall>=54&&p.overall<=64);
-  assert.equal(p.category,'uzbek_league');assert.match(p.nationality,/^[A-Z]{2}$/);assert.match(p.realPlayerDob,/^\\d{4}-\\d{2}-\\d{2}$/);
+  assert.equal(p.category,'uzbek_league');assert.match(p.nationality,/^[A-Z]{2}$/);assert.match(p.realPlayerDob,/^\d{4}-\d{2}-\d{2}$/);
   assert.ok(p.realClubName&&p.realClubCrestUrl&&p.realRosterSource&&p.realRosterCheckedAt);assert.doesNotThrow(()=>assertValidRating(p));
  }
 });
