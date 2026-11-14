@@ -23,7 +23,7 @@ import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValue
 
 const db=()=>requireDb();
 const clientRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../game_client');
-const staticFiles={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/styles.css':'styles.css','/config.js':'config.js','/admin':'admin.html','/admin.html':'admin.html','/admin.js':'admin.js','/assets/hero-stadium.png':'assets/hero-stadium.png','/assets/pitch-texture.png':'assets/pitch-texture.png','/assets/crowd-bokeh.png':'assets/crowd-bokeh.png','/assets/goal-burst.png':'assets/goal-burst.png'};
+const staticFiles={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/styles.css':'styles.css','/config.js':'config.js','/i18n.js':'i18n.js','/admin':'admin.html','/admin.html':'admin.html','/admin.js':'admin.js','/assets/hero-stadium.png':'assets/hero-stadium.png','/assets/pitch-texture.png':'assets/pitch-texture.png','/assets/crowd-bokeh.png':'assets/crowd-bokeh.png','/assets/goal-burst.png':'assets/goal-burst.png'};
 const staticTypes={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png'};
 const pathModule=path;
 // What the client may know about an XI in a formation. Always computed here, never read from a request.
