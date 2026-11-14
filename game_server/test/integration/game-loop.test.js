@@ -780,9 +780,10 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
  await t.test('the whole season is settled automatically, pays income, result bonuses and top-three prizes',async()=>{
   const before=await assets(),budgetsBefore=await Promise.all(clubs.map((_,i)=>budgetOf(i)));
   server2=await startServer(childEnv({PORT:String(PORT+1)}));logs.push(server2.log);
+  // Seed qualifying actions at the accelerated fixture times before making fixtures overdue,
+  // so the live scheduler cannot race between the timestamp shift and the activity inserts.
+  await db.query("INSERT INTO owner_activity_events(user_id,activity_at) SELECT c.owner_user_id,f.kickoff_at-interval '40 days 1 hour' FROM fixtures f JOIN clubs c ON c.id IN (f.home_club_id,f.away_club_id) WHERE f.kind='league' AND f.status='scheduled'");
   await db.query("UPDATE fixtures SET kickoff_at=kickoff_at-interval '40 days' WHERE kind='league' AND status='scheduled'");
-  // Recreate a realistic qualifying action one hour before each accelerated fixture kick-off.
-  await db.query("INSERT INTO owner_activity_events(user_id,activity_at) SELECT c.owner_user_id,f.kickoff_at-interval '1 hour' FROM fixtures f JOIN clubs c ON c.id IN (f.home_club_id,f.away_club_id) WHERE f.kind='league' AND f.status='scheduled'");
   await waitFor(async()=>await playedCount()===90,'season settlement',40000);
   const s1=await one('SELECT id FROM leagues WHERE season_number=1');
   const played=await one("SELECT SUM(home_goals)::int AS hg,SUM(away_goals)::int AS ag FROM fixtures WHERE status='played' AND league_id=$1",[s1.id]);
