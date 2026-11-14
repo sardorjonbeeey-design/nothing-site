@@ -3,7 +3,7 @@
 import {requireDb,inTransaction,assertIsolatedDatabase} from './db.js';
 import {simulateMatch} from './simulation.js';
 import {MATCH_DURATION_SECONDS} from './league.js';
-import {LEAGUE_MATCH_INCOME_UZS,MATCH_WIN_BONUS_UZS,MATCH_DRAW_BONUS_UZS} from './economy.js';
+import {LEAGUE_MATCH_INCOME_UZS,LEAGUE_PARTICIPATION_BONUS_UZS,MATCH_WIN_BONUS_UZS,MATCH_DRAW_BONUS_UZS} from './economy.js';
 import {repairClubLineup} from './lineup.js';
 import {ensureNextSeasons,payWaitingStipends} from './seasons.js';
 import {ensureYouthSupply} from './players.js';
@@ -24,20 +24,34 @@ export async function progressMission(client,clubId,metric,amount){
  }
 }
 const lineupSql='SELECT p.*,l.formation FROM lineups l CROSS JOIN LATERAL unnest(l.starters) WITH ORDINALITY s(id,ord) JOIN players p ON p.id=s.id WHERE l.club_id=$1 ORDER BY s.ord';
+export async function consumeInactivityGrace(client,leagueId,clubId,fixtureId){
+ const r=await client.query('INSERT INTO club_inactivity_graces(league_id,club_id,fixture_id) VALUES($1,$2,$3) ON CONFLICT(league_id,club_id) DO NOTHING RETURNING club_id',[leagueId,clubId,fixtureId]);
+ return r.rowCount===1;
+}
+
 // The caller holds a row lock on the fixture and has verified that it is scheduled and due.
 async function settleFixture(client,f){
  await client.query('SELECT id FROM clubs WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE',[[f.home_club_id,f.away_club_id]]);
  const [homeActivity,awayActivity]=await Promise.all([ownerActivity(client,f.home_club_id,f.kickoff_at),ownerActivity(client,f.away_club_id,f.kickoff_at)]);
+ const homeGrace= f.kind==='league'&&homeActivity.inactive ? await consumeInactivityGrace(client,f.league_id,f.home_club_id,f.id) : false;
+ const awayGrace= f.kind==='league'&&awayActivity.inactive ? await consumeInactivityGrace(client,f.league_id,f.away_club_id,f.id) : false;
+ const homeInactive=homeActivity.inactive&&!homeGrace,awayInactive=awayActivity.inactive&&!awayGrace;
  let result,forfeit=null;
- if(f.kind==='league'&&(homeActivity.inactive||awayActivity.inactive)){
-  if(homeActivity.inactive&&awayActivity.inactive){result={homeGoals:0,awayGoals:0,events:[{type:'forfeit',forfeit:'double',reason:'owner_inactivity'}]};forfeit='double';}
-  else if(homeActivity.inactive){result={homeGoals:0,awayGoals:3,events:[{type:'forfeit',forfeit:'single',reason:'owner_inactivity',inactiveClubId:f.home_club_id}]};forfeit='home';}
+ if(f.kind==='league'&&(homeInactive||awayInactive)){
+  if(homeInactive&&awayInactive){result={homeGoals:0,awayGoals:0,events:[{type:'forfeit',forfeit:'double',reason:'owner_inactivity'}]};forfeit='double';}
+  else if(homeInactive){result={homeGoals:0,awayGoals:3,events:[{type:'forfeit',forfeit:'single',reason:'owner_inactivity',inactiveClubId:f.home_club_id}]};forfeit='home';}
   else{result={homeGoals:3,awayGoals:0,events:[{type:'forfeit',forfeit:'single',reason:'owner_inactivity',inactiveClubId:f.away_club_id}]};forfeit='away';}
  }else{
   // Backstop: an incomplete or invalid Starting XI is repaired before a real match is simulated.
   await repairClubLineup(client,f.home_club_id);await repairClubLineup(client,f.away_club_id);
   const hl=await client.query(lineupSql,[f.home_club_id]),al=await client.query(lineupSql,[f.away_club_id]);
   result=simulateMatch(hl.rows,al.rows,{homeFormation:hl.rows[0]?.formation||'4-3-3',awayFormation:al.rows[0]?.formation||'4-3-3'});
+  if(homeGrace||awayGrace){
+   const graceEvents=[];
+   if(homeGrace)graceEvents.push({minute:0,type:'grace',side:'home',text:'Home club used its one protected inactivity miss this season'});
+   if(awayGrace)graceEvents.push({minute:0,type:'grace',side:'away',text:'Away club used its one protected inactivity miss this season'});
+   result.events=[...graceEvents,...result.events];
+  }
  }
  const played=await client.query("UPDATE fixtures SET status='played',home_goals=$2,away_goals=$3,events=$4::jsonb,played_at=NOW() WHERE id=$1 AND status='scheduled'",[f.id,result.homeGoals,result.awayGoals,JSON.stringify(result.events)]);
  if(!played.rowCount)return;
@@ -55,6 +69,9 @@ async function settleFixture(client,f){
    const bonusBalance=(await client.query('UPDATE clubs SET budget_uzs=budget_uzs+$2 WHERE id=$1 RETURNING budget_uzs',[clubId,resultBonus.toString()])).rows[0].budget_uzs;
    await client.query("INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,'match_result_bonus',$4)",[clubId,resultBonus.toString(),bonusBalance,f.id]);
   }
+  const participationBalance=(await client.query('UPDATE clubs SET budget_uzs=budget_uzs+$2 WHERE id=$1 RETURNING budget_uzs',[clubId,LEAGUE_PARTICIPATION_BONUS_UZS.toString()])).rows[0].budget_uzs;
+  await client.query("INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,'league_participation_bonus',$4)",[clubId,LEAGUE_PARTICIPATION_BONUS_UZS.toString(),participationBalance,f.id]);
+  await chargeSquadWages(client,clubId,f.id);
   await awardDevelopmentPoints(client,clubId,2,'match_reward',f.id);
   await progressMission(client,clubId,'matches_played',1);
   await progressMission(client,clubId,'wins',win?1:0);
