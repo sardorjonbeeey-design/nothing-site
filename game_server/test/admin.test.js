@@ -10,6 +10,11 @@ test('admin server, admin client, and runtime config parse cleanly',()=>{
  }
  const client=spawnSync(process.execPath,['--check',path.join(root,'../game_client/admin.js')],{encoding:'utf8'});
  assert.equal(client.status,0,'admin.js syntax error: '+client.stderr);
+ const badIdentity=spawnSync(process.execPath,['--input-type=module','-e',"import('./src/config.js')"],{encoding:'utf8',env:{...process.env,NODE_ENV:'production',SUPER_ADMIN_TELEGRAM_ID:'not-a-numeric-id'}});
+ assert.notEqual(badIdentity.status,0,'production config must reject malformed owner Telegram IDs');
+ assert.match(badIdentity.stderr,/SUPER_ADMIN_TELEGRAM_ID/);
+ const goodIdentity=spawnSync(process.execPath,['--input-type=module','-e',"import('./src/config.js')"],{encoding:'utf8',env:{...process.env,NODE_ENV:'production',SUPER_ADMIN_TELEGRAM_ID:'123456789'}});
+ assert.equal(goodIdentity.status,0,'production config accepts a numeric Telegram owner ID: '+goodIdentity.stderr);
 });
 test('super-admin migration includes audit, entitlements and competition settings tables',async()=>{
  const sql=await (await import('node:fs/promises')).readFile(path.join(root,'db/008_super_admin.sql'),'utf8');
