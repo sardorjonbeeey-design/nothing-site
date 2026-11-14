@@ -128,7 +128,7 @@ A request or acceptance is refused with 409 when either club already has a match
 
 ## Public operational routes
 - GET /health — process liveness.
-- GET /ready — verifies that PostgreSQL is reachable and its current database name matches EXPECTED_DATABASE_NAME.
+- GET /ready — verifies PostgreSQL connectivity, the isolated database name, required schema tables (including migrations 008 and 009), and required seed data.
 
 ## Inactivity and competition rewards (migration 009)
 - GET /api/clubs/:clubId/activity — returns the owner's last qualifying activity, idle seconds, inactive status, warningLevel (24 or 2), and forfeitsAt.
