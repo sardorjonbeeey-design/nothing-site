@@ -914,6 +914,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const s1=await one('SELECT id FROM leagues WHERE season_number=1'),s2=await one('SELECT id FROM leagues WHERE season_number=2');
   const finalTable=JSON.stringify((await db.query('SELECT * FROM league_members WHERE league_id=$1 ORDER BY club_id',[s1.id])).rows);
   const before=await budgetOf(3),waitingBefore=await budgetOf(10);
+  await db.query("INSERT INTO owner_activity_events(user_id,activity_at) SELECT owner_user_id,NOW()-interval '1 hour' FROM clubs WHERE id IN (SELECT home_club_id FROM fixtures WHERE league_id=$1 AND day_number=1 UNION SELECT away_club_id FROM fixtures WHERE league_id=$1 AND day_number=1)",[s2.id]);
   await db.query("UPDATE fixtures SET kickoff_at=NOW()-interval '61 seconds' WHERE league_id=$1 AND day_number=1",[s2.id]);
   await waitFor(async()=>Number((await one("SELECT COUNT(*)::int AS n FROM fixtures WHERE league_id=$1 AND status='played'",[s2.id])).n)===5,'season 2 matchday 1');
   await waitFor(async()=>Number((await one('SELECT COUNT(*)::int AS n FROM stipend_runs WHERE league_id=$1',[s2.id])).n)===1,'season 2 stipend run',5000);
