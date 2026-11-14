@@ -77,7 +77,7 @@ Do not connect the live Telegram Mini App, live bot, existing backend, productio
 - Admin capabilities: inspect clubs/users/players; ledgered UZS budget adjustments; player gifts with squad-bound validation and transactional lineup repair; Gold/VIP grant/revoke and user-facing active-entitlement API; persistent JSON competition settings.
 - Migration 008 creates admin audit, entitlement and settings tables. Audit entries store actor Telegram ID, target, action, time, before/after JSON and required reason; DB trigger enforces append-only.
 - Integration tests cover owner/non-owner authorization, funds ledger, Gold grant/revoke and entitlement access, competition settings, player gift and lineup integrity, required reason, negative budget protection and audit immutability.
-- GitHub Actions run 43587396857 passed: 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. A follow-up test for production Telegram ID config validation is running on the latest commit.
+- GitHub Actions run 43587396857 passed: 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. Follow-up CI run 43587550239 also passed, including production Telegram ID config validation: 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed.
 - No merge, deployment, production DB, live Mini App or bot connection.
 
 ## Remaining Phase 3 work
