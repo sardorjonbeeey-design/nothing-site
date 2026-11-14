@@ -1,7 +1,7 @@
 // League seasons: creation of the schedule, automatic rollover and the waiting-list stipend.
 // Everything here runs inside a caller-supplied transaction and is safe to call repeatedly.
 import {leagueSchedule,LEAGUE_TIMEZONE,LEAGUE_KICKOFF_TIME,MATCH_DURATION_SECONDS} from './league.js';
-import {WAITING_STIPEND_UZS,STARTING_SQUAD_SIZE,MINIMUM_GOALKEEPERS} from './economy.js';
+import {WAITING_STIPEND_UZS,STARTING_SQUAD_SIZE,MINIMUM_GOALKEEPERS} from './economy.js';\nimport {chargeSquadWages} from './competition.js';
 export const LEAGUE_LOCK=8111001;
 export const LEAGUE_SIZE=10;
 export const REST_DAYS_BETWEEN_SEASONS=2;
@@ -58,7 +58,7 @@ export async function payWaitingStipends(client){
    const payment=await client.query('INSERT INTO stipend_payments(league_id,day_number,club_id,amount_uzs) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING club_id',[day.league_id,day.day_number,club.id,WAITING_STIPEND_UZS.toString()]);
    if(!payment.rowCount)continue;
    const balance=(await client.query('UPDATE clubs SET budget_uzs=budget_uzs+$2 WHERE id=$1 RETURNING budget_uzs',[club.id,WAITING_STIPEND_UZS.toString()])).rows[0].budget_uzs;
-   await client.query("INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,'waiting_stipend',$4)",[club.id,WAITING_STIPEND_UZS.toString(),balance,day.league_id]);
+   await client.query("INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,'waiting_stipend',$4)",[club.id,WAITING_STIPEND_UZS.toString(),balance,day.league_id]);\n   await chargeSquadWages(client,club.id,day.league_id);
    paid++;
   }
  }
