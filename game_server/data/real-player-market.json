@@ -4,7 +4,7 @@
   "description": "Separate static real-player catalogue for ZAMIN FK Management Game. Existing gameOVR values are approximate game-balancing ratings. Internet base ratings are populated only where a published rating was located; null means no exact online rating verified.",
   "ratingMethod": {
     "sourceRating": "2026 Uzbekistan Super League average match ratings where available (ZeroZero); corroborating league leaders and player stats from NoFluffPicks and club/PFL sources.",
-    "estimatedOVR": "Where a 2026 average match rating exists: round(48 + 12 × (seasonAverageMatchRating − 6.0)), clamped 50–75. Where unavailable, retain the existing provisional gameOVR rather than invent a source rating.",
+    "estimatedOVR": "Where a 2026 average match rating exists: round(60 + 10 × (seasonAverageMatchRating − 6.6)), clamped 54–72. This anchors the league's 6.6 average-performance band at 60 OVR and scales stronger/weaker season performers proportionally. Where unavailable, retain the existing provisional gameOVR.",
     "caution": "These are ZAMIN FK gameplay estimates, not official EA FC/FIFA ratings. A match-performance average is not the same thing as a videogame overall rating. Revisit low-confidence entries when player-specific stats or market values are found."
   },
   "sources": [
@@ -125,7 +125,7 @@
       "gameOVR": 57,
       "seasonAverageMatchRating": 6.6,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 55,
+      "estimatedOVR": 60,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -141,7 +141,7 @@
       "gameOVR": 61,
       "seasonAverageMatchRating": 6.9,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 59,
+      "estimatedOVR": 63,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -157,7 +157,7 @@
       "gameOVR": 60,
       "seasonAverageMatchRating": 6.9,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 59,
+      "estimatedOVR": 63,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -173,7 +173,7 @@
       "gameOVR": 64,
       "seasonAverageMatchRating": 6.9,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 59,
+      "estimatedOVR": 63,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -189,7 +189,7 @@
       "gameOVR": 64,
       "seasonAverageMatchRating": 6.8,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 58,
+      "estimatedOVR": 62,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -221,7 +221,7 @@
       "gameOVR": 58,
       "seasonAverageMatchRating": 6.6,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 55,
+      "estimatedOVR": 60,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -237,7 +237,7 @@
       "gameOVR": 63,
       "seasonAverageMatchRating": 6.5,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 54,
+      "estimatedOVR": 59,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -253,7 +253,7 @@
       "gameOVR": 61,
       "seasonAverageMatchRating": 6.4,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 53,
+      "estimatedOVR": 58,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -269,7 +269,7 @@
       "gameOVR": 60,
       "seasonAverageMatchRating": 6.6,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 55,
+      "estimatedOVR": 60,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -317,7 +317,7 @@
       "gameOVR": 62,
       "seasonAverageMatchRating": 6.8,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 58,
+      "estimatedOVR": 62,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -365,7 +365,7 @@
       "gameOVR": 56,
       "seasonAverageMatchRating": 6.5,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 54,
+      "estimatedOVR": 59,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -381,7 +381,7 @@
       "gameOVR": 58,
       "seasonAverageMatchRating": 6.6,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 55,
+      "estimatedOVR": 60,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -397,7 +397,7 @@
       "gameOVR": 57,
       "seasonAverageMatchRating": 6.7,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 56,
+      "estimatedOVR": 61,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -445,7 +445,7 @@
       "gameOVR": 55,
       "seasonAverageMatchRating": 6.5,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 54,
+      "estimatedOVR": 59,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -461,7 +461,7 @@
       "gameOVR": 58,
       "seasonAverageMatchRating": 6.7,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 56,
+      "estimatedOVR": 61,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -477,7 +477,7 @@
       "gameOVR": 61,
       "seasonAverageMatchRating": 6.7,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 56,
+      "estimatedOVR": 61,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -509,7 +509,7 @@
       "gameOVR": 61,
       "seasonAverageMatchRating": 6.7,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 56,
+      "estimatedOVR": 61,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -525,7 +525,7 @@
       "gameOVR": 63,
       "seasonAverageMatchRating": 6.8,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 58,
+      "estimatedOVR": 62,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -653,7 +653,7 @@
       "gameOVR": 57,
       "seasonAverageMatchRating": 6.6,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 55,
+      "estimatedOVR": 60,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -701,7 +701,7 @@
       "gameOVR": 57,
       "seasonAverageMatchRating": 6.5,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 54,
+      "estimatedOVR": 59,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -717,7 +717,7 @@
       "gameOVR": 58,
       "seasonAverageMatchRating": 7.3,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 64,
+      "estimatedOVR": 67,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -733,7 +733,7 @@
       "gameOVR": 54,
       "seasonAverageMatchRating": 6.5,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 54,
+      "estimatedOVR": 59,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -765,7 +765,7 @@
       "gameOVR": 62,
       "seasonAverageMatchRating": 6.8,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 58,
+      "estimatedOVR": 62,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -845,7 +845,7 @@
       "gameOVR": 56,
       "seasonAverageMatchRating": 6.8,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 58,
+      "estimatedOVR": 62,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -877,7 +877,7 @@
       "gameOVR": 60,
       "seasonAverageMatchRating": 6.5,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 54,
+      "estimatedOVR": 59,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -909,7 +909,7 @@
       "gameOVR": 59,
       "seasonAverageMatchRating": 7,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 60,
+      "estimatedOVR": 64,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -925,7 +925,7 @@
       "gameOVR": 58,
       "seasonAverageMatchRating": 7.5,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 66,
+      "estimatedOVR": 69,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -957,7 +957,7 @@
       "gameOVR": 59,
       "seasonAverageMatchRating": 6.8,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 58,
+      "estimatedOVR": 62,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -989,7 +989,7 @@
       "gameOVR": 60,
       "seasonAverageMatchRating": 6.8,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 58,
+      "estimatedOVR": 62,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -1037,7 +1037,7 @@
       "gameOVR": 59,
       "seasonAverageMatchRating": 6.7,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 56,
+      "estimatedOVR": 61,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -1053,7 +1053,7 @@
       "gameOVR": 59,
       "seasonAverageMatchRating": 6.9,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 59,
+      "estimatedOVR": 63,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -1117,7 +1117,7 @@
       "gameOVR": 55,
       "seasonAverageMatchRating": 6.8,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 58,
+      "estimatedOVR": 62,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -1149,7 +1149,7 @@
       "gameOVR": 58,
       "seasonAverageMatchRating": 7.5,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 66,
+      "estimatedOVR": 69,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
@@ -1165,7 +1165,7 @@
       "gameOVR": 57,
       "seasonAverageMatchRating": 6.7,
       "seasonRatingSource": "ZeroZero 2026 Uzbekistan Super League player ratings",
-      "estimatedOVR": 56,
+      "estimatedOVR": 61,
       "ratingConfidence": "medium — based on published 2026 season match average"
     },
     {
