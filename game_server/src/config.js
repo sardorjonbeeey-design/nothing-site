@@ -12,6 +12,6 @@ export const config = {
  schedulerMaxIdleMs: Math.max(200, Math.min(60000, Number(process.env.SCHEDULER_MAX_IDLE_MS) || 15000))
 };
 if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) throw new Error('PORT is invalid');
-if (config.nodeEnv !== 'development' && config.superAdminTelegramId && !/^[1-9]\\d{0,19}$/.test(config.superAdminTelegramId)) throw new Error('SUPER_ADMIN_TELEGRAM_ID must be the numeric Telegram user ID of the sole owner');
+if (config.nodeEnv !== 'development' && config.superAdminTelegramId && !/^[1-9]\d{0,19}$/.test(config.superAdminTelegramId)) throw new Error('SUPER_ADMIN_TELEGRAM_ID must be the numeric Telegram user ID of the sole owner');
 if (!Number.isInteger(config.sessionMaxAgeSeconds) || config.sessionMaxAgeSeconds < 60) throw new Error('SESSION_MAX_AGE_SECONDS must be at least 60');
 if (!Number.isInteger(config.telegramAuthMaxAgeSeconds) || config.telegramAuthMaxAgeSeconds < 60) throw new Error('TELEGRAM_AUTH_MAX_AGE_SECONDS must be at least 60');
