@@ -28,7 +28,7 @@ const lineupSql='SELECT p.*,l.formation FROM lineups l CROSS JOIN LATERAL unnest
 // The caller holds a row lock on the fixture and has verified that it is scheduled and due.
 async function settleFixture(client,f){
  await client.query('SELECT id FROM clubs WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE',[[f.home_club_id,f.away_club_id]]);
- const [homeActivity,awayActivity]=await Promise.all([ownerActivity(client,f.home_club_id),ownerActivity(client,f.away_club_id)]);
+ const [homeActivity,awayActivity]=await Promise.all([ownerActivity(client,f.home_club_id,f.kickoff_at),ownerActivity(client,f.away_club_id,f.kickoff_at)]);
  let result,forfeit=null;
  if(f.kind==='league'&&(homeActivity.inactive||awayActivity.inactive)){
   if(homeActivity.inactive&&awayActivity.inactive){result={homeGoals:0,awayGoals:0,events:[{type:'forfeit',forfeit:'double',reason:'owner_inactivity'}]};forfeit='double';}
