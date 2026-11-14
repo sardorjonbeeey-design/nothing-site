@@ -74,7 +74,7 @@ Do not connect the live Telegram Mini App, live bot, existing backend, productio
 ## Remaining Phase 3 work
 1. Review the proposed tactical coefficients and run a longer full-season formation balance simulation with realistic squads.
 2. Finalize the open inactivity-forfeit edge cases, top-three prize amounts and tie-break policy.
-3. Player-to-player transfer market implemented in isolated server API and client UI; automated verification remains pending.
+3. Player-to-player transfer market implemented and CI verified: 85 unit/default tests passed, 0 failed, 1 skipped; PostgreSQL integration 37/37 passed. Adversarial concurrency testing remains outstanding.
 4. Implement the sole super-admin backend authorization, audit trail and separate panel.
 5. Implement owner-approved match bonuses and the finalized inactivity/season rewards.
 6. Run adversarial tests for transfers, duplicate rewards, scheduler restarts, inactivity and economy balance.
