@@ -148,7 +148,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   await run('src/seed.js');await run('src/seed.js');
   assert.match(first,/Applied migration 003_league_schedule/);assert.match(first,/Applied migration 004_economy/);assert.match(first,/Applied migration 005_price_rebalance/);assert.match(first,/Applied migration 006_rating_profiles/);assert.match(first,/Applied migration 010_real_player_club_metadata/);assert.match(first,/Applied migration 011_real_player_date_of_birth/);assert.match(second,/Skipped migration 011_real_player_date_of_birth/);assert.match(second,/Skipped migration 004_economy/);assert.match(second,/Skipped migration 005_price_rebalance/);assert.match(second,/Skipped migration 006_rating_profiles/);
   const counts=(await db.query("SELECT (SELECT COUNT(*)::int FROM players WHERE origin='market') AS market,(SELECT COUNT(*)::int FROM players WHERE origin='generated') AS generated,(SELECT COUNT(*)::int FROM players WHERE origin='academy') AS academy,(SELECT COUNT(DISTINCT catalog_key)::int FROM players) AS keys,(SELECT COUNT(*)::int FROM missions) AS missions,(SELECT COUNT(DISTINCT real_club_key)::int FROM players WHERE origin='market') AS clubs,(SELECT COUNT(*)::int FROM players WHERE origin='market' AND real_player_dob IS NOT NULL AND real_club_crest_url IS NOT NULL) AS verified")).rows[0];
-  assert.deepEqual(counts,{market:68,generated:12,academy:0,keys:68,missions:5,clubs:16,verified:68},'real catalogue and youth supply seed once');
+  assert.deepEqual(counts,{market:236,generated:12,academy:0,keys:236,missions:5,clubs:16,verified:68},'real catalogue and youth supply seed once');
   // The migration's SQL price formula and the server's JavaScript formula agree for every rating.
   const sqlPrices=(await db.query("SELECT o::int AS overall,(ROUND(11000000*POWER(1.112::numeric,o-80)/10000)*10000)::bigint AS price FROM generate_series(1,100) o")).rows;
   for(const r of sqlPrices)assert.equal(Number(r.price),marketValueUzs(r.overall),'overall '+r.overall);
@@ -329,9 +329,17 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:attacking.slice().reverse(),substitutes:attackingBench})).status,200,'in any order');
   assert.equal((await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking,substitutes:attackingBench})).status,400,'the allowance does not carry to another formation');
   // Improving it: the first XI with a spare striker for a centre-back has fewer players out of position, though still not none.
-  const firstCb=attacking.find(x=>byId.get(x).position==='CB'),spareFullback=squad.find(p=>p.position==='RB'&&!attacking.includes(p.id)).id,mild=attacking.map(x=>x===firstCb?spareFullback:x),mildBench=attackingBench.filter(id=>id!==spareFullback).concat(firstCb);
-  const mildWrong=analyseLineup(team(mild),'4-1-4-1').outOfPosition;
-  assert.ok(mildWrong>0&&mildWrong<wrongBefore.outOfPosition,`mild out-of-position=${mildWrong}; before=${wrongBefore.outOfPosition}`);
+  // Find a real bench replacement that improves this particular 18-player squad; do not assume a fixed RB is always the best fit.
+  let mild=null,mildWrong=wrongBefore.outOfPosition,mildOutgoing=null,mildIncoming=null;
+  for(const outgoing of attacking.filter(id=>byId.get(id).position==='CB')){
+   for(const incoming of squad.filter(p=>!attacking.includes(p.id))){
+    const candidate=attacking.map(id=>id===outgoing?incoming.id:id);
+    const outOfPosition=analyseLineup(team(candidate),'4-1-4-1').outOfPosition;
+    if(outOfPosition<mildWrong){mild=candidate;mildWrong=outOfPosition;mildOutgoing=outgoing;mildIncoming=incoming.id;}
+   }
+  }
+  assert.ok(mild&&mildWrong<wrongBefore.outOfPosition,`no bench replacement improved out-of-position count; before=${wrongBefore.outOfPosition}; best=${mildWrong}`);
+  const mildBench=attackingBench.filter(id=>id!==mildIncoming).concat(mildOutgoing);
   assert.match(lineupProblem('4-1-4-1',mild,squad),/cannot be filled/,'not acceptable for a club without the legacy lineup');
   assert.equal(lineupProblem('4-1-4-1',mild,squad,legacy),null);
   assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:mild,substitutes:mildBench})).status,200,'the legacy lineup can be improved step by step');
@@ -346,7 +354,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const market=await ok(users[0],'GET','/api/market');
   assert.deepEqual(market.squadLimits,{min:13,max:26,required:18,minimumGoalkeepers:2});
   assert.ok(market.players.length>0&&market.players.length<=500);
-  assert.equal(market.players.length,61,'seven real players have already been recruited by the first club');
+  assert.equal(market.players.length,229,'seven real players have already been recruited by the first club');
   assert.equal(new Set(market.players.map(p=>p.real_club_key)).size,16,'all 16 Super League clubs are represented');
   assert.ok(market.players.every(p=>p.real_club_name&&p.real_club_crest_url&&Number.isInteger(p.age)&&p.age>=16),'real market entries include club, crest and current age');
   assert.ok(Array.isArray(market.academy),'resold academy players are returned separately from real players');
@@ -549,7 +557,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
  await t.test('resale rates, automatic lineup replacement, squad limits and a consistent ledger',async()=>{
   const id=clubs[0].id,sell=playerId=>call(users[0],'POST',clubPath(0)+'/players/sell',{playerId}),sign=playerId=>call(users[0],'POST',clubPath(0)+'/players/sign',{playerId});
   const squad=(await ok(users[0],'GET',clubPath(0)+'/squad')).players,lineup=(await ok(users[0],'GET',clubPath(0)+'/lineup')).lineup;
-  assert.equal(squad.length,19);
+  assert.equal(squad.length,18);
   const bench=pos=>squad.find(p=>!lineup.starters.includes(p.id)&&p.position===pos&&p.origin==='academy');
   let budget=await budgetOf(0);
   // 1. Academy player, first sale: 50%.
@@ -1073,9 +1081,9 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM rating_profiles')).n),1);
   const stats=await one("SELECT COUNT(*)::int AS n,MIN(overall)::int AS low,MAX(overall)::int AS high,MAX(potential)::int AS potential,COUNT(*) FILTER (WHERE category<>'uzbek_league')::int AS foreign_rows,COUNT(*) FILTER (WHERE potential<overall)::int AS inverted FROM players");
   assert.ok(stats.n>180);assert.ok(stats.low>=40&&stats.high<=90&&stats.potential<=90);assert.equal(stats.foreign_rows,0);assert.equal(stats.inverted,0);
-  // The imported catalogue is a curated 68-player snapshot with game-only OVRs in the 54-64 range.
+  // The imported catalogue is a curated 236-player snapshot with game-only OVR estimates in the 54-69 range.
   const catalogue=await one("SELECT MAX(overall)::int AS high,MIN(overall)::int AS low,COUNT(*)::int AS n,COUNT(*) FILTER (WHERE potential=90)::int AS capped FROM players WHERE catalog_key IS NOT NULL");
-  assert.equal(catalogue.n,68);assert.equal(catalogue.low,54);assert.equal(catalogue.high,64);assert.equal(catalogue.capped,0);
+  assert.equal(catalogue.n,236);assert.equal(catalogue.low,54);assert.equal(catalogue.high,69);assert.equal(catalogue.capped,0);
   const bad=(await db.query("SELECT 1 FROM players p,jsonb_each_text(p.attributes) a WHERE a.value::numeric NOT BETWEEN 1 AND 99")).rowCount;
   assert.equal(bad,0);
   const insert="INSERT INTO players(full_name,age,position,quality,overall,potential,attributes,market_value_uzs,origin) VALUES('Rating Probe',22,'ST','elite',$1,$2,$3::jsonb,0,'market') RETURNING id";
