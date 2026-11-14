@@ -53,7 +53,6 @@ export const starterPlayers=realPlayerSeeds.map((seed,index)=>{
   realPlayerDob:seed.dob??null,
   realClubName:seed.realClubName,
   realClubKey:seed.realClubKey,
-  realClubCrestUrl:seed.realClubCrestUrl,
   realRosterSource:seed.realRosterSource,
   realRosterCheckedAt:'2026-11-14'
  };

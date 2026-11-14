@@ -9,6 +9,9 @@ export const config = {
  sessionMaxAgeSeconds: Number(process.env.SESSION_MAX_AGE_SECONDS || 86400),
  telegramAuthMaxAgeSeconds: Number(process.env.TELEGRAM_AUTH_MAX_AGE_SECONDS || 86400),
  allowDevAuth: process.env.ALLOW_DEV_AUTH === 'true',
+ // Real Super League players are shown in the transfer market unless this is set to 'false'.
+ // Set REAL_PLAYERS_ENABLED=false in any public deployment until written rights and permissions are in place.
+ realPlayersEnabled: process.env.REAL_PLAYERS_ENABLED !== 'false',
  // How often an idle scheduler re-checks for newly created fixtures. It never changes kick-off or settlement times.
  schedulerMaxIdleMs: Math.max(200, Math.min(60000, Number(process.env.SCHEDULER_MAX_IDLE_MS) || 15000))
 };

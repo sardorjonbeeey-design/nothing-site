@@ -34,7 +34,7 @@ test('real-player catalogue: 236 Super League players across 16 clubs with sourc
   assert.equal(p.origin,'market');assert.equal(p.marketValueUzs,marketValueUzs(p.overall));assert.equal(p.quality,qualityForOverall(p.overall));
   assert.equal(sum(p.attributes),p.overall*6);assert.ok(p.potential>=p.overall&&p.potential<=90);assert.ok(p.overall>=54&&p.overall<=69);
   assert.equal(p.category,'uzbek_league');assert.match(p.nationality,/^[A-Z]{2}$/);if(p.realPlayerDob!==null)assert.match(p.realPlayerDob,/^\d{4}-\d{2}-\d{2}$/);else assert.ok(p.age>=16&&p.age<=40,'age must be supplied when exact DOB is unavailable');
-  assert.ok(p.realClubName&&p.realClubCrestUrl&&p.realRosterSource&&p.realRosterCheckedAt);assert.doesNotThrow(()=>assertValidRating(p));
+  assert.ok(p.realClubName&&p.realRosterSource&&p.realRosterCheckedAt);assert.equal(p.realClubCrestUrl,undefined,'club crests are not stored or served');assert.doesNotThrow(()=>assertValidRating(p));
  }
 });
 test('academy squad: the approved 18-player distribution, identical for every club',()=>{
