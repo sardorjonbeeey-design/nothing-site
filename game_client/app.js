@@ -217,7 +217,7 @@ function matchHome(){
  const lastCard=last?'<section class="panel"><div class="eyebrow">LAST RESULT</div>'+resultCard(last)+'<div class="actions"><button class="btn" data-action="watch-replay" data-fixture="'+last.id+'">Watch replay</button><button class="btn secondary" data-action="open-report" data-fixture="'+last.id+'">Full report</button></div></section>':'';
  const sample=!last&&!ready?'<section class="panel entrance"><div class="eyebrow">WATCH FIRST</div><h2>See how a match plays out</h2><p class="sub">A one-minute sample match between two generated sides. Nothing is saved or paid.</p><button class="btn" data-action="watch-sample">Watch sample match</button></section>':'';
  const squad='<section class="panel"><div class="row"><div><div class="eyebrow">SQUAD</div><h2>'+state.squad.length+' / '+required+' players · '+xi+'/11 in XI</h2><p class="sub">Budget '+money(c.budget_uzs)+'</p></div><button class="btn secondary" data-tab="squad">Manage</button></div></section>';
- return pageHead('MATCHDAY',esc(c.name),'Watch every match. Shape your team between them.')+hero+lastCard+sample+squad+reportPanel();
+ return pageHead('MATCHDAY',esc(c.name),'Watch every match. Shape your team between them.')+'<div class="hero-art" aria-hidden="true"></div>'+hero+lastCard+sample+squad+reportPanel();
 }
 // ---- Season: one destination with segments for table, fixtures, objectives and challenges.
 function resultRowsSection(){
@@ -302,6 +302,7 @@ function startReplay(){
    score.textContent=hg+' — '+ag;
    line('goal','<b>'+minute+"'</b> ⚽ "+esc(e.scorerName||'Goal')+(e.assistName?' <span class="muted">· assist '+esc(e.assistName)+'</span>':''));
    haptic('success');
+   const flash=document.createElement('div');flash.className='goal-flash';root.querySelector('.replay')?.appendChild(flash);at(1100,()=>flash.remove());
    return;
   }
   moveBall(50,e.side==='away'?78:22);
