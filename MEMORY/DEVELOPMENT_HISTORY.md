@@ -104,3 +104,15 @@ Chronological record. Append entries; do not erase earlier history.
 - Fixed test-only issues revealed by CI: mock query order/409 conflict expectation, actual club short-name lookup, and fixture cleanup between integration cases.
 - Adversarial simultaneous purchase/spend/list/cancel DB concurrency tests remain outstanding. No production DB, live Mini App, bot, merge or deployment.
 
+
+
+## 2026-11-14 — Phase 3C sole-owner super-admin implementation
+- Added migration game_server/db/008_super_admin.sql: admin audit records, Gold/VIP entitlement state, persistent competition setting JSON; audit table is append-only via a DB trigger.
+- Configured SUPER_ADMIN_TELEGRAM_ID in runtime config and .env.example. In production it must be the sole owner's numeric Telegram ID; absent configuration fails closed for all admin endpoints.
+- Added separate /admin UI and client dashboard tabs for clubs/funds, players/gifts, user entitlements, competition settings and audit history.
+- Server-side admin APIs implement club/user/player inspection, signed UZS budget adjustment (with money ledger), player gift (squad boundary validation and source/recipient lineup repair), Gold/VIP grant/revoke, active entitlement query for the user, JSON competition setting upsert and audit inspection.
+- Every mutation requires a reason and records actor, target, action, timestamp and before/after. No multi-admin enrollment.
+- Added unit/static checks plus PostgreSQL integration coverage for owner/non-owner authorization, funds ledger, Gold grant/revoke, account entitlement access, settings persistence, player gifting/lineup repair, reason requirement, budget floor and immutable audit.
+- CI run 43587396857 passed: unit/default 88 passed, 0 failed, 1 skipped; PostgreSQL integration 38/38 passed. Production Telegram ID format test is included in a subsequent in-progress run.
+- Competition setting values are persisted and audited; a stored key only affects game behavior after the related gameplay system explicitly consumes it.
+- No merge, deployment, production DB, bot or live Mini App connection.
