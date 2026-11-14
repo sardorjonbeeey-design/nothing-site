@@ -1,7 +1,7 @@
-// Fictional players only. Three classes (players.origin):
-//  market    – the seeded transfer-market catalogue below
-//  academy   – the 18 players generated for a new club (50% resale on their first sale)
-//  generated – low-rated youth players the market always keeps in stock
+// Real Super League market players plus generated academy/youth players.
+//  market    – imported real-player catalogue
+//  academy   – legacy 18-player template for controlled fixtures; never auto-assigned to a new club
+//  generated – low-rated youth prospects the market always keeps in stock
 import {marketValueUzs,qualityForOverall} from './economy.js';
 import {realPlayerSeeds} from './real-player-seeds.js';
 import {UZBEK_LEAGUE,assertValidRating,clampPotential,isValidOverall} from './ratings.js';
@@ -27,7 +27,7 @@ export function attributesFor(overall,position,profile=UZBEK_LEAGUE){
  }
  return Object.fromEntries(attributeNames.map((key,i)=>[key,values[i]]));
 }
-// Every generated player is an Uzbek League player; potential never exceeds the profile maximum.
+// All cards use the Uzbekistan Super League game rating profile. Real-player nationality is supplied by the seed; generated prospects default to UZ.
 function card(fullName,position,overall,age,potential,origin,profile=UZBEK_LEAGUE){
  const player={fullName,nationality:'UZ',category:profile.category,age,position,quality:qualityForOverall(overall),overall,potential:clampPotential(potential,profile),attributes:attributesFor(overall,position,profile),marketValueUzs:marketValueUzs(overall),origin};
  assertValidRating(player,profile);

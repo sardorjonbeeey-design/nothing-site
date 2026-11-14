@@ -19,7 +19,7 @@ Player dates of birth were cross-checked against PFL player profiles and, where 
 
 ## Club crests
 
-PFL CDN SVG crests are used for 15 clubs. Dinamo Samarqand uses the 2026 FootyLogos PNG because its PFL crest asset could not be resolved during this import. All crest URLs are stored in the real_club_crest_url column.
+Official PFL CDN SVG crests are used for all 16 clubs, including Dinamo Samarqand. All crest URLs are stored in the real_club_crest_url column.
 
 ## Game-only values
 
