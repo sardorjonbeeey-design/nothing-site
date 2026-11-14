@@ -129,7 +129,7 @@ async function buildSquad(i,user){
  await ok(user,'POST','/api/clubs/'+clubId+'/lineup',{formation:'4-3-3',starters:best.starters,substitutes:best.substitutes});
  if(i===0){
   // Retain coverage for the one-time academy resale rule using controlled integration fixtures only.
-  await db.query("UPDATE players p SET origin='academy',first_sale_done=false WHERE p.id IN (SELECT unnest(l.substitutes) FROM lineups l WHERE l.club_id=$1) AND p.position IN ('CB','CM','AM')",[clubId]);
+  await db.query("UPDATE players p SET origin='academy',first_sale_done=false WHERE p.id IN (SELECT unnest(l.substitutes) FROM lineups l WHERE l.club_id=$1) AND p.position IN ('GK','CB','CM','AM')",[clubId]);
   await db.query("UPDATE players p SET origin='academy',first_sale_done=false WHERE p.id=(SELECT p2.id FROM players p2 JOIN lineups l ON l.club_id=p2.club_id WHERE p2.club_id=$1 AND p2.position='ST' AND p2.id=ANY(l.starters) ORDER BY p2.overall LIMIT 1)",[clubId]);
  }
  assert.equal((await ok(user,'GET','/api/clubs/'+clubId+'/squad')).players.length,18);
@@ -374,7 +374,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.ok(budgetAfterRecruitment>0n&&budgetAfterRecruitment<20000000n);
   // Buying a youth player goes through the normal signing rules and is replaced by exactly one new youth player.
   const generatedBefore=Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n);
-  const youth=market.youth.slice().sort((a,b)=>BigInt(a.market_value_uzs)<BigInt(b.market_value_uzs)?-1:BigInt(a.market_value_uzs)>BigInt(b.market_value_uzs)?1:0)[0];
+  const youth=market.youth.filter(p=>p.position!=='GK').slice().sort((a,b)=>BigInt(a.market_value_uzs)<BigInt(b.market_value_uzs)?-1:BigInt(a.market_value_uzs)>BigInt(b.market_value_uzs)?1:0)[0];
   assert.ok(budgetAfterRecruitment>BigInt(youth.market_value_uzs),'the completed squad leaves enough budget for one more academy prospect');
   const signed=await ok(users[0],'POST',clubPath(0)+'/players/sign',{playerId:youth.id});
   assert.equal(signed.budgetUzs,(budgetAfterRecruitment-BigInt(youth.market_value_uzs)).toString());
