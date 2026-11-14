@@ -18,6 +18,22 @@ Authorization: Bearer <token>
 
 Local-only development authentication is available only when NODE_ENV=development and ALLOW_DEV_AUTH=true, using the x-dev-user-id header. Never enable this on a public server.
 
+## Sole-owner super-admin (migration 008)
+The separate dashboard is served at \`/admin\` (open inside Telegram Mini App). Every admin API requires a valid bearer session whose Telegram user ID exactly matches server environment \`SUPER_ADMIN_TELEGRAM_ID\`. The server fails closed when the setting is absent. There is no admin registration or multi-admin path. Mutations require a reason and write an append-only audit row with actor, target, action, timestamp and before/after JSON.
+
+- GET /api/admin/overview — clubs and registered users, capped at 250 each.
+- GET /api/admin/players?q= — player inspection/search, capped at 100.
+- POST /api/admin/funds — \`{clubId,amountUzs:"-500000|500000",reason}\`; signed whole UZS, ledgered, cannot make budget negative.
+- POST /api/admin/player-gift — \`{playerId,targetClubId,reason}\`; checks 13–26 squad bounds and transactionally repairs the source/target lineups.
+- GET /api/admin/entitlements — entitlement records and user labels.
+- POST /api/admin/entitlement — \`{userId,feature:"gold"|"vip",active:true|false,reason}\`; grants/restores or revokes.
+- GET /api/account/entitlements — the authenticated user's active Gold/VIP entitlements.
+- GET /api/admin/settings — persistent JSON competition settings.
+- POST /api/admin/competition-setting — \`{key,value,reason}\`; upserts extensible JSON value with audit.
+- GET /api/admin/audit?limit=50 — recent audit rows (limit 100 maximum).
+
+Competition settings are stored and audited; gameplay rules must explicitly read a setting key before that key affects match or league outcomes.
+
 ## Club and identity
 
 ### GET /api/clubs
