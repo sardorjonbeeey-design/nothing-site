@@ -643,6 +643,31 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
    await restore(snap,sellerPlayers,sellerPlayers.map(item=>({listingId:item.listingId,playerId:item.id})));
    await assertLedgersConsistent();
   }
+
+  // Cancellation and purchase race on the same listing: either cancellation or sale wins, never both.
+  {
+   const snap=await snapshot();
+   const player=(await ok(users[seller1],'GET',clubPath(seller1)+'/squad')).players.find(p=>p.position!=='GK');
+   const before=await one('SELECT club_id,first_sale_done FROM players WHERE id=$1',[player.id]);
+   const listing=(await ok(users[seller1],'POST',clubPath(seller1)+'/transfers',{playerId:player.id,askingPriceUzs:'1000000'})).listing;
+   const [cancel,buy]=await Promise.all([
+    call(users[seller1],'POST',clubPath(seller1)+'/transfers/'+listing.id+'/cancel',{}),
+    call(users[buyer1],'POST',clubPath(buyer1)+'/transfers/'+listing.id+'/buy',{})
+   ]);
+   assert.equal([cancel,buy].filter(x=>x.status===200).length,1,'exactly one state transition succeeds');
+   const final=await one('SELECT status FROM player_transfer_listings WHERE id=$1',[listing.id]);
+   if(final.status==='sold'){
+    assert.equal(buy.status,200);assert.equal(cancel.status,404);
+    assert.equal((await one('SELECT club_id FROM players WHERE id=$1',[player.id])).club_id,clubs[buyer1].id);
+    assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM player_transfer_history WHERE listing_id=$1',[listing.id])).n),1);
+   }else{
+    assert.equal(final.status,'cancelled');assert.equal(cancel.status,200);assert.equal(buy.status,409);
+    assert.equal((await one('SELECT club_id FROM players WHERE id=$1',[player.id])).club_id,clubs[seller1].id);
+    assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM player_transfer_history WHERE listing_id=$1',[listing.id])).n),0);
+   }
+   await restore(snap,[{id:player.id,...before}],[{listingId:listing.id,playerId:player.id}]);
+   await assertLedgersConsistent();
+  }
  });
 
  await t.test('upgrades are refused without Development Points',async()=>{
