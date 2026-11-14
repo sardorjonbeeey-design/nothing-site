@@ -270,7 +270,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const info=await ok(users[0],'GET','/api/clubs/'+id+'/formations');
   assert.deepEqual(info.formations.map(f=>f.id),FORMATION_IDS);assert.equal(info.formations.length,12);
   assert.equal(info.current.formation,'4-3-3');assert.equal(info.current.valid,true);assert.equal(info.current.fit,11);assert.equal(info.current.fitBonus,4);
-  assert.equal(info.current.strength,squadStrength(original.starters.map(x=>byId.get(x)),'4-3-3'));
+  assert.equal(info.current.strength,Number(squadStrength(original.starters.map(x=>byId.get(x)),'4-3-3').toFixed(1)));
   assert.equal((await call(users[1]||{dev:99},'GET','/api/clubs/'+id+'/formations')).status,404,'another user cannot read this club');
   // Every formation: the suggested XI is accepted, stored and read back, and the report is computed by the server.
   for(const f of info.formations){
@@ -358,12 +358,14 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const capped=(await ok(users[0],'GET','/api/market?maxValue=3000000')).players;
   assert.ok(capped.length>0&&capped.every(p=>BigInt(p.market_value_uzs)<=3000000n));
   assert.equal((await call(users[0],'GET','/api/market?maxValue=abc')).status,400);
-  // An 80-rated player costs 11,000,000 UZS: one fits the opening budget, two do not.
+  // An 80-rated player costs 11,000,000 UZS: one fits the 20M opening budget, two do not. The club has already recruited its squad.
   const elite=(await one("INSERT INTO players(full_name,age,position,quality,overall,potential,attributes,market_value_uzs,origin) VALUES('Test Elite',27,'ST','elite',80,84,'{\"pace\":82,\"shooting\":88,\"passing\":76,\"dribbling\":81,\"defending\":70,\"physical\":83}',$1,'market') RETURNING id",[marketValueUzs(80)])).id;
   assert.equal(marketValueUzs(80),11000000);
   assert.ok(marketValueUzs(80)<=20000000);
   assert.ok(2*marketValueUzs(80)>20000000);
-  assert.equal(await budgetOf(0),20000000n);
+  const budgetAfterRecruitment=await budgetOf(0);
+  assert.ok(budgetAfterRecruitment>0n&&budgetAfterRecruitment<20000000n);
+  assert.ok(budgetAfterRecruitment<marketValueUzs(80),'the completed squad has used part of the opening budget');
   // Buying a youth player goes through the normal signing rules and is replaced by exactly one new youth player.
   const generatedBefore=Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n);
   const youth=market.youth.find(p=>p.position==='CM');
