@@ -66,7 +66,7 @@ test('purchase transfers ownership and records paired ledger entries and history
   if(sql.includes('SELECT id,club_id,position,full_name FROM players WHERE id=$1 FOR UPDATE'))return {rowCount:1,rows:[{id:'listed-player',club_id:'seller',position:'ST',full_name:'Listed Player'}]};
   if(sql.includes('SELECT COUNT(*)::int AS count FROM players WHERE club_id=$1'))return {rowCount:1,rows:[{count:p[0]==='buyer'?17:18}]};
   if(sql.includes('UPDATE player_transfer_listings SET status=\'sold\''))return {rowCount:1,rows:[{id:'listing-1'}]};
-  if(sql.includes('UPDATE players SET club_id=$2 WHERE id=$1 AND club_id=$3'))return {rowCount:1,rows:[{}]};
+  if(sql.includes('UPDATE players SET club_id=$2,first_sale_done=TRUE WHERE id=$1 AND club_id=$3'))return {rowCount:1,rows:[{}]};
   if(sql.includes('SELECT formation,starters,substitutes FROM lineups WHERE club_id=$1 FOR UPDATE'))return {rowCount:1,rows:[lineups[p[0]]]};
   if(sql.includes('SELECT id,position,overall,full_name FROM players WHERE club_id=$1'))return {rowCount:1,rows:[...(p[0]==='seller'?sellerPlayers:buyerPlayers)]};
   if(sql.includes('INSERT INTO money_ledger'))return {rowCount:2,rows:[]};
