@@ -183,7 +183,8 @@ Price rebalance and the 40–90 Uzbek League rating profile are verified on the 
 ## Phase 3B — peer-to-peer transfer market (2026-11-14) — IMPLEMENTED, VERIFICATION PENDING
 - New migration: `db/007_player_to_player_transfers.sql`.
 - New domain service: `src/player-transfers.js`; wired into server API and mobile client market UI.
-- Test file: `test/player-transfers.test.js` (validation, stale listing gate, bounded browse and seller cancellation).
+- Unit tests: `test/player-transfers.test.js` (price validation, ownership gate, stale listing, bounded browse, seller cancellation, mocked successful purchase accounting).
+- PostgreSQL integration case added to `test/integration/game-loop.test.js` for listing, browse, purchase, duplicate refusal, ownership, lineup repair and ledger consistency.
 - Server enforces seller ownership, squad minimum/maximum, minimum goalkeeper retention, buyer affordability, and active-listing state; transaction performs buyer debit, seller credit, player ownership update and ledger/history writes atomically.
 - Listing row is locked before both club rows in purchases; club rows are locked in sorted ID order to serialize buyer spending. Cancellation uses listing-first lock ordering. Partial unique index prevents concurrent active duplicate listings.
 - Database trigger blocks the pre-existing sell-to-market endpoint from transferring out a player who remains actively listed.
