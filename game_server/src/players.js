@@ -6,7 +6,7 @@ export async function insertPlayer(client,p,clubId=null){
  const category=p.category||DEFAULT_CATEGORY;
  // The rating profile is checked here and again by the database trigger.
  assertValidRating(p,ratingProfileFor(category));
- const r=await client.query('INSERT INTO players(club_id,full_name,nationality,age,position,quality,overall,potential,attributes,market_value_uzs,origin,catalog_key,category) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12,$13) ON CONFLICT (catalog_key) DO UPDATE SET full_name=EXCLUDED.full_name,nationality=EXCLUDED.nationality,age=EXCLUDED.age,position=EXCLUDED.position,quality=EXCLUDED.quality,overall=EXCLUDED.overall,potential=EXCLUDED.potential,attributes=EXCLUDED.attributes,market_value_uzs=EXCLUDED.market_value_uzs,category=EXCLUDED.category WHERE players.club_id IS NULL AND players.origin=\\'market\\' RETURNING *',
+ const r=await client.query('INSERT INTO players(club_id,full_name,nationality,age,position,quality,overall,potential,attributes,market_value_uzs,origin,catalog_key,category) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12,$13) ON CONFLICT (catalog_key) DO UPDATE SET full_name=EXCLUDED.full_name,nationality=EXCLUDED.nationality,age=EXCLUDED.age,position=EXCLUDED.position,quality=EXCLUDED.quality,overall=EXCLUDED.overall,potential=EXCLUDED.potential,attributes=EXCLUDED.attributes,market_value_uzs=EXCLUDED.market_value_uzs,category=EXCLUDED.category WHERE players.club_id IS NULL AND players.origin=\'market\' RETURNING *',
   [clubId,p.fullName,p.nationality,p.age,p.position,p.quality,p.overall,p.potential,JSON.stringify(p.attributes),p.marketValueUzs,p.origin,p.catalogKey||null,category]);
  return r.rows[0]||null;
 }
