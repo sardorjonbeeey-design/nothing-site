@@ -738,13 +738,16 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
  const wealth=async()=>JSON.stringify((await db.query('SELECT id,budget_uzs,development_points FROM clubs ORDER BY id')).rows);
 
  await t.test('owner activity warnings and inactivity forfeits are evaluated at scheduled kick-off',async()=>{
-  const first=(await one("SELECT * FROM fixtures WHERE kind='league' AND day_number=6 AND status='scheduled' ORDER BY id LIMIT 1"));
+  const first=(await one("SELECT * FROM fixtures WHERE kind='league' AND status='scheduled' ORDER BY kickoff_at,id LIMIT 1"));
   const homeIndex=clubs.findIndex(c=>c.id===first.home_club_id),awayIndex=clubs.findIndex(c=>c.id===first.away_club_id);
   assert.ok(homeIndex>=0&&awayIndex>=0);
   await db.query("UPDATE owner_activity_events SET activity_at=NOW()-interval '49 hours' WHERE user_id=(SELECT owner_user_id FROM clubs WHERE id=$1)",[first.home_club_id]);
+  await db.query("UPDATE owner_activity_events SET activity_at=NOW()-interval '24 hours' WHERE user_id=(SELECT owner_user_id FROM clubs WHERE id=$1)",[first.away_club_id]);
+  const warning24=await ok(users[awayIndex],'GET',clubPath(awayIndex)+'/activity');
+  assert.equal(warning24.activity.warningLevel,24,'the first warning appears at 24 hours idle');
   await db.query("UPDATE owner_activity_events SET activity_at=NOW()-interval '46 hours' WHERE user_id=(SELECT owner_user_id FROM clubs WHERE id=$1)",[first.away_club_id]);
   const warning=await ok(users[awayIndex],'GET',clubPath(awayIndex)+'/activity');
-  assert.equal(warning.activity.warningLevel,2,'the 2-hour warning appears at 46 hours idle');
+  assert.equal(warning.activity.warningLevel,2,'the final warning appears at 46 hours idle');
   await db.query("UPDATE fixtures SET kickoff_at=NOW()-interval '61 seconds' WHERE id=$1",[first.id]);
   await waitFor(async()=>(await one('SELECT status FROM fixtures WHERE id=$1',[first.id])).status==='played','single inactivity forfeit');
   const single=await one('SELECT home_goals,away_goals,events FROM fixtures WHERE id=$1',[first.id]);
@@ -753,7 +756,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal((await ledgerRows(awayIndex,'match_result_bonus')).some(x=>x.reference_id===first.id),true,'active opponent receives the win bonus');
   assert.equal((await ledgerRows(homeIndex,'match_result_bonus')).some(x=>x.reference_id===first.id),false,'inactive owner receives no result bonus');
 
-  const second=(await one("SELECT * FROM fixtures WHERE kind='league' AND day_number=6 AND status='scheduled' AND id<>$1 ORDER BY id LIMIT 1",[first.id]));
+  const second=(await one("SELECT * FROM fixtures WHERE kind='league' AND status='scheduled' AND id<>$1 ORDER BY kickoff_at,id LIMIT 1",[first.id]));
   const h2=clubs.findIndex(c=>c.id===second.home_club_id),a2=clubs.findIndex(c=>c.id===second.away_club_id);
   const pointsBefore=await db.query('SELECT club_id,points,losses,played FROM league_members WHERE league_id=$1 AND club_id=ANY($2::uuid[])',[second.league_id,[second.home_club_id,second.away_club_id]]);
   for(const clubId of [second.home_club_id,second.away_club_id])await db.query("UPDATE owner_activity_events SET activity_at=NOW()-interval '49 hours' WHERE user_id=(SELECT owner_user_id FROM clubs WHERE id=$1)",[clubId]);
@@ -778,6 +781,8 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const before=await assets(),budgetsBefore=await Promise.all(clubs.map((_,i)=>budgetOf(i)));
   server2=await startServer(childEnv({PORT:String(PORT+1)}));logs.push(server2.log);
   await db.query("UPDATE fixtures SET kickoff_at=kickoff_at-interval '40 days' WHERE kind='league' AND status='scheduled'");
+  // Recreate a realistic qualifying action one hour before each accelerated fixture kick-off.
+  await db.query("INSERT INTO owner_activity_events(user_id,activity_at) SELECT c.owner_user_id,f.kickoff_at-interval '1 hour' FROM fixtures f JOIN clubs c ON c.id IN (f.home_club_id,f.away_club_id) WHERE f.kind='league' AND f.status='scheduled'");
   await waitFor(async()=>await playedCount()===90,'season settlement',40000);
   const s1=await one('SELECT id FROM leagues WHERE season_number=1');
   const played=await one("SELECT SUM(home_goals)::int AS hg,SUM(away_goals)::int AS ag FROM fixtures WHERE status='played' AND league_id=$1",[s1.id]);
