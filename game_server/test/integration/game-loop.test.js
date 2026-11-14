@@ -316,7 +316,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(legacyInfo.current.valid,false);assert.equal(legacyInfo.current.outOfPosition,wrongBefore.outOfPosition);
   assert.equal((await call(users[0],'POST',route,legacy)).status,200,'the legacy lineup can be saved again unchanged');
   assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:attacking.slice().reverse(),substitutes:original.substitutes})).status,200,'in any order');
-  assert.equal((await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking})).status,400,'the allowance does not carry to another formation');
+  assert.equal((await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking,substitutes:original.substitutes})).status,400,'the allowance does not carry to another formation');
   // Improving it: the first XI with a spare striker for a centre-back has fewer players out of position, though still not none.
   const firstCb=xi.find(x=>byId.get(x).position==='CB'),spareStriker=squad.find(p=>p.position==='ST'&&!xi.includes(p.id)).id,mild=xi.map(x=>x===firstCb?spareStriker:x);
   const mildWrong=analyseLineup(team(mild),'4-1-4-1').outOfPosition;
