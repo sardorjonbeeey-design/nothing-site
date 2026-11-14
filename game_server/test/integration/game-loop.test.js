@@ -244,11 +244,11 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   // Position mapping: an eleven with six attackers cannot play 5-4-1 (one striker's place), and the saved lineup is left alone.
   const pick=(position,n)=>squad.filter(p=>p.position===position).slice(0,n).map(p=>p.id);
   const attacking=[...pick('GK',1),...pick('CB',3),...pick('CM',1),...pick('AM',1),...pick('LW',1),...pick('RW',1),...pick('ST',3)];assert.equal(attacking.length,11);
-  const wrongShape=await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking});
+  const wrongShape=await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking,substitutes:lineup.substitutes});
   assert.equal(wrongShape.status,400);assert.match(wrongShape.data.error,/5-4-1 cannot be filled.*ST.*out of position/);
   assert.deepEqual((await ok(users[0],'GET',route)).lineup,lineup);
   // The very same eleven is a legitimate, if poorly suited, 4-3-3: wingers cover at full-back, strikers on the wings.
-  const asFront=await ok(users[0],'POST',route,{formation:'4-3-3',starters:attacking});
+  const asFront=await ok(users[0],'POST',route,{formation:'4-3-3',starters:attacking,substitutes:lineup.substitutes});
   assert.equal(asFront.analysis.valid,true);assert.ok(asFront.analysis.cover>=5);assert.ok(asFront.analysis.fitBonus<1&&asFront.analysis.fitBonus>=-4);
   await ok(users[0],'POST',route,{formation:'4-4-2',starters:lineup.starters,substitutes:lineup.substitutes});
   assert.equal((await ok(users[0],'GET',route)).lineup.formation,'4-4-2');
@@ -294,7 +294,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
    'duplicate starter':{formation:'4-3-3',starters:xi.slice(0,10).concat(xi[0])},'duplicate in another letter case':{formation:'4-3-3',starters:xi.slice(0,10).concat(xi[0].toUpperCase())},
    'not a UUID':{formation:'4-3-3',starters:xi.slice(0,10).concat('1')},'free agent':{formation:'4-3-3',starters:xi.slice(0,10).concat(freeAgent)},
    'no goalkeeper':{formation:'4-3-3',starters:outfield.concat(subs.find(x=>byId.get(x).position!=='GK'))},'two goalkeepers':{formation:'4-3-3',starters:xi.slice(0,10).concat(spareKeeper)},
-   'six attackers in a back five':{formation:'5-4-1',starters:attacking},'six attackers in 4-1-4-1':{formation:'4-1-4-1',starters:attacking},
+   'six attackers in a back five':{formation:'5-4-1',starters:attacking,substitutes:original.substitutes},'six attackers in 4-1-4-1':{formation:'4-1-4-1',starters:attacking},
    'starter repeated on the bench':{formation:'4-3-3',starters:xi,substitutes:[xi[3]]},'duplicate substitute':{formation:'4-3-3',starters:xi,substitutes:[subs[0],subs[0]]},
    'eight substitutes':{formation:'4-3-3',starters:xi,substitutes:subs.concat(subs[0])},'foreign substitute':{formation:'4-3-3',starters:xi,substitutes:[freeAgent]}
   };
@@ -310,12 +310,12 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   // Backward compatibility: a lineup stored before roles were validated (the old rules took any eleven with a goalkeeper).
   // The club must be able to save it again unchanged and to improve it, but not to make it worse.
   await db.query("UPDATE lineups SET formation='4-1-4-1',starters=$2 WHERE club_id=$1",[id,attacking]);
-  const legacy={formation:'4-1-4-1',starters:attacking},team=ids=>ids.map(x=>byId.get(x)),wrongBefore=analyseLineup(team(attacking),'4-1-4-1');
+  const legacy={formation:'4-1-4-1',starters:attacking,substitutes:original.substitutes},team=ids=>ids.map(x=>byId.get(x)),wrongBefore=analyseLineup(team(attacking),'4-1-4-1');
   assert.equal(wrongBefore.valid,false);
   const legacyInfo=await ok(users[0],'GET','/api/clubs/'+id+'/formations');
   assert.equal(legacyInfo.current.valid,false);assert.equal(legacyInfo.current.outOfPosition,wrongBefore.outOfPosition);
   assert.equal((await call(users[0],'POST',route,legacy)).status,200,'the legacy lineup can be saved again unchanged');
-  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:attacking.slice().reverse()})).status,200,'in any order');
+  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:attacking.slice().reverse(),substitutes:original.substitutes})).status,200,'in any order');
   assert.equal((await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking})).status,400,'the allowance does not carry to another formation');
   // Improving it: the first XI with a spare striker for a centre-back has fewer players out of position, though still not none.
   const firstCb=xi.find(x=>byId.get(x).position==='CB'),spareStriker=squad.find(p=>p.position==='ST'&&!xi.includes(p.id)).id,mild=xi.map(x=>x===firstCb?spareStriker:x);
@@ -323,7 +323,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.ok(mildWrong>0&&mildWrong<wrongBefore.outOfPosition);
   assert.match(lineupProblem('4-1-4-1',mild,squad),/cannot be filled/,'not acceptable for a club without the legacy lineup');
   assert.equal(lineupProblem('4-1-4-1',mild,squad,legacy),null);
-  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:mild})).status,200,'the legacy lineup can be improved step by step');
+  assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:mild,substitutes:original.substitutes})).status,200,'the legacy lineup can be improved step by step');
   // Making it worse again is refused, and the stored lineup stays as it was.
   const kept=await stored(),refused=await call(users[0],'POST',route,legacy);
   assert.equal(refused.status,400);assert.match(refused.data.error,/cannot be filled/);assert.equal(await stored(),kept);
