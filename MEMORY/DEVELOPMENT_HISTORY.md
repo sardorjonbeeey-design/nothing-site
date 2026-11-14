@@ -98,6 +98,7 @@ Chronological record. Append entries; do not erase earlier history.
 - Added `game_server/src/player-transfers.js`: seller listing creation/cancellation, browse, purchase with server ownership checks, squad limits, keeper protection, affordability, listing/player/club row locks, UZS debit-credit ledger entries and a unique transfer history record.
 - Integrated authenticated endpoints in `game_server/src/server.js`: public authenticated-market browse, club-owned listings, listing creation, cancellation and purchase.
 - Added P2P listing cards and owner actions to `game_client/app.js`: list player at an entered UZS asking price, buy listed players, cancel listings; global listings and the club's own listings load into the transfer-market view.
-- Added `game_server/test/player-transfers.test.js` coverage for invalid asking prices, ownership gate, stale/closed listing purchase, bounded browsing and seller-only cancellation.
-- No production DB, live Mini App, bot, merge or deployment. Full automated test run and concurrency integration tests have not yet been observed; implementation remains UNVERIFIED pending test execution.
+- Added `game_server/test/player-transfers.test.js` coverage for invalid asking prices, ownership gate, stale/closed listing purchase, bounded browsing, seller-only cancellation and successful mocked accounting flow.
+- Added a PostgreSQL end-to-end P2P integration case to `game_server/test/integration/game-loop.test.js` covering list, browse, purchase, duplicate prevention, ownership, seller/buyer squad-lineup repair and ledger consistency.
+- No production DB, live Mini App, bot, merge or deployment. Tests have been authored but not run/observed; implementation remains UNVERIFIED pending test execution.
 
