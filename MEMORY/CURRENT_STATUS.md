@@ -87,11 +87,10 @@ Do not connect the live Telegram Mini App, live bot, existing backend, productio
 - Match result bonuses: win 250,000 UZS; draw 100,000 UZS each; loss 0. These are additional to 750,000 UZS league income. Double inactivity forfeit pays no result bonus.
 - Season prizes: 1st 10,000,000 UZS; 2nd 7,000,000 UZS; 3rd 5,000,000 UZS. Tie-breaks: points, GD, GF, head-to-head points, head-to-head GD. Remaining ties share occupied top-three prize slots equally; payout is idempotent.
 - Added tests for warning thresholds, single/double forfeits, result bonus ledger entries, 22M UZS prize pool, tie splits, scheduler-restart duplicate protection, concurrent transfer double-buy, concurrent buyer overspend, cancel-vs-buy races, and 120 full 10-club seasons using balanced 18-player squads.
-- Latest successful CI run before the final cancel-vs-buy test addition: 43590707653 — 93 passed, 0 failed, 1 skipped; PostgreSQL integration 40/40 passed. A fresh run is in progress for the final concurrency test.
+- Latest successful CI run after all concurrency tests: 43590913933 — 93 passed, 0 failed, 1 skipped; PostgreSQL integration 40/40 passed.
 - All work remains on zamin-management-isolated; no merge, deployment, production DB, bot or live Mini App connection.
 - Admin access remains closed until isolated runtime has SUPER_ADMIN_TELEGRAM_ID set to the owner's numeric Telegram user ID and migration 008_super_admin.sql is applied. Migration 009_competition_rewards.sql is also required for these competition features.
 - A separate Phase 3 iPhone/Telegram mobile smoke run has not been performed. Phase 2 mobile smoke figures were owner-reported.
 
 ## Remaining Phase 3 work
-- Wait for the final CI run covering the concurrent cancel-vs-buy race test.
 - Before release, run the mobile smoke test in the isolated runtime and review the still-proposed formation coefficients. No deployment is authorized.
