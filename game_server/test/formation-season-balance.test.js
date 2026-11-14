@@ -52,5 +52,5 @@ test('120 complete 10-club seasons show no material formation advantage',()=>{
  }
  const averages=FORMATION_IDS.map(id=>pointsByFormation.get(id)/gamesByFormation.get(id));
  assert.ok(Math.max(...averages)-Math.min(...averages)<0.18,
-  'formation points-per-game spread stays below 0.12 across 120 complete seasons: '+averages.map(x=>x.toFixed(3)).join(', '));
+  'formation points-per-game spread stays below 0.18 across 120 complete seasons: '+averages.map(x=>x.toFixed(3)).join(', '));
 });
