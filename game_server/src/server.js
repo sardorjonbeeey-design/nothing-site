@@ -10,7 +10,7 @@ import {json,readJson,HttpError,safeString,colour,uuid} from './http.js';
 import {saveCrest,readCrest} from './uploads.js';
 import {LEAGUE_TIMEZONE,MATCH_DURATION_SECONDS} from './league.js';
 import {ensureLeague,LEAGUE_LOCK} from './seasons.js';
-import {insertPlayer,ensureYouthSupply} from './players.js';
+import {ensureYouthSupply} from './players.js';
 import {YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL} from './catalog.js';
 import {repairClubLineup,lineupProblem} from './lineup.js';
 import {formations,FORMATION_IDS,isFormation,bestLineup,FIT_BONUS_MAX,FIT_BONUS_PER_PLAYER} from './formations.js';
