@@ -107,11 +107,7 @@ async function handle(req,res){
   const body=await readJson(req);return json(res,200,await telegramLogin(body.initData));
  }
  const user=await authenticate(req);
- // Only explicit authenticated state-changing requests count as owner activity; GET polling never resets inactivity.
- if(req.method==='POST'&&!path.startsWith('/api/admin')){
-  await db().query('INSERT INTO owner_activity_events(user_id) VALUES($1)',[user.id]);
-  await db().query('UPDATE game_users SET last_seen_at=NOW() WHERE id=$1',[user.id]);
- }
+ req.gameUser=user;
  if(path.startsWith('/api/admin')){
   if(!config.superAdminTelegramId||String(user.telegramUserId)!==String(config.superAdminTelegramId))throw new HttpError(403,'Super-admin access denied');
   const audit=async(client,{targetType,targetId,action,before,after,reason})=>{
@@ -444,6 +440,14 @@ const server=http.createServer(async(req,res)=>{
  try{
   if(req.method!=='GET'&&!rateLimit(clientIp(req),120))throw new HttpError(429,'Too many requests');
   await handle(req,res);
+  const requestPath=new URL(req.url,'http://localhost').pathname;
+  // Only successful authenticated, user-initiated state changes count. GET polling and rejected POSTs do not.
+  if(req.method==='POST'&&res.statusCode>=200&&res.statusCode<400&&req.gameUser&&!requestPath.startsWith('/api/admin')){
+   try{
+    await db().query('INSERT INTO owner_activity_events(user_id) VALUES($1)',[req.gameUser.id]);
+    await db().query('UPDATE game_users SET last_seen_at=NOW() WHERE id=$1',[req.gameUser.id]);
+   }catch(activityError){console.error('Could not record owner activity',activityError);}
+  }
  }catch(error){
   const status=Number(error.status)||500;
   if(status>=500)console.error(error);
