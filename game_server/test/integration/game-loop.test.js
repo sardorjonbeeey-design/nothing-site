@@ -785,7 +785,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal(table.length,10);
   for(const r of table){assert.equal(r.played,18);assert.equal(r.wins+r.draws+r.losses,18);assert.equal(r.points,r.wins*3+r.draws);}
   const sum=k=>table.reduce((n,r)=>n+r[k],0);
-  const doubleForfeits=Number((await one("SELECT COUNT(*)::int AS n FROM fixtures WHERE league_id=$1 AND events->>'forfeit'='double'",[s1.id])).n);
+  const doubleForfeits=Number((await one("SELECT COUNT(*)::int AS n FROM fixtures WHERE league_id=$1 AND events->0->>'forfeit'='double'",[s1.id])).n);
   assert.equal(sum('losses')-sum('wins'),doubleForfeits*2,'double forfeits count as two losses and no win');assert.equal(sum('draws')%2,0);
   assert.equal(sum('goals_for'),sum('goals_against'));assert.equal(sum('goals_for'),played.hg+played.ag);
   const order=(await db.query("SELECT day_number FROM fixtures WHERE league_id=$1 AND day_number>6 ORDER BY played_at,kickoff_at",[s1.id])).rows.map(r=>r.day_number);
