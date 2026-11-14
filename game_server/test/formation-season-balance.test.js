@@ -16,13 +16,13 @@ function equalStrengthXI(formation,rating=65){
  }));
 }
 
-test('30 complete 10-club seasons show no material formation advantage',()=>{
+test('120 complete 10-club seasons show no material formation advantage',()=>{
  const clubs=Array.from({length:10},(_,i)=>'club-'+i);
  const schedule=generateDoubleRoundRobin(clubs);
  assert.equal(schedule.length,18);
  const pointsByFormation=new Map(FORMATION_IDS.map(id=>[id,0]));
  const gamesByFormation=new Map(FORMATION_IDS.map(id=>[id,0]));
- for(let season=0;season<30;season++){
+ for(let season=0;season<120;season++){
   const formations=clubs.map((_,i)=>FORMATION_IDS[(i+season)%FORMATION_IDS.length]);
   const lineups=formations.map(id=>equalStrengthXI(id));
   const table=clubs.map(()=>({played:0,wins:0,draws:0,losses:0,points:0,gf:0,ga:0}));
@@ -53,5 +53,5 @@ test('30 complete 10-club seasons show no material formation advantage',()=>{
  }
  const averages=FORMATION_IDS.map(id=>pointsByFormation.get(id)/gamesByFormation.get(id));
  assert.ok(Math.max(...averages)-Math.min(...averages)<0.18,
-  'formation points-per-game spread stays below 0.18 across 30 complete seasons: '+averages.map(x=>x.toFixed(3)).join(', '));
+  'formation points-per-game spread stays below 0.12 across 120 complete seasons: '+averages.map(x=>x.toFixed(3)).join(', '));
 });
