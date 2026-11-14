@@ -107,7 +107,7 @@ async function buildSquad(i,user){
   assert.ok(candidates.length>=count,'test catalogue has enough players for '+positions.join('/'));
   for(const p of candidates.slice(0,count)){used.add(p.id);chosen.push(p);}
  };
- choose(['GK'],2);choose(['CB'],3);choose(['LB','RB'],2);choose(['DM'],2);choose(['CM'],2);choose(['AM'],2);choose(['LW','RW','ST'],5);
+ choose(['GK'],2);choose(['CB'],3);choose(['LB','RB'],2);choose(['DM'],1);choose(['CM'],3);choose(['AM'],2);choose(['ST'],3);choose(['LW','RW'],2);
  for(const p of chosen)await ok(user,'POST','/api/clubs/'+clubId+'/players/sign',{playerId:p.id});
  const info=await ok(user,'GET','/api/clubs/'+clubId+'/formations'),best=info.formations.find(f=>f.id==='4-3-3').best;
  assert.equal(best.valid,true,'test squad can field a valid 4-3-3');
@@ -203,6 +203,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   const squad=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/squad')).players;
   assert.equal(squad.length,0,'new clubs receive no pre-assigned players');
   assert.equal((await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/lineup')).lineup,null,'new clubs receive no pre-saved formation');
+  assert.deepEqual(await ok(users[0],'POST','/api/clubs/'+clubs[0].id+'/leagues/ensure',{}),{leagueId:null,created:false},'an empty club cannot enter the league');
   const ledger=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/ledger')).transactions;
   assert.equal(ledger.length,1);assert.equal(ledger[0].reason,'club_created');assert.equal(ledger[0].amount_uzs,'20000000');assert.equal(ledger[0].balance_after_uzs,'20000000');
   await buildSquad(0,users[0]);
@@ -470,6 +471,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
 
  await t.test('the 10th club creates an 18-round, 19-day league with 20:00 Asia/Tashkent kick-offs',async()=>{
   clubs[9]=(await ok(users[9],'POST','/api/clubs',{name:'Integration Club 10',shortName:'IC10',primaryColour:'#225588',secondaryColour:'#ffffff'})).club;
+  assert.deepEqual(await ok(users[9],'POST',clubPath(9)+'/leagues/ensure',{}),{leagueId:null,created:false},'the tenth club is not admitted until it has a complete squad');
   await buildSquad(9,users[9]);
   const table=(await ok(users[0],'GET',clubPath(0)+'/league')).table;
   assert.equal(table.length,10);assert.ok(table.every(r=>r.played===0&&r.points===0));
