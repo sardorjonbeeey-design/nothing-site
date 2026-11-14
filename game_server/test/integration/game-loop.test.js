@@ -107,7 +107,7 @@ async function buildSquad(i,user){
   assert.ok(candidates.length>=count,'test catalogue has enough players for '+positions.join('/'));
   for(const p of candidates.slice(0,count)){used.add(p.id);chosen.push(p);}
  };
- choose(['GK'],2);choose(['CB'],3);choose(['LB','RB'],2);choose(['DM'],1);choose(['CM'],3);choose(['AM'],2);choose(['ST'],3);choose(['LW','RW'],2);
+ choose(['GK'],2);choose(['CB'],3);choose(['LB'],1);choose(['RB'],1);choose(['DM'],1);choose(['CM'],3);choose(['AM'],2);choose(['ST'],3);choose(['LW'],1);choose(['RW'],1);
  for(const p of chosen)await ok(user,'POST','/api/clubs/'+clubId+'/players/sign',{playerId:p.id});
  const info=await ok(user,'GET','/api/clubs/'+clubId+'/formations'),best=info.formations.find(f=>f.id==='4-3-3').best;
  assert.equal(best.valid,true,'test squad can field a valid 4-3-3');
