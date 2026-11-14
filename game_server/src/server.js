@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {config} from './config.js';
+import {startTelegramBot} from './telegram-bot.js';
 import {requireDb,inTransaction,assertIsolatedDatabase,assertGameSchema,pool} from './db.js';
 import {authenticate,telegramLogin} from './auth.js';
 import {json,readJson,HttpError,safeString,colour,uuid} from './http.js';
@@ -456,6 +457,8 @@ const server=http.createServer(async(req,res)=>{
  }
 });
 server.listen(config.port,'0.0.0.0',()=>console.log('ZAMIN FK isolated game server listening on '+config.port));
+// The dedicated Management Game bot only opens this isolated Mini App; it never touches the City bot.
+const telegramBot=startTelegramBot({token:config.telegramBotToken,webAppUrl:config.webAppUrl});
 // League and friendly matches are settled here, by the server alone, whether or not anyone is online.
 const scheduler=pool?startScheduler({maxIdleMs:config.schedulerMaxIdleMs}):null;
 let shuttingDown=false;
@@ -464,6 +467,7 @@ async function shutdown(){
  shuttingDown=true;
  let failed=false;
  try{await scheduler?.stop();}catch(error){console.error(error);failed=true;}
+ try{await telegramBot.stop();}catch(error){console.error(error);failed=true;}
  server.close(async()=>{
   try{await pool?.end();process.exit(failed?1:0);}
   catch(error){console.error(error);process.exit(1);}
