@@ -1,6 +1,6 @@
 # Owner-approved next phase — competition, transfers and administration
 
-Status: Phase 3A formation matchup model, Phase 3B player-to-player transfer market, Phase 3C sole-owner super-admin, inactivity forfeits, match bonuses, and season prizes are implemented on `zamin-management-isolated`; final verification and longer formation balance review remain.
+Status: Phase 3A–3C, inactivity forfeits, match bonuses, standings tie-breaks and season prizes are implemented and CI-verified on `zamin-management-isolated`. No deployment or production connection has been made. Admin activation still requires the isolated runtime secret and migrations.
 Scope: isolated ZAMIN FK Management game only. Do not connect to the live Mini App, production backend, bot, or live database.
 
 ## 1. Competition integrity and match outcomes
@@ -45,7 +45,8 @@ Formations must alter the actual match simulation, not only the pitch display. E
 - A first model is implemented in `src/formation-tactics.js` and connected to `src/simulation.js` on `zamin-management-isolated`.
 - It uses role-weighted attribute surplus/deficit relative to OVR and applies an antisymmetric matchup adjustment capped at a proposed 1.5 total rating-point swing.
 - CI run `43515953300` passed: 79 unit tests passed, 0 failed, 1 skipped; PostgreSQL integration 36/36 passed. The all-12-formation matchup and balance tests passed.
-- The numeric weights and cap remain PROPOSED, not final owner-approved balance values. A longer full-season simulation with realistic squads remains required.
+- A 120-season, 10-club round-robin simulation using balanced 18-player squads now checks formation points-per-game spread; it passes the 0.18-point threshold.
+- The numeric weights and 1.5-point cap remain PROPOSED, not final owner-approved balance values; the simulation verifies aggregate balance but does not constitute approval of every coefficient.
 
 ## 4. Player-to-player transfer market
 
@@ -79,8 +80,9 @@ Formations must alter the actual match simulation, not only the pitch display. E
 - Win: 250,000 UZS to the winning club.
 - Draw: 100,000 UZS to each club.
 - Loss: no match-result bonus.
-- Rewards are paid by the server after official settlement, exactly once per fixture, and written to the money ledger.
-- These are additional to the existing 750,000 UZS league-match income unless the owner later changes that rule.
+- Both owners inactive: no match-result bonus for either club.
+- Rewards are paid by the server after official settlement, exactly once per fixture, and written to the money ledger as `match_result_bonus`.
+- These are additional to the existing 750,000 UZS league-match income.
 
 ### Season top-three rewards — owner-approved and implemented
 - 1st: 10,000,000 UZS.
@@ -92,11 +94,13 @@ Formations must alter the actual match simulation, not only the pitch display. E
 - A tie extending beyond 3rd place shares only the prize pool for the top-three positions occupied by that tie.
 - Pay once after the season is complete. `season_prize_payments` is unique by league and club; each payment is ledgered as `season_prize`.
 
-## 7. Remaining delivery order
+## 7. Verification and activation gate
 
-1. Re-run the pending price-rebalance migrations and complete test suite on the current isolated branch; review proposed formation coefficients and perform longer realistic full-season balance simulations.
-2. Add and pass adversarial tests for concurrent transfers, duplicate rewards, scheduler restarts, single/double inactivity forfeits, tie-split payouts, and economy balance.
-3. Run longer realistic full-season formation balance simulations and review the proposed tactical coefficients before any release.
+- Latest successful GitHub Actions run `43590707653`: `npm test` — 93 passed, 0 failed, 1 skipped; PostgreSQL integration — 40/40 passed.
+- Coverage includes successful/failed inactivity warnings, single and double inactivity forfeits at the scheduled kick-off, match bonus amounts, 22M UZS prize pool, tied-place prize splitting, idempotent prize payouts across scheduler restarts, concurrent same-listing purchases, concurrent buyer-budget contention, and a 120-season/10-club formation balance simulation.
+- The current branch remains isolated. Before admin access can open, set `SUPER_ADMIN_TELEGRAM_ID` to the owner's numeric Telegram user ID in the isolated runtime and apply migration `008_super_admin.sql`. Migration `009_competition_rewards.sql` must also be applied for inactivity and season rewards. Do not claim admin access is active before those steps are verified.
+- Run the mobile smoke test in the isolated runtime/Telegram client before any release. Phase 2 mobile smoke numbers were owner-reported; this Phase 3 branch has not had a separate live iPhone Telegram smoke run.
+- Tactical coefficients remain proposed. Do not change them or release the branch without the owner's separate approval.
 
 Completed Phase 3 systems: formation tactical matchup model (3A), player-to-player market (3B), sole-owner super-admin (3C), inactivity forfeits, match bonuses, standings tie-breaks and season prizes.
 
