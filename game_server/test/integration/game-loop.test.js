@@ -329,9 +329,9 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:attacking.slice().reverse(),substitutes:attackingBench})).status,200,'in any order');
   assert.equal((await call(users[0],'POST',route,{formation:'5-4-1',starters:attacking,substitutes:attackingBench})).status,400,'the allowance does not carry to another formation');
   // Improving it: the first XI with a spare striker for a centre-back has fewer players out of position, though still not none.
-  const firstCb=attacking.find(x=>byId.get(x).position==='CB'),spareMidfielder=squad.find(p=>p.position==='DM'&&!attacking.includes(p.id)).id,mild=attacking.map(x=>x===firstCb?spareMidfielder:x),mildBench=attackingBench.filter(id=>id!==spareMidfielder).concat(firstCb);
+  const firstCb=attacking.find(x=>byId.get(x).position==='CB'),spareFullback=squad.find(p=>p.position==='RB'&&!attacking.includes(p.id)).id,mild=attacking.map(x=>x===firstCb?spareFullback:x),mildBench=attackingBench.filter(id=>id!==spareFullback).concat(firstCb);
   const mildWrong=analyseLineup(team(mild),'4-1-4-1').outOfPosition;
-  assert.ok(mildWrong>0&&mildWrong<wrongBefore.outOfPosition);
+  assert.ok(mildWrong>0&&mildWrong<wrongBefore.outOfPosition,`mild out-of-position=${mildWrong}; before=${wrongBefore.outOfPosition}`);
   assert.match(lineupProblem('4-1-4-1',mild,squad),/cannot be filled/,'not acceptable for a club without the legacy lineup');
   assert.equal(lineupProblem('4-1-4-1',mild,squad,legacy),null);
   assert.equal((await call(users[0],'POST',route,{formation:'4-1-4-1',starters:mild,substitutes:mildBench})).status,200,'the legacy lineup can be improved step by step');
