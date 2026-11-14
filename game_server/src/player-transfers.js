@@ -1,12 +1,13 @@
 import {HttpError} from './http.js';
 import {MIN_SQUAD_SIZE,MAX_SQUAD_SIZE} from './economy.js';
+import {repairClubLineup} from './lineup.js';
 
 // All operations use caller-supplied authenticated userId and a transaction-capable DB client.
 // Route handlers must wrap each function in inTransaction(...) and must not trust client-sent ownership.
 const positiveUzs=value=>{
  if(typeof value!=='string'&&!Number.isSafeInteger(value))throw new HttpError(400,'Asking price must be an integer UZS amount');
  const text=String(value);
- if(!/^\\d{1,18}$/.test(text)||BigInt(text)<=0n)throw new HttpError(400,'Asking price must be a positive integer UZS amount');
+ if(!/^\d{1,18}$/.test(text)||BigInt(text)<=0n)throw new HttpError(400,'Asking price must be a positive integer UZS amount');
  return text;
 };
 async function ownedClub(client,clubId,userId,lock=false){
@@ -88,5 +89,6 @@ export async function purchasePlayerListing(client,{buyerClubId,userId,listingId
  const buyerAfter=(buyerBalance-price).toString(),sellerAfter=(sellerBalance+price).toString();
  await client.query("INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,'player_transfer_purchase',$4),($5,$6,$7,'player_transfer_sale',$4)",[buyerClubId,(-price).toString(),buyerAfter,player.id,listing.seller_club_id,price.toString(),sellerAfter]);
  await client.query('INSERT INTO player_transfer_history(listing_id,player_id,seller_club_id,buyer_club_id,price_uzs) VALUES($1,$2,$3,$4,$5)',[listingId,player.id,listing.seller_club_id,buyerClubId,price.toString()]);
- return {listingId,playerId:player.id,playerName:player.full_name,priceUzs:price.toString(),buyerBalanceUzs:buyerAfter,sellerBalanceUzs:sellerAfter};
+ const sellerLineup=await repairClubLineup(client,listing.seller_club_id);\n const buyerLineup=await repairClubLineup(client,buyerClubId);
+ return {listingId,playerId:player.id,playerName:player.full_name,priceUzs:price.toString(),buyerBalanceUzs:buyerAfter,sellerBalanceUzs:sellerAfter,sellerPromoted:sellerLineup.promotedPlayers.map(p=>({id:p.id,full_name:p.full_name,position:p.position,overall:p.overall})),buyerPromoted:buyerLineup.promotedPlayers.map(p=>({id:p.id,full_name:p.full_name,position:p.position,overall:p.overall}))};
 }
