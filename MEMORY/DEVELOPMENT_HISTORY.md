@@ -100,5 +100,7 @@ Chronological record. Append entries; do not erase earlier history.
 - Added P2P listing cards and owner actions to `game_client/app.js`: list player at an entered UZS asking price, buy listed players, cancel listings; global listings and the club's own listings load into the transfer-market view.
 - Added `game_server/test/player-transfers.test.js` coverage for invalid asking prices, ownership gate, stale/closed listing purchase, bounded browsing, seller-only cancellation and successful mocked accounting flow.
 - Added a PostgreSQL end-to-end P2P integration case to `game_server/test/integration/game-loop.test.js` covering list, browse, purchase, duplicate prevention, ownership, seller/buyer squad-lineup repair and ledger consistency.
-- No production DB, live Mini App, bot, merge or deployment. Tests have been authored but not run/observed; implementation remains UNVERIFIED pending test execution.
+- CI run `43585008300` completed successfully: `npm test` — 85 passed, 0 failed, 1 skipped; PostgreSQL integration — 37 passed, 0 failed, 0 skipped. The transfer integration test snapshots and restores seeded clubs, budgets, player ownership/resale flag, lineups, ledger rows and transfer records so unrelated tests remain isolated.
+- Fixed test-only issues revealed by CI: mock query order/409 conflict expectation, actual club short-name lookup, and fixture cleanup between integration cases.
+- Adversarial simultaneous purchase/spend/list/cancel DB concurrency tests remain outstanding. No production DB, live Mini App, bot, merge or deployment.
 
