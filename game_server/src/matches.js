@@ -8,6 +8,15 @@ import {repairClubLineup} from './lineup.js';
 import {ensureNextSeasons,payWaitingStipends} from './seasons.js';
 import {ensureYouthSupply} from './players.js';
 import {ownerActivity,payCompletedSeasonPrizes} from './competition.js';
+import {announce} from './channel-feed.js';
+// The channel post for a settled fixture: score, then each goal with its scorer and assist.
+function matchAnnouncement(f,result,forfeit,names){
+ const home=names.get(f.home_club_id)||'Home',away=names.get(f.away_club_id)||'Away';
+ const head=(f.kind==='league'?'League':'Friendly')+' · '+home+' '+result.homeGoals+' - '+result.awayGoals+' '+away;
+ if(forfeit)return head+' (forfeit: owner inactivity)';
+ const goals=result.events.filter(e=>e.type==='goal').sort((a,b)=>a.minute-b.minute).map(e=>e.minute+"' "+(e.scorerName||'Goal')+(e.assistName?' (assist '+e.assistName+')':'')+' · '+(e.side==='home'?home:away));
+ return [head,...goals].join('\n');
+}
 
 export async function awardDevelopmentPoints(client,clubId,amount,reason,referenceId=null){
  const r=await client.query('UPDATE clubs SET development_points=development_points+$2 WHERE id=$1 RETURNING development_points',[clubId,amount]);
@@ -30,7 +39,7 @@ export function matchLineupSnapshot(homeRows,awayRows){
  return {homeFormation:homeRows[0]?.formation||'4-3-3',awayFormation:awayRows[0]?.formation||'4-3-3',home:side(homeRows),away:side(awayRows)};
 }
 // The caller holds a row lock on the fixture and has verified that it is scheduled and due.
-async function settleFixture(client,f){
+async function settleFixture(client,f,holder={}){
  await client.query('SELECT id FROM clubs WHERE id=ANY($1::uuid[]) ORDER BY id FOR UPDATE',[[f.home_club_id,f.away_club_id]]);
  const [homeActivity,awayActivity]=await Promise.all([ownerActivity(client,f.home_club_id,f.kickoff_at),ownerActivity(client,f.away_club_id,f.kickoff_at)]);
  let result,forfeit=null,lineups=null;
@@ -48,6 +57,8 @@ async function settleFixture(client,f){
  }
  const played=await client.query("UPDATE fixtures SET status='played',home_goals=$2,away_goals=$3,events=$4::jsonb,match_lineups=$5::jsonb,played_at=NOW() WHERE id=$1 AND status='scheduled'",[f.id,result.homeGoals,result.awayGoals,JSON.stringify(result.events),lineups?JSON.stringify(lineups):null]);
  if(!played.rowCount)return;
+ const names=new Map((await client.query('SELECT id,name FROM clubs WHERE id=ANY($1::uuid[])',[[f.home_club_id,f.away_club_id]])).rows.map(r=>[r.id,r.name]));
+ holder.note=matchAnnouncement(f,result,forfeit,names);
  // Friendlies never touch standings, league rewards, Development Points or missions.
  if(f.kind!=='league')return;
  const doubleForfeit=forfeit==='double';
@@ -76,11 +87,13 @@ async function settleFixture(client,f){
 export async function settleDueFixtures(){
  let settled=0;
  for(;;){
+  const holder={};
   const done=await inTransaction(async client=>{
    const f=(await client.query("SELECT * FROM fixtures WHERE status='scheduled' AND kickoff_at<=NOW()-make_interval(secs=>$1) ORDER BY kickoff_at,id LIMIT 1 FOR UPDATE SKIP LOCKED",[MATCH_DURATION_SECONDS])).rows[0];
    if(!f)return false;
-   await settleFixture(client,f);return true;
+   await settleFixture(client,f,holder);return true;
   });
+  if(holder.note)announce(holder.note);
   if(!done)break;
   settled++;
  }

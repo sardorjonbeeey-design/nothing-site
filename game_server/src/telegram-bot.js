@@ -116,3 +116,12 @@ export function startTelegramBot({ token, webAppUrl, fetchImpl = fetch, logger =
     }
   };
 }
+
+// Posts a plain-text update to the game's Telegram channel. The bot must be an administrator of the channel.
+export async function sendChannelMessage(text, { token, chatId, fetchImpl = fetch }) {
+  return telegramCall(token, 'sendMessage', {
+    chat_id: chatId,
+    text: String(text).slice(0, 4000),
+    disable_web_page_preview: true
+  }, fetchImpl, AbortSignal.timeout(15000));
+}
