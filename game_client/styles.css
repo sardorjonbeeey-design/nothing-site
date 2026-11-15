@@ -200,7 +200,7 @@
 .dot span{font-size:7.5px;top:100%;margin-top:1px;letter-spacing:.02em}
 .dot.pulse{animation:goal-pulse .9s ease 2}
 /* Anonymous player avatar (silhouette, tinted by position) for squad, transfer and assist lists */
-.avatar{float:left;display:inline-flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;margin:0 10px 6px 0;border-radius:50%;background:var(--avatar,#5b6b64);border:1px solid rgba(255,255,255,.22);overflow:hidden}
+.avatar{float:left;display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;height:32px;margin:0 9px 6px 0;border-radius:50%;background:var(--avatar,#5b6b64);border:1px solid rgba(255,255,255,.22);overflow:hidden}
 .avatar svg{width:100%;height:100%;fill:rgba(255,255,255,.88)}
 .assist-row>.avatar{float:none}
 /* Club badge in the header is a button (opens club settings); XI change picker */
@@ -214,6 +214,6 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 .avatar{background:#2d3331;border:1px solid rgba(255,255,255,.12)}
 .avatar svg{fill:#a7b0ab}
 .market-player{position:relative;padding-left:72px}
-.market-player>.avatar{position:absolute;left:14px;top:50%;transform:translateY(-50%);float:none;margin:0;width:46px;height:46px;flex:0 0 46px}
+.market-player>.avatar{position:absolute;left:14px;top:50%;transform:translateY(-50%);float:none;margin:0;width:38px;height:38px;flex:0 0 38px}
 /* League leaders: rank number */
 .rank{width:22px;flex:0 0 22px;color:var(--muted);font-weight:700}
