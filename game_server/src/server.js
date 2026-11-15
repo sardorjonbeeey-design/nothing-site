@@ -17,7 +17,6 @@ import {formations,FORMATION_IDS,isFormation,bestLineup,FIT_BONUS_MAX,FIT_BONUS_
 import {lineupStrength,simulateMatch} from './simulation.js';
 import {awardDevelopmentPoints,startScheduler} from './matches.js';
 import {createPlayerListing,browsePlayerListings,cancelPlayerListing,purchasePlayerListing} from './player-transfers.js';
-import {announce} from './channel-feed.js';
 import {ratingProfileFor,assertValidRating} from './ratings.js';
 import {ownerActivity,leagueStandings,leagueLeaders} from './competition.js';
 import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValueUzs,overallFromAttributes,STARTING_BUDGET_UZS,MIN_SQUAD_SIZE,MAX_SQUAD_SIZE,STARTING_SQUAD_SIZE,MINIMUM_GOALKEEPERS} from './economy.js';
@@ -320,9 +319,8 @@ async function handle(req,res){
     const bal=(BigInt(c.budget_uzs)-fee).toString();
     await client.query('INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,$4,$5)',[clubId,(-fee).toString(),bal,'player_signing',playerId]);
     if(p.origin==='generated')await ensureYouthSupply(client);
-    return {player:p,budgetUzs:bal,clubName:c.name};
+    return {player:p,budgetUzs:bal};
    });
-   announce(result.clubName+' signed '+result.player.full_name+' ('+result.player.position+', OVR '+result.player.overall+') for '+Number(result.player.market_value_uzs).toLocaleString('en-US')+' UZS');
    return json(res,200,result);
   }
   if(req.method==='POST'&&parts[3]==='players'&&parts[4]==='sell'){
@@ -341,9 +339,8 @@ async function handle(req,res){
     // The sold player leaves the lineup; a sold starter is replaced automatically from the remaining squad.
     const lineup=await repairClubLineup(client,clubId);
     await client.query('INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,$4,$5)',[clubId,fee.toString(),bal,'player_sale',playerId]);
-    return {player:p,budgetUzs:bal,feeUzs:fee.toString(),resaleRatePercent:rate,promoted:lineup.promotedPlayers.map(x=>({id:x.id,full_name:x.full_name,position:x.position,overall:x.overall})),clubName:c.name};
+    return {player:p,budgetUzs:bal,feeUzs:fee.toString(),resaleRatePercent:rate,promoted:lineup.promotedPlayers.map(x=>({id:x.id,full_name:x.full_name,position:x.position,overall:x.overall}))};
    });
-   announce(result.clubName+' sold '+result.player.full_name+' ('+result.player.position+', OVR '+result.player.overall+') for '+Number(result.feeUzs).toLocaleString('en-US')+' UZS');
    return json(res,200,result);
   }
   if(req.method==='POST'&&parts[3]==='players'&&parts[4]==='upgrade'){
