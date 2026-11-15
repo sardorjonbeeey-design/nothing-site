@@ -218,6 +218,6 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 /* League leaders: rank number */
 .rank{width:22px;flex:0 0 22px;color:var(--muted);font-weight:700}
 /* Transfers: squad status strip */
-.squad-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0 0 16px}
+.squad-strip{display:grid;grid-template-columns:.8fr 1.5fr 1.1fr;gap:10px;margin:0 0 16px}
 .squad-strip>div{background:#1a1f1d;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px}
-.squad-strip strong{display:block;font-size:20px;font-weight:800;margin-top:4px}
+.squad-strip strong{display:block;font-size:16px;font-weight:800;margin-top:4px;white-space:nowrap}
