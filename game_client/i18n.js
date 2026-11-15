@@ -13,7 +13,7 @@ const DICT = {
   'Last-minute pressure':'So‘nggi daqiqadagi bosim',
   'Fixtures':'Jadval','Goal':'Gol','Not saved. ':'Saqlanmadi. ','Starting XI saved':'Asosiy 11 saqlandi','Date not recorded':'Sana kiritilmagan',
   'Invalid server response':'Serverdan noto‘g‘ri javob','Request failed':'So‘rov bajarilmadi',
-  'Match':'O‘yin','Squad':'Tarkib','Transfers':'O‘tkazmalar','Season':'Mavsum',
+  'Match':'O‘yin','Squad':'Tarkib','Transfers':'Transferlar','Season':'Mavsum',
   'PROSPECT':'YOSH ISTEDODI','DEVELOPING':'RIVOJLANMOQDA','ESTABLISHED':'TAJRIBALI','ELITE':'ELITA',
   'Your Starting XI must include a goalkeeper.':'Asosiy 11 ta darvozabon bo‘lishi kerak.','A Starting XI needs exactly one goalkeeper.':'Asosiy 11 ta da aynan bitta darvozabon bo‘lishi kerak.',
   'Fit ':'Mos ','Natural':'Asosiy o‘rin','Cover':'Almashtiruvchi','Out of position':'Noodatiy o‘rinda','Empty':'Bo‘sh',
