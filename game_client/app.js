@@ -242,10 +242,27 @@ function seasonPage(){
  return seg+body;
 }
 // ---- Pitch: positions come from the formation's position codes; the away side is mirrored to face the home side.
-const SLOT_POSITIONS={GK:[[50,90]],CB:[[36,76],[64,76],[50,78]],LB:[[12,64]],RB:[[88,64]],DM:[[38,60],[62,60],[50,58]],CM:[[30,46],[70,46],[50,46]],AM:[[50,36],[28,34],[72,34]],LW:[[14,22]],RW:[[86,22]],ST:[[38,16],[62,16],[50,12]]};
-function placeOnPitch(list,flip,side){
- const used={};
- return list.map(p=>{const slots=SLOT_POSITIONS[p.position]||[[50,50]],k=used[p.position]||0;used[p.position]=k+1;const [x,y]=slots[k%slots.length];const yy=flip?100-y:y;return {p,x,y:yy,bx:x,by:yy,side:side||(flip?'away':'home'),role:p.position};});
+// The pitch is horizontal: x runs goal to goal (home attacks right), y runs touchline to touchline.
+// The formation string (e.g. 4-3-3) sets how many players stand on each line; players are sorted from back to front.
+const FORM_DEPTH={GK:0,CB:1,LB:1,RB:1,DM:2,CM:2.5,AM:3,LW:3.5,RW:3.5,ST:4};
+function formationLines(f){const n=String(f||'').split('-').map(Number);return n.length>=2&&n.every(x=>x>0)&&n.reduce((a,b)=>a+b,0)===10?n:[4,3,3];}
+function lineWidths(n){return n===1?[50]:n===2?[35,65]:n===3?[18,50,82]:Array.from({length:n},(_,j)=>12+j*(76/(n-1)));}
+function placeOnPitch(list,away,formation){
+ const lines=formationLines(formation);
+ const gk=list.filter(p=>p.position==='GK').slice(0,1);
+ const outfield=list.filter(p=>!gk.includes(p)).map((p,i)=>({p,i}));
+ outfield.sort((a,b)=>((FORM_DEPTH[a.p.position]??2.5)-(FORM_DEPTH[b.p.position]??2.5))||a.i-b.i);
+ const lane=p=>['LB','LW'].includes(p.position)?0:['RB','RW'].includes(p.position)?2:1;
+ const rows=[gk];let idx=0;
+ for(const n of lines){const group=outfield.slice(idx,idx+n).map(x=>x.p);idx+=n;group.sort((a,b)=>lane(a)-lane(b));rows.push(group);}
+ if(idx<outfield.length)rows[rows.length-1].push(...outfield.slice(idx).map(x=>x.p));
+ const out=[];
+ rows.forEach((row,i)=>{
+  if(!row.length)return;
+  const depth=7+i*(73/lines.length),widths=lineWidths(row.length);
+  row.forEach((p,j)=>{const x=away?100-depth:depth,y=away?100-widths[j]:widths[j];out.push({p,x,y,bx:x,by:y,side:away?'away':'home',role:p.position});});
+ });
+ return out;
 }
 function dotMarkup(placed,colour){
  const p=placed.p,parts=String(p.full_name||p.fullName||'').trim().split(/\s+/),label=esc((parts[parts.length-1]||'').slice(0,4).toUpperCase());
@@ -255,7 +272,7 @@ function squadPitch(){
  const ids=state.lineup?.starters||[];
  if(ids.length!==11)return '<section class="panel pitch-panel"><div class="eyebrow">'+t('PITCH')+'</div><p class="sub">'+t('Name 11 starters below to see your team on the pitch.')+'</p></section>';
  const players=ids.map(id=>state.squad.find(p=>p.id===id)).filter(Boolean);
- return '<section class="panel pitch-panel"><div class="eyebrow">STARTING XI · '+esc(state.lineup.formation)+'</div><div class="match-pitch">'+placeOnPitch(players,false).map(d=>dotMarkup(d,state.club.primary_colour)).join('')+'</div></section>';
+ return '<section class="panel pitch-panel"><div class="eyebrow">STARTING XI · '+esc(state.lineup.formation)+'</div><div class="match-pitch static-pitch">'+placeOnPitch(players,false,state.lineup.formation).map(d=>dotMarkup(d,state.club.primary_colour)).join('')+'</div></section>';
 }
 // ---- Replay: a stored match played back on the pitch in about fourteen seconds.
 const REPLAY_MS=14000;
@@ -285,7 +302,7 @@ function clearReplay(){const m=state.replay;if(m&&m.timers){m.timers.forEach(cle
 function replayScreen(){
  const m=state.replay,home=m.home,away=m.away;
  const awayColour=(away.colour||'').toLowerCase()===(home.colour||'').toLowerCase()?'#8a9a92':away.colour;
- const dots=[...placeOnPitch(home.players||[],false,'home').map(d=>dotMarkup(d,home.colour)),...placeOnPitch(away.players||[],true,'away').map(d=>dotMarkup(d,awayColour))].join('');
+ const dots=[...placeOnPitch(home.players||[],false,home.formation).map(d=>dotMarkup(d,home.colour)),...placeOnPitch(away.players||[],true,away.formation).map(d=>dotMarkup(d,awayColour))].join('');
  return '<div class="replay"><header class="replay-top"><button class="btn ghost" data-action="replay-close">Close</button><span class="eyebrow">'+esc(m.title)+'</span><span></span></header>'+
   '<div class="replay-score"><span class="team-tag" style="--accent:'+esc(home.colour||'#167a55')+'">'+esc(home.short||home.name)+'</span><strong id="replay-score">0 — 0</strong><span class="team-tag" style="--accent:'+esc(away.colour||'#7c8b84')+'">'+esc(away.short||away.name)+'</span></div>'+
   '<div class="match-pitch replay-pitch"><div class="pitch-centre"></div>'+dots+'<div class="ball" id="replay-ball"></div></div>'+
@@ -307,10 +324,11 @@ function startReplay(){
  const layout=()=>{
   for(const d of dots){
    const home=d.dataset.side==='home',f=ROLE_FOLLOW[d.dataset.role]??.4;
-   const lineShift=home?-Math.max(0,50-pos.by)*.15:Math.max(0,pos.by-50)*.15;
-   const x=+d.dataset.bx+(pos.bx-50)*.45*f+(Math.random()-.5)*4;
-   const y=+d.dataset.by+(pos.by-(+d.dataset.by))*.3*f+lineShift+(Math.random()-.5)*4;
-   d.style.left=clamp(x,5,95)+'%';d.style.top=clamp(y,5,95)+'%';
+   // Horizontal pitch: pos.bx is the ball's goal-to-goal position, pos.by its touchline-to-touchline position.
+   const lineShift=home?Math.max(0,pos.bx-50)*.15:-Math.max(0,50-pos.bx)*.15;
+   const x=+d.dataset.bx+(pos.bx-(+d.dataset.bx))*.3*f+lineShift+(Math.random()-.5)*3;
+   const y=+d.dataset.by+(pos.by-50)*.45*f+(Math.random()-.5)*3;
+   d.style.left=clamp(x,4,96)+'%';d.style.top=clamp(y,6,94)+'%';
   }
  };
  const moveBall=(x,y)=>{pos.bx=x;pos.by=y;ball.style.left=x+'%';ball.style.top=y+'%';layout();};
@@ -322,9 +340,9 @@ function startReplay(){
   if(e.type==='forfeit'){line('gold',t('Forfeit · owner inactivity'));return;}
   if(e.type==='goal'){
    if(e.side==='home')hg++;else ag++;
-   const goalY=e.side==='home'?8:92,scorer=dotAt(e.scorerId);
-   if(scorer){moveBall(scorer.x,scorer.y);scorer.el.classList.add('pulse');at(700,()=>moveBall(50,goalY));}
-   else moveBall(50,goalY);
+   const goalX=e.side==='home'?93:7,scorer=dotAt(e.scorerId);
+   if(scorer){moveBall(scorer.x,scorer.y);scorer.el.classList.add('pulse');at(700,()=>moveBall(goalX,50));}
+   else moveBall(goalX,50);
    score.textContent=hg+' — '+ag;
    const banner=document.createElement('div');banner.className='goal-banner';banner.innerHTML='<small>'+t('GOAL')+' · '+minute+"'</small><strong>"+esc(e.scorerName||t('Goal'))+'</strong>';root.querySelector('.replay')?.appendChild(banner);at(1800,()=>banner.remove());
    const flash=document.createElement('div');flash.className='goal-flash';root.querySelector('.replay')?.appendChild(flash);at(1100,()=>flash.remove());
@@ -333,7 +351,7 @@ function startReplay(){
    haptic('success');
    return;
   }
-  moveBall(50,e.side==='away'?78:22);
+  moveBall(e.side==='away'?28:72,50);
   line('','<b>'+minute+"'</b> "+esc(t(e.text||'')));
  };
  layout();
