@@ -89,7 +89,7 @@ async function saveLineup(formation,starters,substitutes,message){
 }
 const draftBench=()=>state.squad.filter(p=>!state.lineupDraft.includes(p.id)).sort((a,b)=>b.overall-a.overall).slice(0,7).map(p=>p.id);
 // Anonymous player avatar: a generic silhouette tinted by position, never a real photo.
-function avatar(p){const g=({GK:"#c9a227",CB:"#2e7d5b",LB:"#2e7d5b",RB:"#2e7d5b",DM:"#2b6cb0",CM:"#2b6cb0",AM:"#2b6cb0",LW:"#b5473a",RW:"#b5473a",ST:"#b5473a"})[p.position]||"#5b6b64";return '<span class="avatar" style="--avatar:'+g+'"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="15" r="7.5"/><path d="M6 39c1.5-9 7-13.5 14-13.5S32.5 30 34 39z"/></svg></span>';}
+function avatar(p){const g="#2d3331";return '<span class="avatar" style="--avatar:'+g+'"><svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="15" r="7.5"/><path d="M6 39c1.5-9 7-13.5 14-13.5S32.5 30 34 39z"/></svg></span>';}
 function squadPage(){
  const c=state.club;
  const players=state.squad;

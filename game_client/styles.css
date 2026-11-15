@@ -210,3 +210,8 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 .xi-picker .assist-row{display:flex;align-items:center;gap:8px}
 .xi-picker .assist-row>div{flex:1;min-width:0}
 .xi-picker>.btn{margin-top:10px;width:100%}
+/* Anonymous avatar: neutral dark grey silhouette. Market cards reserve a left column and place it absolutely so the card layout stays intact. */
+.avatar{background:#2d3331;border:1px solid rgba(255,255,255,.12)}
+.avatar svg{fill:#a7b0ab}
+.market-player{position:relative;padding-left:72px}
+.market-player>.avatar{position:absolute;left:14px;top:50%;transform:translateY(-50%);float:none;margin:0;width:46px;height:46px;flex:0 0 46px}
