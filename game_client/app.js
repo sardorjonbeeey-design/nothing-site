@@ -22,7 +22,7 @@ async function api(path,options={}){
  return data;
 }
 function shell(body){
- root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><div class="top-right">'+(state.clubs.length>1?'<select id="club-switcher">'+state.clubs.map(x=>'<option value="'+x.id+'" '+(x.id===state.club.id?'selected':'')+'>'+esc(x.short_name)+' · '+esc(x.name)+'</option>').join('')+'</select>':'')+'<div class="club-context">'+miniCrest(state.club)+'<span>'+esc(state.club.name)+'</span></div><button class="lang-toggle" data-action="lang">'+(window.ZAMIN_LANG==='ru'?'RU':'UZ')+'</button><span class="budget-chip">'+money(state.club.budget_uzs)+'</span></div></header><div class="layout"><nav class="nav">'+
+ root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><div class="top-right">'+(state.clubs.length>1?'<select id="club-switcher">'+state.clubs.map(x=>'<option value="'+x.id+'" '+(x.id===state.club.id?'selected':'')+'>'+esc(x.short_name)+' · '+esc(x.name)+'</option>').join('')+'</select>':'')+'<button class="club-context" data-action="edit-identity">'+miniCrest(state.club)+'<span>'+esc(state.club.name)+'</span></button><button class="lang-toggle" data-action="lang">'+(window.ZAMIN_LANG==='ru'?'RU':'UZ')+'</button><span class="budget-chip">'+money(state.club.budget_uzs)+'</span></div></header><div class="layout"><nav class="nav">'+
  [['overview',t('Match')],['squad',t('Squad')],['market',t('Transfers')],['league',t('Season')]].map(x=>'<button data-tab="'+x[0]+'" class="'+(state.tab===x[0]||(x[0]==='league'&&SEASON_TABS.includes(state.tab))?'active':'')+'">'+x[1]+'</button>').join('')+
  '<div class="nav-foot">ISOLATED GAME CLIENT<br>NOT CONNECTED TO LIVE SYSTEMS</div></nav><main class="content">'+body+'</main></div><footer class="footer"><span>ZAMIN FK · MANAGEMENT GAME</span><span>ISOLATED BUILD 0.1</span></footer></div>';
 }
@@ -205,7 +205,7 @@ function createPage(){
 }
 function identityPage(){
  const c=state.club;
- return '<div class="create">'+pageHead(t('CLUB SETTINGS'),'Edit identity','Update your name, colours and club crest.')+'<form id="identity-form" class="panel"><div class="field"><label>CLUB NAME</label><input name="name" maxlength="28" required value="'+esc(c.name)+'"></div><div class="grid2"><div class="field"><label>SHORT NAME</label><input name="shortName" maxlength="5" required value="'+esc(c.short_name)+'"></div><div class="field"><label>PRIMARY COLOUR</label><input name="primaryColour" type="color" value="'+esc(c.primary_colour)+'"></div></div><div class="field"><label>SECONDARY COLOUR</label><input name="secondaryColour" type="color" value="'+esc(c.secondary_colour)+'"></div><div class="field"><label>REPLACE CREST · OPTIONAL</label><input id="crest-file" type="file" accept="image/png,image/jpeg,image/webp"><small class="meta">'+t('Leave empty to keep the current crest.')+'</small></div><div class="field"><label>EDITABLE CREST GENERATION PROMPT</label><textarea id="crest-prompt" rows="4">Create an original professional football club crest for [club name]. Use [primary colour] as the main colour and [secondary colour] as the accent. Design a distinctive shield with a memorable central symbol, clean vector geometry, strong contrast and readable initials. Do not copy any existing club badge. Transparent background, flat colours, suitable for a mobile football management game.</textarea><button class="btn secondary" type="button" data-action="copy-prompt">Copy prompt</button></div><div class="actions"><button class="btn" type="submit">Save identity</button><button class="btn ghost" type="button" data-tab="overview">Cancel</button></div></form></div>';
+ return '<div class="create">'+pageHead(t('CLUB SETTINGS'),'Edit identity','Update your name, colours and club crest.')+'<form id="identity-form" class="panel"><div class="field"><label>CLUB NAME</label><input name="name" maxlength="28" required value="'+esc(c.name)+'"></div><div class="grid2"><div class="field"><label>SHORT NAME</label><input name="shortName" maxlength="5" required value="'+esc(c.short_name)+'"></div><div class="field"><label>PRIMARY COLOUR</label><input name="primaryColour" type="color" value="'+esc(c.primary_colour)+'"></div></div><div class="field"><label>SECONDARY COLOUR</label><input name="secondaryColour" type="color" value="'+esc(c.secondary_colour)+'"></div><div class="field"><label>CLUB PHOTO · OPTIONAL</label><input id="crest-file" type="file" accept="image/png,image/jpeg,image/webp"><small class="meta">'+t('Leave empty to keep the current crest.')+'</small></div><div class="field"><label>EDITABLE CREST GENERATION PROMPT</label><textarea id="crest-prompt" rows="4">Create an original professional football club crest for [club name]. Use [primary colour] as the main colour and [secondary colour] as the accent. Design a distinctive shield with a memorable central symbol, clean vector geometry, strong contrast and readable initials. Do not copy any existing club badge. Transparent background, flat colours, suitable for a mobile football management game.</textarea><button class="btn secondary" type="button" data-action="copy-prompt">Copy prompt</button></div><div class="actions"><button class="btn" type="submit">Save identity</button><button class="btn ghost" type="button" data-tab="overview">Cancel</button></div></form></div>';
 }
 // ---- Match home: the next kick-off, the last result with its replay, and a first-run sample match.
 function matchHome(){
@@ -266,15 +266,26 @@ function placeOnPitch(list,away,formation){
  });
  return out;
 }
-function dotMarkup(placed,colour){
+function dotMarkup(placed,colour,pickable){
  const p=placed.p,parts=String(p.full_name||p.fullName||'').trim().split(/\s+/),label=esc((parts[parts.length-1]||'').slice(0,4).toUpperCase());
- return '<div class="dot" data-pid="'+esc(p.id)+'" data-bx="'+placed.bx+'" data-by="'+placed.y+'" data-role="'+esc(placed.role)+'" data-side="'+placed.side+'" style="left:'+placed.x+'%;top:'+placed.y+'%;--accent:'+esc(colour||'#167a55')+'"><span>'+label+'</span></div>';
+ return '<div class="dot" data-pid="'+esc(p.id)+'" data-bx="'+placed.bx+'" data-by="'+placed.y+'" data-role="'+esc(placed.role)+'" data-side="'+placed.side+'"'+(pickable?' data-action="xi-slot" data-player="'+esc(p.id)+'"':'')+' style="left:'+placed.x+'%;top:'+placed.y+'%;--accent:'+esc(colour||'#167a55')+'"><span>'+label+'</span></div>';
+}
+const POS_GROUP={GK:"GK",CB:"DEF",LB:"DEF",RB:"DEF",DM:"MID",CM:"MID",AM:"MID",LW:"ATT",RW:"ATT",ST:"ATT"};
+// Trial check: would this Starting XI be accepted for the current formation? Same arrangement rule as the server.
+function xiProblem(starters,def){if(!def)return "Formations not loaded";const saved=state.lineupDraft;state.lineupDraft=starters;try{return arrangeXI(def,draftPlayers()).problem;}finally{state.lineupDraft=saved;}}
+function xiPickerMarkup(out,players){
+ const def=formationDef(state.lineup.formation),ids=players.map(p=>p.id);
+ const cands=state.squad.filter(p=>!ids.includes(p.id)&&POS_GROUP[p.position]===POS_GROUP[out.position]).sort((a,b)=>b.overall-a.overall).filter(p=>!xiProblem(ids.map(id=>id===out.id?p.id:id),def));
+ return '<div class="xi-picker"><div class="eyebrow">'+t('CHANGE')+' · '+esc(out.position)+'</div><h3>'+esc(out.full_name)+'</h3>'+
+  (cands.length?cands.map(p=>'<div class="assist-row">'+avatar(p)+'<div><strong>'+esc(p.full_name)+'</strong><div class="meta">'+esc(p.position)+' · '+esc(p.age)+' yrs</div></div><span class="rating">'+esc(p.overall)+'</span><button class="btn" data-action="xi-swap" data-player="'+esc(p.id)+'" data-out="'+esc(out.id)+'">'+t('Put in')+'</button></div>').join(''):'<p class="sub">'+t('No available player for this position.')+'</p>')+
+  '<button class="btn secondary" data-action="xi-close">'+t('Close')+'</button></div>';
 }
 function squadPitch(){
  const ids=state.lineup?.starters||[];
  if(ids.length!==11)return '<section class="panel pitch-panel"><div class="eyebrow">'+t('PITCH')+'</div><p class="sub">'+t('Name 11 starters below to see your team on the pitch.')+'</p></section>';
  const players=ids.map(id=>state.squad.find(p=>p.id===id)).filter(Boolean);
- return '<section class="panel pitch-panel"><div class="eyebrow">STARTING XI · '+esc(state.lineup.formation)+'</div><div class="match-pitch static-pitch">'+placeOnPitch(players,false,state.lineup.formation).map(d=>dotMarkup(d,state.club.primary_colour)).join('')+'</div></section>';
+ const pick=state.xiPick?players.find(p=>p.id===state.xiPick):null;
+ return '<section class="panel pitch-panel"><div class="eyebrow">STARTING XI · '+esc(state.lineup.formation)+'</div><div class="match-pitch static-pitch">'+placeOnPitch(players,false,state.lineup.formation).map(d=>dotMarkup(d,state.club.primary_colour,true)).join('')+'</div><p class="meta">'+t('Tap a player to change him.')+'</p>'+(pick?xiPickerMarkup(pick,players):'')+'</section>';
 }
 // ---- Replay: a stored match played back on the pitch in about fourteen seconds.
 const REPLAY_MS=14000;
@@ -375,7 +386,7 @@ function render(){
  // While a replay is open it owns the screen. Background refreshes must not restart it.
  if(state.replay){if(!state.replay.started){state.replay.started=true;root.innerHTML=replayScreen();startReplay();}return;}
  if(!state.club){root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><span class="tag">ISOLATED BUILD</span></header>'+createPage()+'</div>';return;}
- if(state.opening&&state.results.length){root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><div class="club-context">'+miniCrest(state.club)+'<span>'+esc(state.club.name)+'</span></div></header>'+openingPage()+'</div>';return;}
+ if(state.opening&&state.results.length){root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><button class="club-context" data-action="edit-identity">'+miniCrest(state.club)+'<span>'+esc(state.club.name)+'</span></button></header>'+openingPage()+'</div>';return;}
  let body=state.tab==='identity'?identityPage():state.tab==='overview'?matchHome():state.tab==='squad'?squadPage():state.tab==='market'?marketPage():seasonPage();
  shell(body);
 }
@@ -431,6 +442,16 @@ root.addEventListener('click',async e=>{
   if(action==='cancel-create'){state.club=state.clubs[0]||null;state.tab='overview';render();return;}
   if(action==='edit-identity'){state.tab='identity';render();return;}
   if(action==='copy-prompt'){const prompt=$('#crest-prompt')?.value||'';if(!prompt)throw new Error('Prompt is empty');if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(prompt);else{const area=$('#crest-prompt');area.select();document.execCommand('copy');}toast('Crest prompt copied');return;}
+  if(action==='xi-slot'){state.xiPick=b.dataset.player;render();return;}
+  if(action==='xi-close'){state.xiPick=null;render();return;}
+  if(action==='xi-swap'){
+   const out=b.dataset.out,starters=state.lineup.starters.map(id=>id===out?b.dataset.player:id),problem=xiProblem(starters,formationDef(state.lineup.formation));
+   if(problem){render();toast('Not saved. '+problem);return;}
+   const subs=state.squad.filter(p=>!starters.includes(p.id)).sort((a,b)=>b.overall-a.overall).slice(0,7).map(p=>p.id);
+   state.xiPick=null;
+   try{await saveLineup(state.lineup.formation,starters,subs,t('Player changed'));}catch(error){render();toast('Not saved. '+error.message);}
+   return;
+  }
   if(action==='pick-formation'){state.formationDraft=b.dataset.formation;render();return;}
   if(action==='toggle-starter'){
    const id=b.dataset.player,draft=state.lineupDraft.slice(),index=draft.indexOf(id);

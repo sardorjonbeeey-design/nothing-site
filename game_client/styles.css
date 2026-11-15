@@ -203,3 +203,10 @@
 .avatar{float:left;display:inline-flex;align-items:center;justify-content:center;flex:0 0 40px;width:40px;height:40px;margin:0 10px 6px 0;border-radius:50%;background:var(--avatar,#5b6b64);border:1px solid rgba(255,255,255,.22);overflow:hidden}
 .avatar svg{width:100%;height:100%;fill:rgba(255,255,255,.88)}
 .assist-row>.avatar{float:none}
+/* Club badge in the header is a button (opens club settings); XI change picker */
+button.club-context{border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:0}
+.xi-picker{margin-top:12px;padding:12px;border-radius:14px;background:var(--panel2);border:1px solid var(--line)}
+.xi-picker h3{margin:4px 0 10px}
+.xi-picker .assist-row{display:flex;align-items:center;gap:8px}
+.xi-picker .assist-row>div{flex:1;min-width:0}
+.xi-picker>.btn{margin-top:10px;width:100%}
