@@ -2,6 +2,7 @@
 (() => {
 const DICT = {
  uz: {
+'CHANGE':'ALMASHTIRISH','Put in':'Tarkibga kiritish','Tap a player to change him.':'Almashtirish uchun o‘yinchini bosing.','Player changed':'O‘yinchi almashtirildi','No available player for this position.':'Bu pozitsiya uchun bo‘sh o‘yinchi yo‘q.','Close':'Yopish',
 'TOP SCORERS':'ENG KO‘P GOL URGANLAR','TOP ASSISTS':'ENG KO‘P ASSIST BERGANLAR','No goals yet.':'Hali gol yo‘q.',
   'GOAL':'GOL','assist':'Assist',
   'Home team scores':'Ev jamoasi gol urdi',
@@ -180,8 +181,8 @@ const DICT = {
   'Your team':'Ваша команда','Standing':'Место'
  }
 };
-let lang=localStorage.getItem('zamin-lang');
-if(!lang){const code=window.Telegram?.WebApp?.initDataUnsafe?.user?.language_code||'';lang=code.startsWith('ru')?'ru':'uz';}
+// Uzbek is the base language for every user; Russian only if the user picks it with the RU/UZ toggle.
+let lang=localStorage.getItem('zamin-lang')||'uz';
 window.ZAMIN_LANG=lang;
 window.t=function(s){const d=DICT[window.ZAMIN_LANG]||{};return Object.prototype.hasOwnProperty.call(d,s)?d[s]:s;};
 window.setZaminLang=function(l){localStorage.setItem('zamin-lang',l);location.reload();};
