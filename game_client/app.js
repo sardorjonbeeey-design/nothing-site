@@ -13,6 +13,8 @@ const whenFormat=new Intl.DateTimeFormat('en-GB',{timeZone:TZ,day:'2-digit',mont
 const when=(v)=>v?whenFormat.format(new Date(v))+t(' · Tashkent time'):'Date not recorded';
 function toast(msg){const el=document.createElement('div');el.className='toast';el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),2600);}
 async function api(path,options={}){
+ // Trades and lineup changes are saved on the server, so they are refused while offline.
+ if((options.method||'GET')!=='GET'&&navigator.onLine===false)throw new Error(t('No connection. Trades need internet.'));
  const headers={'content-type':'application/json',...(options.headers||{})};
  if(state.token)headers.authorization='Bearer '+state.token;
  if(!state.token&&cfg.devUserId)headers['x-dev-user-id']=String(cfg.devUserId);
@@ -21,6 +23,16 @@ async function api(path,options={}){
  if(!response.ok)throw new Error(data.error||'Request failed');
  return data;
 }
+// Offline banner and button state: read-only screens keep working from the last sync.
+function syncOnline(){
+ const offline=navigator.onLine===false;
+ document.body.classList.toggle('offline',offline);
+ let bar=document.getElementById('offline-bar');
+ if(offline&&!bar){bar=document.createElement('div');bar.id='offline-bar';bar.className='offline-bar';bar.textContent=t('Offline. You can view your club, but trades and lineup changes need internet.');document.body.prepend(bar);}
+ if(!offline&&bar)bar.remove();
+}
+window.addEventListener('offline',syncOnline);
+window.addEventListener('online',()=>{syncOnline();if(state.token||cfg.devUserId)loadAll().catch(()=>{});});
 function shell(body){
  root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><div class="top-right">'+(state.clubs.length>1?'<select id="club-switcher">'+state.clubs.map(x=>'<option value="'+x.id+'" '+(x.id===state.club.id?'selected':'')+'>'+esc(x.short_name)+' · '+esc(x.name)+'</option>').join('')+'</select>':'')+'<button class="club-context" data-action="edit-identity">'+miniCrest(state.club)+'<span>'+esc(state.club.name)+'</span></button><button class="lang-toggle" data-action="lang">'+(window.ZAMIN_LANG==='ru'?'RU':'UZ')+'</button><span class="budget-chip">'+money(state.club.budget_uzs)+'</span></div></header><div class="layout"><nav class="nav">'+
  [['overview',t('Match')],['squad',t('Squad')],['market',t('Transfers')],['league',t('Season')]].map(x=>'<button data-tab="'+x[0]+'" class="'+(state.tab===x[0]||(x[0]==='league'&&SEASON_TABS.includes(state.tab))?'active':'')+'">'+x[1]+'</button>').join('')+
@@ -538,5 +550,5 @@ async function boot(){
   if(state.club&&state.results.length){const firstNew=state.results.findIndex(r=>!r.viewed);state.resultIndex=firstNew>=0?firstNew:0;state.opening=true;render();}
  }catch(err){root.innerHTML='<div class="shell"><section class="panel create"><h1>Connection unavailable</h1><p class="sub">'+esc(err.message)+'</p><p class="sub">Check the isolated game server URL, database migration and authentication settings.</p></section></div>';}
 }
-boot();
+syncOnline();boot();
 })();

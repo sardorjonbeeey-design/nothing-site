@@ -2,6 +2,7 @@
 (() => {
 const DICT = {
  uz: {
+'No connection. Trades need internet.':'Internet aloqasi yo‘q. Savdo uchun internet kerak.','Offline. You can view your club, but trades and lineup changes need internet.':'Oflayn. Klubni ko‘rishingiz mumkin, lekin savdo va tarkib o‘zgarishi uchun internet kerak.',
 'CHANGE':'ALMASHTIRISH','Put in':'Tarkibga kiritish','Tap a player to change him.':'Almashtirish uchun o‘yinchini bosing.','Player changed':'O‘yinchi almashtirildi','No available player for this position.':'Bu pozitsiya uchun bo‘sh o‘yinchi yo‘q.','Close':'Yopish',
 'TOP SCORERS':'ENG KO‘P GOL URGANLAR','TOP ASSISTS':'ENG KO‘P ASSIST BERGANLAR','No goals yet.':'Hali gol yo‘q.',
   'GOAL':'GOL','assist':'Assist',
