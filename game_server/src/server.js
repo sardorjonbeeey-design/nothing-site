@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {config} from './config.js';
-import {startTelegramBot} from './telegram-bot.js';
+import {startTelegramBot,sendDirectMessage} from './telegram-bot.js';
 import {requireDb,inTransaction,assertIsolatedDatabase,assertGameSchema,pool} from './db.js';
 import {authenticate,telegramLogin} from './auth.js';
 import {json,readJson,HttpError,safeString,colour,uuid} from './http.js';
@@ -156,6 +156,35 @@ async function handle(req,res){
     await audit(client,{targetType:'player',targetId:playerId,action:'player_gifted',before:{clubId:p.club_id},after:{clubId:targetClubId,fullName:p.full_name},reason});
     return {playerId,fullName:p.full_name,fromClubId:p.club_id,toClubId:targetClubId};
    });return json(res,200,result);
+  }
+  if(req.method==='POST'&&path==='/api/admin/messages'){
+   const body=await readJson(req),scope=body.scope,reason=safeString(body.reason,500,'Reason');
+   const text=String(body.text??'').trim();
+   if(!text||text.length>1000)throw new HttpError(400,'Message must be 1-1000 characters');
+   if(!config.telegramBotToken)throw new HttpError(503,'Telegram bot token is not configured');
+   let recipients,targetId=scope;
+   if(scope==='self'){recipients=[String(user.telegramUserId)];}
+   else if(scope==='user'){
+    const id=uuid(body.userId,'User ID');targetId='user:'+id;
+    const row=(await db().query('SELECT telegram_user_id FROM game_users WHERE id=$1',[id])).rows[0];
+    if(!row)throw new HttpError(404,'User not found');
+    recipients=[String(row.telegram_user_id)];
+   }
+   else if(scope==='all'){
+    if(body.confirm!=='SEND ALL')throw new HttpError(400,'Type SEND ALL to confirm a broadcast');
+    recipients=(await db().query('SELECT telegram_user_id FROM game_users')).rows.map(r=>String(r.telegram_user_id));
+   }
+   else throw new HttpError(400,'scope must be self, user or all');
+   // Sent in the background, one message at a time with a short gap (Telegram limits bulk sends); the result is audited when done.
+   (async()=>{
+    let sent=0,failed=0;
+    for(const chatId of recipients){
+     try{await sendDirectMessage(text,{token:config.telegramBotToken,chatId});sent++;}catch{failed++;}
+     await new Promise(resolve=>setTimeout(resolve,60));
+    }
+    await audit(db(),{targetType:'message',targetId,action:'message_sent',after:{scope,total:recipients.length,sent,failed,length:text.length},reason}).catch(()=>{});
+   })();
+   return json(res,202,{scope,total:recipients.length,started:true});
   }
   if(req.method==='POST'&&path==='/api/admin/entitlement'){
    const body=await readJson(req),userId=uuid(body.userId,'User ID'),feature=body.feature,active=body.active,reason=safeString(body.reason,500,'Reason');
