@@ -23,8 +23,8 @@ import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValue
 
 const db=()=>requireDb();
 const clientRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../game_client');
-const staticFiles={'/':'index.html','/index.html':'index.html','/app.js':'app.js','/styles.css':'styles.css','/config.js':'config.js','/i18n.js':'i18n.js','/admin':'admin.html','/admin.html':'admin.html','/admin.js':'admin.js','/assets/hero-stadium.png':'assets/hero-stadium.png','/assets/pitch-texture.png':'assets/pitch-texture.png','/assets/crowd-bokeh.png':'assets/crowd-bokeh.png','/assets/goal-burst.png':'assets/goal-burst.png'};
-const staticTypes={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png'};
+const staticFiles={'/manifest.webmanifest':'manifest.webmanifest','/sw.js':'sw.js','/icons/icon-192.png':'icons/icon-192.png','/icons/icon-512.png':'icons/icon-512.png','/icons/apple-touch-icon.png':'icons/apple-touch-icon.png','/':'index.html','/index.html':'index.html','/app.js':'app.js','/styles.css':'styles.css','/config.js':'config.js','/i18n.js':'i18n.js','/admin':'admin.html','/admin.html':'admin.html','/admin.js':'admin.js','/assets/hero-stadium.png':'assets/hero-stadium.png','/assets/pitch-texture.png':'assets/pitch-texture.png','/assets/crowd-bokeh.png':'assets/crowd-bokeh.png','/assets/goal-burst.png':'assets/goal-burst.png'};
+const staticTypes={'.webmanifest':'application/manifest+json; charset=utf-8','.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png'};
 const pathModule=path;
 // What the client may know about an XI in a formation. Always computed here, never read from a request.
 function lineupReport(formation,xi){
@@ -98,7 +98,7 @@ async function handle(req,res){
  cors(req,res);
  if(req.method==='OPTIONS'){res.writeHead(204);return res.end();}
  const url=new URL(req.url,'http://localhost'),path=url.pathname;
- if(req.method==='GET'&&staticFiles[path]){const file=staticFiles[path],bytes=await fs.readFile(pathModule.join(clientRoot,file));res.writeHead(200,{'content-type':staticTypes[pathModule.extname(file)],'cache-control':file==='index.html'?'no-cache':'public,max-age=300','x-content-type-options':'nosniff'});return res.end(bytes);}
+ if(req.method==='GET'&&staticFiles[path]){const file=staticFiles[path],bytes=await fs.readFile(pathModule.join(clientRoot,file));res.writeHead(200,{'content-type':staticTypes[pathModule.extname(file)],'cache-control':(file==='index.html'||file==='sw.js')?'no-cache':'public,max-age=300','x-content-type-options':'nosniff'});return res.end(bytes);}
  if(req.method==='GET'&&path==='/health')return json(res,200,{ok:true,service:'zamin-fk-game-server'});
  if(req.method==='GET'&&path==='/ready'){await assertGameSchema(db());return json(res,200,{ok:true,database:true,schema:true,seeded:true});}
  if(req.method==='GET'&&path.startsWith('/uploads/')){const file=await readCrest(path.slice('/uploads/'.length));res.writeHead(200,{'content-type':file.type,'cache-control':'public,max-age=31536000,immutable','x-content-type-options':'nosniff'});return res.end(file.bytes);}
