@@ -20,6 +20,7 @@ async function api(path,options={}){
  if(!state.token&&cfg.devUserId)headers['x-dev-user-id']=String(cfg.devUserId);
  const response=await fetch((cfg.apiBase||'')+path,{...options,headers,body:options.body?JSON.stringify(options.body):undefined});
  const data=await response.json().catch(()=>({error:t('Invalid server response')}));
+ if(response.status===401&&state.token&&!(window.Telegram&&window.Telegram.WebApp&&window.Telegram.WebApp.initData)){localStorage.removeItem('zamin-token');location.reload();}
  if(!response.ok)throw new Error(data.error||'Request failed');
  return data;
 }
@@ -539,11 +540,34 @@ root.addEventListener('submit',async e=>{
   }
  }catch(err){toast(err.message||'Could not save club');button.disabled=false;}
 });
+// Browser / PWA sign-in: the Telegram Login Widget returns a signed user, which the server exchanges for a session token.
+const TELEGRAM_LOGIN_BOT='zamingame_bot';
+window.onTelegramAuth=async function(user){
+ try{
+  const login=await fetch((cfg.apiBase||'')+'/api/auth/telegram-widget',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(user)});
+  const data=await login.json().catch(()=>({}));
+  if(!login.ok)throw new Error(data.error||'Telegram sign-in failed');
+  localStorage.setItem('zamin-token',data.token);
+  location.reload();
+ }catch(err){toast(err.message);}
+};
+function showTelegramSignIn(){
+ root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div></header><section class="panel create"><h1>'+t('Sign in')+'</h1><p class="sub">'+t('Sign in with Telegram to open your club.')+'</p><div id="tg-login"></div></section></div>';
+ const s=document.createElement('script');
+ s.async=true;s.src='https://telegram.org/js/telegram-widget.js?22';
+ s.setAttribute('data-telegram-login',TELEGRAM_LOGIN_BOT);s.setAttribute('data-size','large');
+ s.setAttribute('data-onauth','onTelegramAuth(user)');s.setAttribute('data-request-access','write');
+ document.getElementById('tg-login').appendChild(s);
+}
 async function boot(){
  try{
   const tg=window.Telegram&&window.Telegram.WebApp;
   if(tg&&tg.initData){tg.ready();tg.expand();const login=await api('/api/auth/telegram',{method:'POST',body:{initData:tg.initData}});state.token=login.token;state.user=login.user;}
-  else if(!cfg.devUserId){root.innerHTML='<div class="shell"><header class="top"><div class="brand"><span class="mark">Z</span><span>ZAMIN FK</span></div><span class="tag">ISOLATED BUILD</span></header><section class="panel create"><h1>Game client ready</h1><p class="sub">Open this client inside the configured Telegram Mini App, or set a local development user ID in config.js and enable development authentication on the isolated server.</p><div class="notice">This client is not connected to the live ZAMIN FK Mini App or production database.</div></section></div>';return;}
+  else if(!cfg.devUserId){
+   const saved=localStorage.getItem('zamin-token');
+   if(saved){state.token=saved;}
+   else{showTelegramSignIn();return;}
+  }
   await loadAll();
   startAutoRefresh();
   // Opening the game only reads stored results; it never starts or settles a match.

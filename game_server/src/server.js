@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {config} from './config.js';
 import {startTelegramBot,sendDirectMessage} from './telegram-bot.js';
 import {requireDb,inTransaction,assertIsolatedDatabase,assertGameSchema,pool} from './db.js';
-import {authenticate,telegramLogin} from './auth.js';
+import {authenticate,telegramLogin,telegramWidgetLogin} from './auth.js';
 import {json,readJson,HttpError,safeString,colour,uuid} from './http.js';
 import {saveCrest,readCrest} from './uploads.js';
 import {LEAGUE_TIMEZONE,MATCH_DURATION_SECONDS} from './league.js';
@@ -105,6 +105,10 @@ async function handle(req,res){
  if(req.method==='POST'&&path==='/api/auth/telegram'){
   if(!rateLimit(clientIp(req),12))throw new HttpError(429,'Too many login attempts');
   const body=await readJson(req);return json(res,200,await telegramLogin(body.initData));
+ }
+ if(req.method==='POST'&&path==='/api/auth/telegram-widget'){
+  if(!rateLimit(clientIp(req),12))throw new HttpError(429,'Too many login attempts');
+  const body=await readJson(req);return json(res,200,await telegramWidgetLogin(body));
  }
  const user=await authenticate(req);
  req.gameUser=user;

@@ -53,8 +53,29 @@ export async function authenticate(req) {
  }
  throw new HttpError(401,'Authentication required');
 }
+// Telegram Login Widget (website sign-in, used by the PWA). The hash is HMAC-SHA256 of the sorted fields,
+// keyed by SHA256(bot token); this differs from Mini App initData, which uses the 'WebAppData' key.
+export function verifyTelegramWidget(data) {
+ if (!config.telegramBotToken) throw new HttpError(503,'Telegram authentication is not configured');
+ if (!data || typeof data !== 'object' || typeof data.hash !== 'string') throw new HttpError(400,'Telegram login data is missing');
+ const fields = Object.entries(data).filter(([k,v]) => k !== 'hash' && v !== undefined && v !== null);
+ const checkString = fields.map(([k,v]) => [k,String(v)]).sort(([a],[b]) => a.localeCompare(b)).map(([k,v]) => k + '=' + v).join('\n');
+ const secret = crypto.createHash('sha256').update(config.telegramBotToken).digest();
+ const expected = crypto.createHmac('sha256',secret).update(checkString).digest('hex');
+ if (!safeEqualHex(data.hash,expected)) throw new HttpError(401,'Telegram signature is invalid');
+ const authDate = Number(data.auth_date), now = Math.floor(Date.now()/1000);
+ if (!Number.isFinite(authDate) || authDate > now + 30 || now - authDate > config.telegramAuthMaxAgeSeconds) throw new HttpError(401,'Telegram authentication data has expired');
+ if (!Number.isSafeInteger(Number(data.id))) throw new HttpError(401,'Telegram user is missing');
+ return { id: String(data.id), username: data.username, first_name: data.first_name, last_name: data.last_name };
+}
+export async function telegramWidgetLogin(data) {
+ return loginTelegramUser(verifyTelegramWidget(data));
+}
 export async function telegramLogin(initData) {
- const user = verifyTelegramInitData(initData), db = requireDb();
+ return loginTelegramUser(verifyTelegramInitData(initData));
+}
+async function loginTelegramUser(user) {
+ const db = requireDb();
  const r = await db.query('INSERT INTO game_users(telegram_user_id,username,first_name,last_name,last_seen_at) VALUES($1,$2,$3,$4,NOW()) ON CONFLICT(telegram_user_id) DO UPDATE SET username=EXCLUDED.username,first_name=EXCLUDED.first_name,last_name=EXCLUDED.last_name,last_seen_at=NOW() RETURNING id,telegram_user_id,username,first_name',
   [String(user.id),user.username || null,user.first_name || null,user.last_name || null]);
  const account = r.rows[0], token = signToken({sub:account.id,tg:account.telegram_user_id,exp:Math.floor(Date.now()/1000)+config.sessionMaxAgeSeconds});
