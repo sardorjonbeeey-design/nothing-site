@@ -470,7 +470,7 @@ const server=http.createServer(async(req,res)=>{
 });
 server.listen(config.port,'0.0.0.0',()=>console.log('ZAMIN FK isolated game server listening on '+config.port));
 // The dedicated Management Game bot only opens this isolated Mini App; it never touches the City bot.
-const telegramBot=startTelegramBot({token:config.telegramBotToken,webAppUrl:config.webAppUrl});
+const telegramBot=startTelegramBot({token:config.telegramBotToken,webAppUrl:config.webAppUrl,superAdminTelegramId:config.superAdminTelegramId});
 // League and friendly matches are settled here, by the server alone, whether or not anyone is online.
 const scheduler=pool?startScheduler({maxIdleMs:config.schedulerMaxIdleMs}):null;
 let shuttingDown=false;

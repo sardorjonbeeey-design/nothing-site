@@ -25,11 +25,21 @@ async function telegramCall(token, method, payload, fetchImpl = fetch, signal) {
   return data.result;
 }
 
-export async function replyToTelegramUpdate(update, { token, webAppUrl, fetchImpl = fetch }) {
+export async function replyToTelegramUpdate(update, { token, webAppUrl, superAdminTelegramId = '', fetchImpl = fetch }) {
   const message = update?.message;
   if (!message?.chat?.id || typeof message.text !== 'string' || message.from?.is_bot) return false;
 
   const command = message.text.trim().split(/\s+/, 1)[0].split('@', 1)[0].toLowerCase();
+  if (command === '/admin') {
+    // Owner only: other users get no reply, so the command does not reveal that the panel exists.
+    if (!superAdminTelegramId || String(message.from?.id) !== String(superAdminTelegramId) || message.chat.type !== 'private') return false;
+    await telegramCall(token, 'sendMessage', {
+      chat_id: message.chat.id,
+      text: 'Owner admin panel',
+      reply_markup: { inline_keyboard: [[{ text: 'Open admin panel', web_app: { url: botUrl(new URL('admin', webAppUrl).toString()) } }]] }
+    }, fetchImpl);
+    return true;
+  }
   if (!['/start', '/game', '/help'].includes(command)) return false;
 
   const privateChat = message.chat.type === 'private';
@@ -47,7 +57,7 @@ export async function replyToTelegramUpdate(update, { token, webAppUrl, fetchImp
   return true;
 }
 
-export function startTelegramBot({ token, webAppUrl, fetchImpl = fetch, logger = console }) {
+export function startTelegramBot({ token, webAppUrl, superAdminTelegramId = '', fetchImpl = fetch, logger = console }) {
   if (!token) {
     logger.warn('Telegram bot is disabled: TELEGRAM_BOT_TOKEN is not configured');
     return { stop: async () => {} };
@@ -93,7 +103,7 @@ export function startTelegramBot({ token, webAppUrl, fetchImpl = fetch, logger =
         for (const update of updates) {
           offset = Math.max(offset, Number(update.update_id) + 1);
           try {
-            await replyToTelegramUpdate(update, { token, webAppUrl: appUrl, fetchImpl });
+            await replyToTelegramUpdate(update, { token, webAppUrl: appUrl, superAdminTelegramId, fetchImpl });
           } catch (error) {
             logger.error('Telegram message reply failed:', error.message);
           }
