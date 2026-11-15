@@ -5,7 +5,7 @@ import {academySquadTemplate} from '../src/catalog.js';
 import {UZBEK_LEAGUE} from '../src/ratings.js';
 
 test('approved economy constants',()=>{
- assert.equal(STARTING_BUDGET_UZS,20000000n);assert.equal(LEAGUE_MATCH_INCOME_UZS,750000n);assert.equal(WAITING_STIPEND_UZS,750000n);
+ assert.equal(STARTING_BUDGET_UZS,30000000n);assert.equal(LEAGUE_MATCH_INCOME_UZS,750000n);assert.equal(WAITING_STIPEND_UZS,750000n);
  assert.equal(MIN_SQUAD_SIZE,13);assert.equal(MAX_SQUAD_SIZE,26);assert.equal(STARTING_SQUAD_SIZE,18);
 });
 test('price curve: 11,000,000 x 1.112^(overall-80), rounded to 10,000 UZS',()=>{
@@ -21,15 +21,15 @@ test('price curve: 11,000,000 x 1.112^(overall-80), rounded to 10,000 UZS',()=>{
  assert.equal(marketValueUzs(UZBEK_LEAGUE.minOverall),160000);assert.equal(marketValueUzs(UZBEK_LEAGUE.maxOverall),31800000);
  assert.throws(()=>marketValueUzs(0));assert.throws(()=>marketValueUzs(101));assert.throws(()=>marketValueUzs(70.5));
 });
-test('a new club can afford one 80-rated player, but not two without selling players',()=>{
+test('a new club can afford two 80-rated players, but not three without selling players',()=>{
  assert.equal(marketValueUzs(80),11000000);
  assert.ok(BigInt(marketValueUzs(80))<=STARTING_BUDGET_UZS);
- assert.ok(2n*BigInt(marketValueUzs(80))>STARTING_BUDGET_UZS);
- // Selling the five most valuable academy players leaves 13 and adds 2,090,000 cash, enough for two 80s with only 90,000 left.
+ assert.ok(3n*BigInt(marketValueUzs(80))>STARTING_BUDGET_UZS);
+ // Selling the five most valuable academy players adds 2,090,000 cash: 32,090,000 in total, enough for two 80s with 10,090,000 left.
  const values=academySquadTemplate.map(([,o])=>marketValueUzs(o)).sort((a,b)=>b-a);
  const cash=STARTING_BUDGET_UZS+values.slice(0,5).reduce((n,v)=>n+saleValueUzs(v,50),0n);
- assert.equal(cash,22090000n);
- assert.equal(cash-2n*BigInt(marketValueUzs(80)),90000n);
+ assert.equal(cash,32090000n);
+ assert.equal(cash-2n*BigInt(marketValueUzs(80)),10090000n);
  assert.equal(values.reduce((a,b)=>a+b,0),10520000,'starting squad list value');
 });
 test('quality tiers use provisional thresholds',()=>{

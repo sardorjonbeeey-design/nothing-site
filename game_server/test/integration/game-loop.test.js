@@ -206,14 +206,14 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.equal((await call(users[0],'POST','/api/clubs',{name:'Bad Crest',shortName:'BCR',crestUrl:'https://example.com/x.png'})).status,400);
   const created=await ok(users[0],'POST','/api/clubs',{name:'Integration One',shortName:'INT1',primaryColour:'#167a55',secondaryColour:'#f0c75e',crestUrl:up.crestUrl});
   clubs[0]=created.club;
-  assert.equal(created.club.crest_url,up.crestUrl);assert.equal(created.club.budget_uzs,'20000000');assert.equal(created.club.development_points,0);
+  assert.equal(created.club.crest_url,up.crestUrl);assert.equal(created.club.budget_uzs,'30000000');assert.equal(created.club.development_points,0);
   const crest=await fetch(BASE+up.crestUrl);assert.equal(crest.status,200);assert.equal(crest.headers.get('content-type'),'image/png');
   const squad=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/squad')).players;
   assert.equal(squad.length,0,'new clubs receive no pre-assigned players');
   assert.equal((await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/lineup')).lineup,null,'new clubs receive no pre-saved formation');
   assert.deepEqual(await ok(users[0],'POST','/api/clubs/'+clubs[0].id+'/leagues/ensure',{}),{leagueId:null,created:false},'an empty club cannot enter the league');
   const ledger=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/ledger')).transactions;
-  assert.equal(ledger.length,1);assert.equal(ledger[0].reason,'club_created');assert.equal(ledger[0].amount_uzs,'20000000');assert.equal(ledger[0].balance_after_uzs,'20000000');
+  assert.equal(ledger.length,1);assert.equal(ledger[0].reason,'club_created');assert.equal(ledger[0].amount_uzs,'30000000');assert.equal(ledger[0].balance_after_uzs,'30000000');
   await buildSquad(0,users[0]);
   const built=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/squad')).players;
   const lineup=(await ok(users[0],'GET','/api/clubs/'+clubs[0].id+'/lineup')).lineup;
@@ -371,10 +371,10 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   // An 80-rated player costs 11,000,000 UZS: one fits the 20M opening budget, two do not. The club has already recruited its squad.
   const elite=(await one("INSERT INTO players(full_name,age,position,quality,overall,potential,attributes,market_value_uzs,origin) VALUES('Test Elite',27,'ST','elite',80,84,'{\"pace\":82,\"shooting\":88,\"passing\":76,\"dribbling\":81,\"defending\":70,\"physical\":83}',$1,'market') RETURNING id",[marketValueUzs(80)])).id;
   assert.equal(marketValueUzs(80),11000000);
-  assert.ok(marketValueUzs(80)<=20000000);
-  assert.ok(2*marketValueUzs(80)>20000000);
+  assert.ok(marketValueUzs(80)<=30000000);
+  assert.ok(3*marketValueUzs(80)>30000000);
   const budgetAfterRecruitment=await budgetOf(0);
-  assert.ok(budgetAfterRecruitment>0n&&budgetAfterRecruitment<20000000n);
+  assert.ok(budgetAfterRecruitment>0n&&budgetAfterRecruitment<30000000n);
   // Buying a youth player goes through the normal signing rules and is replaced by exactly one new youth player.
   const generatedBefore=Number((await one("SELECT COUNT(*)::int AS n FROM players WHERE origin='generated'")).n);
   const youth=market.youth.filter(p=>p.position!=='GK').slice().sort((a,b)=>BigInt(a.market_value_uzs)<BigInt(b.market_value_uzs)?-1:BigInt(a.market_value_uzs)>BigInt(b.market_value_uzs)?1:0)[0];
@@ -794,7 +794,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   // A club registered now is not paid for matchdays that are already over.
   clubs[12]=(await ok(users[12],'POST','/api/clubs',{name:'Integration Club 13',shortName:'IC13',primaryColour:'#225588',secondaryColour:'#ffffff'})).club;
   await sleep(700);
-  assert.equal((await ledgerRows(12,'waiting_stipend')).length,0);assert.equal(await budgetOf(12),20000000n);
+  assert.equal((await ledgerRows(12,'waiting_stipend')).length,0);assert.equal(await budgetOf(12),30000000n);
   server2.child.kill();server2=null;
  });
 
@@ -957,7 +957,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
   assert.ok(prizeSummary.payments>=3);assert.ok(prizeSummary.max_place<=3);
   for(const [i,n] of [[10,18],[11,18],[12,16]]){
    const stipend=await ledgerRows(i,'waiting_stipend');
-   assert.equal(stipend.length,n);assert.equal(await budgetOf(i),20000000n+750000n*BigInt(n));assert.equal((await ledgerRows(i,'league_match_income')).length,0);
+   assert.equal(stipend.length,n);assert.equal(await budgetOf(i),30000000n+750000n*BigInt(n));assert.equal((await ledgerRows(i,'league_match_income')).length,0);
   }
   assert.equal(Number((await one('SELECT COUNT(*)::int AS n FROM stipend_payments')).n),52);
   assert.equal((await db.query('SELECT 1 FROM stipend_payments s JOIN league_members lm ON lm.league_id=s.league_id AND lm.club_id=s.club_id')).rowCount,0);
