@@ -79,3 +79,20 @@ export async function payCompletedSeasonPrizes(client){
  }
  return paid;
 }
+
+// Top scorers and top assists of a league, counted from its played fixtures' goal events.
+export async function leagueLeaders(client,leagueId){
+ const rows=(await client.query("SELECT f.events,f.home_club_id,f.away_club_id,h.short_name AS home_short,a.short_name AS away_short FROM fixtures f JOIN clubs h ON h.id=f.home_club_id JOIN clubs a ON a.id=f.away_club_id WHERE f.league_id=$1 AND f.status='played' AND f.events IS NOT NULL",[leagueId])).rows;
+ const scorers=new Map(),assists=new Map();
+ const add=(map,id,name,club)=>{if(!id||!name)return;const k=String(id);const e=map.get(k)||{playerId:k,name,club,count:0};e.count++;map.set(k,e);};
+ for(const r of rows){
+  for(const e of (Array.isArray(r.events)?r.events:[])){
+   if(e.type!=='goal')continue;
+   const club=e.side==='home'?r.home_short:r.away_short;
+   add(scorers,e.scorerId,e.scorerName,club);
+   add(assists,e.assistId,e.assistName,club);
+  }
+ }
+ const top=m=>[...m.values()].sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name)).slice(0,10);
+ return {scorers:top(scorers),assists:top(assists)};
+}

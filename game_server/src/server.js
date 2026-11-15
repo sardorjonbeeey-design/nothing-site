@@ -18,7 +18,7 @@ import {lineupStrength,simulateMatch} from './simulation.js';
 import {awardDevelopmentPoints,startScheduler} from './matches.js';
 import {createPlayerListing,browsePlayerListings,cancelPlayerListing,purchasePlayerListing} from './player-transfers.js';
 import {ratingProfileFor,assertValidRating} from './ratings.js';
-import {ownerActivity,leagueStandings} from './competition.js';
+import {ownerActivity,leagueStandings,leagueLeaders} from './competition.js';
 import {saleValueUzs,resaleRatePercent,upgradeCost,qualityForOverall,marketValueUzs,overallFromAttributes,STARTING_BUDGET_UZS,MIN_SQUAD_SIZE,MAX_SQUAD_SIZE,STARTING_SQUAD_SIZE,MINIMUM_GOALKEEPERS} from './economy.js';
 
 const db=()=>requireDb();
@@ -260,7 +260,8 @@ async function handle(req,res){
    const table=async league=>leagueStandings(db(),league.id);
    const [current,previous]=seasons.rows;
    const leagueExists=(await db().query('SELECT 1 FROM leagues WHERE starts_on IS NOT NULL LIMIT 1')).rowCount>0;
-   return json(res,200,{leagueExists,table:current?await table(current):[],season:current?{number:current.season_number,status:current.status,startsOn:current.starts_on}:null,
+   const leaders=current?await leagueLeaders(db(),current.id):{scorers:[],assists:[]};
+   return json(res,200,{leagueExists,leaders,table:current?await table(current):[],season:current?{number:current.season_number,status:current.status,startsOn:current.starts_on}:null,
     previous:previous?{season:{number:previous.season_number,status:previous.status,startsOn:previous.starts_on},table:await table(previous)}:null});
   }
   if(req.method==='GET'&&parts[3]==='development-ledger'){const r=await db().query('SELECT amount_dp,balance_after_dp,reason,created_at FROM development_ledger WHERE club_id=$1 ORDER BY created_at DESC LIMIT 30',[clubId]);return json(res,200,{transactions:r.rows});}

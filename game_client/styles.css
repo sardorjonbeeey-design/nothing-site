@@ -215,3 +215,5 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 .avatar svg{fill:#a7b0ab}
 .market-player{position:relative;padding-left:72px}
 .market-player>.avatar{position:absolute;left:14px;top:50%;transform:translateY(-50%);float:none;margin:0;width:46px;height:46px;flex:0 0 46px}
+/* League leaders: rank number */
+.rank{width:22px;flex:0 0 22px;color:var(--muted);font-weight:700}

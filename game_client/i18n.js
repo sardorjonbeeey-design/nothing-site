@@ -2,6 +2,7 @@
 (() => {
 const DICT = {
  uz: {
+'TOP SCORERS':'ENG KO‘P GOL URGANLAR','TOP ASSISTS':'ENG KO‘P ASSIST BERGANLAR','No goals yet.':'Hali gol yo‘q.',
   'GOAL':'GOL','assist':'Assist',
   'Home team scores':'Ev jamoasi gol urdi',
   'Away team scores':'Mehmon jamoasi gol urdi',
@@ -91,6 +92,7 @@ const DICT = {
   'Your team':'Jamoangiz','Standing':'O‘rin'
  },
  ru: {
+'TOP SCORERS':'ЛУЧШИЕ БОМБАРДИРЫ','TOP ASSISTS':'ЛУЧШИЕ АССИСТЕНТЫ','No goals yet.':'Голов пока нет.',
   'GOAL':'ГОЛ','assist':'Assist',
   'Home team scores':'Домашняя команда забивает',
   'Away team scores':'Гостевая команда забивает',

@@ -194,10 +194,19 @@ function friendliesPage(){
 function leagueTable(rows){
  return '<table><thead><tr><th>#</th><th>CLUB</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF:GA</th><th>PTS</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr><td class="rank">'+(i+1)+'</td><td>'+miniCrest({short_name:r.short_name,crest_url:r.crest_url,primary_colour:r.primary_colour})+' <strong>'+esc(r.short_name)+'</strong> '+esc(r.name)+'</td><td>'+r.played+'</td><td>'+r.wins+'</td><td>'+r.draws+'</td><td>'+r.losses+'</td><td>'+r.goals_for+':'+r.goals_against+'</td><td><strong>'+r.points+'</strong></td></tr>').join('')+'</tbody></table>';
 }
+function leaderList(rows,unit){
+ return rows.length?rows.map((r,i)=>'<div class="assist-row"><span class="rank">'+(i+1)+'</span><div><strong>'+esc(r.name)+'</strong><div class="meta">'+esc(r.club)+'</div></div><span class="rating">'+esc(r.count)+'</span></div>').join(''):'<div class="empty">'+t('No goals yet.')+'</div>';
+}
+function leadersSection(){
+ const L=state.leaders||{scorers:[],assists:[]};
+ return '<div class="eyebrow" style="margin:22px 0 10px">'+t('TOP SCORERS')+'</div><section class="panel table-wrap" id="league-scorers">'+leaderList(L.scorers)+'</section>'+
+  '<div class="eyebrow" style="margin:22px 0 10px">'+t('TOP ASSISTS')+'</div><section class="panel table-wrap" id="league-assists">'+leaderList(L.assists)+'</section>';
+}
 function leaguePage(){
  const prev=state.previousSeason;
  return pageHead(t('LEAGUE'),state.season?'Season '+esc(state.season.number):'The table','The league starts when the game reaches 10 clubs. Standings update automatically after each matchday; a new season starts two days after the last one ends.')+
  '<section class="panel table-wrap" id="league-current">'+(state.table.length?leagueTable(state.table):'<div class="empty">'+(state.leagueExists&&state.season===null?'Your club is not in a league yet. While you wait, it receives the same income as league clubs on every league matchday.':t('No active league yet. It will be generated automatically when 10 clubs exist.'))+'</div>')+'</section>'+
+ (state.table.length?leadersSection():'')+
  (prev?'<div class="eyebrow" style="margin:22px 0 10px">SEASON '+esc(prev.season.number)+' · FINAL TABLE</div><section class="panel table-wrap" id="league-previous">'+leagueTable(prev.table)+'</section>':'');
 }
 function createPage(){
@@ -402,7 +411,7 @@ async function loadAll(){
   const results=await Promise.all([
    api('/api/clubs/'+id+'/squad'),api('/api/clubs/'+id+'/activity'),api('/api/clubs/'+id+'/lineup'),api('/api/clubs/'+id+'/missions'),api('/api/clubs/'+id+'/fixtures'),api('/api/clubs/'+id+'/league'),api('/api/market'+(state.affordableOnly?'?maxValue='+encodeURIComponent(state.club.budget_uzs):'')),api('/api/clubs/'+id+'/ledger'),api('/api/clubs/'+id+'/development-ledger'),api('/api/clubs/'+id+'/results?limit=30'),api('/api/clubs/'+id+'/friendlies'),api('/api/clubs/'+id+'/opponents'),api('/api/clubs/'+id+'/formations'),api('/api/transfers?limit=100'),api('/api/clubs/'+id+'/transfers')
   ]);
-  state.squad=results[0].players||[];state.activity=results[1].activity||null;state.lineup=results[2].lineup;state.lineupDraft=state.lineup?.starters?.slice()||[];state.missions=results[3].missions||[];state.fixtures=results[4].fixtures||[];state.table=results[5].table||[];state.leagueExists=Boolean(results[5].leagueExists);state.season=results[5].season||null;state.previousSeason=results[5].previous||null;state.market=results[6].players||[];state.youth=results[6].youth||[];state.academy=results[6].academy||[];state.squadLimits=results[6].squadLimits||state.squadLimits;state.ledger=results[7].transactions||[];state.dpLedger=results[8].transactions||[];state.results=results[9].results||[];state.newResults=results[9].unviewedCount||0;state.friendlies=results[10].requests||[];state.opponents=results[11].clubs||[];state.formations=results[12].formations||[];state.formationInfo=results[12];state.formationDraft=state.lineup?.formation||'4-3-3';state.peerListings=results[13].listings||[];state.ownListings=results[14].listings||[];
+  state.squad=results[0].players||[];state.activity=results[1].activity||null;state.lineup=results[2].lineup;state.lineupDraft=state.lineup?.starters?.slice()||[];state.missions=results[3].missions||[];state.fixtures=results[4].fixtures||[];state.table=results[5].table||[];state.leaders=results[5].leaders||{scorers:[],assists:[]};state.leagueExists=Boolean(results[5].leagueExists);state.season=results[5].season||null;state.previousSeason=results[5].previous||null;state.market=results[6].players||[];state.youth=results[6].youth||[];state.academy=results[6].academy||[];state.squadLimits=results[6].squadLimits||state.squadLimits;state.ledger=results[7].transactions||[];state.dpLedger=results[8].transactions||[];state.results=results[9].results||[];state.newResults=results[9].unviewedCount||0;state.friendlies=results[10].requests||[];state.opponents=results[11].clubs||[];state.formations=results[12].formations||[];state.formationInfo=results[12];state.formationDraft=state.lineup?.formation||'4-3-3';state.peerListings=results[13].listings||[];state.ownListings=results[14].listings||[];
   // A result created since the previous refresh is shown once, without treating a page open or polling as match activity.
   if(initialLoadDone&&!state.opening){
    const freshIndex=state.results.findIndex(r=>!r.viewed&&!previousResultIds.has(r.id));
