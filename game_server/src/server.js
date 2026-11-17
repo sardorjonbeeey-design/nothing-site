@@ -246,7 +246,8 @@ async function handle(req,res){
     });
     applied++;
    }
-   return json(res,200,{applied,eligible:clubs.length});
+   const leagueId=await inTransaction(client=>ensureLeague(client));
+   return json(res,200,{applied,eligible:clubs.length,leagueId:leagueId||null});
   }
   throw new HttpError(404,'Admin route not found');
  }
