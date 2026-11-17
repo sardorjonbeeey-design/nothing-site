@@ -44,7 +44,7 @@ export async function replyToTelegramUpdate(update, { token, webAppUrl, superAdm
 
   const privateChat = message.chat.type === 'private';
   const text = privateChat
-    ? 'Welcome to ZAMIN FK Management Game!\n\nBuild your club and compete in the league.\n\n📋 To join the league:\n• 18+ players in your squad\n• At least 2 goalkeepers\n• Lineup: 11 starters + 7 substitutes\n\n💰 Starting budget: 30,000,000 UZS\n🏆 League starts when 10 clubs are ready. Matches kick off at 20:00 (Tashkent time).\n\nYour game account is linked to your Telegram account.'
+    ? 'ZAMIN FK Menejment o\'yiniga xush kelibsiz!\n\nKlubingizni quring va ligada raqobatlashing.\n\n📋 Ligaga qo\'shilish shartlari:\n• Tarkibda kamida 18 ta futbolchi\n• Kamida 2 ta darvozabon\n• Tarkib: 11 ta asosiy + 7 ta zaxira\n\n💰 Boshlang\'ich balans: 30 000 000 UZS\n🏆 Liga 10 ta klub tayyor bo\'lganda boshlanadi. O\'yinlar soat 20:00 da (Toshkent vaqti).\n\nO\'yin hisobingiz Telegram hisobingizga bog\'langan.'
     : 'To open ZAMIN FK Management Game, start a private chat with @zamingame_bot.';
 
   const payload = { chat_id: message.chat.id, text };
