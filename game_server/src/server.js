@@ -10,7 +10,7 @@ import {json,readJson,HttpError,safeString,colour,uuid} from './http.js';
 import {saveCrest,readCrest} from './uploads.js';
 import {LEAGUE_TIMEZONE,MATCH_DURATION_SECONDS} from './league.js';
 import {ensureLeague,LEAGUE_LOCK} from './seasons.js';
-import {ensureYouthSupply,ensureTemplatePool,insertPlayer,TEMPLATE_PREFIX} from './players.js';
+import {ensureYouthSupply,ensureTemplatePool,copyFreeAgentToClub} from './players.js';
 import {YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL,generateAcademySquad} from './catalog.js';
 import {repairClubLineup,lineupProblem} from './lineup.js';
 import {formations,FORMATION_IDS,isFormation,bestLineup,FIT_BONUS_MAX,FIT_BONUS_PER_PLAYER} from './formations.js';
@@ -359,9 +359,8 @@ async function handle(req,res){
     const fee=BigInt(p.market_value_uzs);
     if(BigInt(c.budget_uzs)<fee)throw new HttpError(400,'Insufficient club budget');
     await client.query('UPDATE clubs SET budget_uzs=budget_uzs-$2 WHERE id=$1',[clubId,fee.toString()]);
-    // Template players stay in the market; the signing club gets its own copy.
-    if(p.catalog_key&&p.catalog_key.startsWith(TEMPLATE_PREFIX))await insertPlayer(client,{fullName:p.full_name,nationality:p.nationality,category:p.category,age:p.age,position:p.position,quality:p.quality,overall:p.overall,potential:p.potential,attributes:p.attributes,marketValueUzs:p.market_value_uzs,origin:p.origin},clubId);
-    else await client.query('UPDATE players SET club_id=$2 WHERE id=$1',[playerId,clubId]);
+    // Free agents stay in the market; the signing club gets its own copy, so every club can field the same players.
+    await copyFreeAgentToClub(client,p,clubId);
     const bal=(BigInt(c.budget_uzs)-fee).toString();
     await client.query('INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,$4,$5)',[clubId,(-fee).toString(),bal,'player_signing',playerId]);
     if(p.origin==='generated')await ensureYouthSupply(client);

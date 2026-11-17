@@ -37,3 +37,8 @@ export async function ensureTemplatePool(client){
  for(let i=0;i<squad.length;i++){const key=TEMPLATE_PREFIX+i;if(have.has(key))continue;await insertPlayer(client,{...squad[i],catalogKey:key},null);created++;}
  return created;
 }
+
+// Signing a free agent creates a separate copy for the club; the market row stays available to every club.
+export async function copyFreeAgentToClub(client,p,clubId){
+ return insertPlayer(client,{fullName:p.full_name,nationality:p.nationality,category:p.category,age:p.age,position:p.position,quality:p.quality,overall:p.overall,potential:p.potential,attributes:p.attributes,marketValueUzs:p.market_value_uzs,origin:p.origin,realPlayerDob:p.real_player_dob,realClubName:p.real_club_name,realClubKey:p.real_club_key,realClubCrestUrl:p.real_club_crest_url,realRosterSource:p.real_roster_source,realRosterCheckedAt:p.real_roster_checked_at},clubId);
+}
