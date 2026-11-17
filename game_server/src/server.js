@@ -237,10 +237,10 @@ async function handle(req,res){
   if(maxValue!==null&&!/^\d{1,15}$/.test(maxValue))throw new HttpError(400,'maxValue is invalid');
   // Club crests are not served: they are third-party trademarks. Real players are listed only while REAL_PLAYERS_ENABLED is not 'false'.
   const realFilter=config.realPlayersEnabled?'real_club_key IS NOT NULL':'FALSE';
-  const r=await db().query('SELECT '+columns+' FROM players WHERE club_id IS NULL AND '+realFilter+' AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 500',[maxValue]);
+  const r=await db().query('SELECT '+columns+' FROM players WHERE club_id IS NULL AND NOT retired AND '+realFilter+' AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 500',[maxValue]);
   // The generated 45–50 players are listed separately so they are never pushed out by the 100-row limit.
-  const youth=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND origin='generated' AND overall BETWEEN $1 AND $2 ORDER BY position,overall DESC,id LIMIT 60",[YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL]);
-  const academy=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND origin='academy' AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 100",[maxValue]);
+  const youth=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND NOT retired AND origin='generated' AND overall BETWEEN $1 AND $2 ORDER BY position,overall DESC,id LIMIT 60",[YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL]);
+  const academy=await db().query("SELECT "+columns+" FROM players WHERE club_id IS NULL AND NOT retired AND origin='academy' AND ($1::bigint IS NULL OR market_value_uzs<=$1::bigint) ORDER BY overall DESC,full_name,id LIMIT 100",[maxValue]);
   return json(res,200,{players:r.rows,youth:youth.rows,academy:academy.rows,squadLimits:{min:MIN_SQUAD_SIZE,max:MAX_SQUAD_SIZE,required:STARTING_SQUAD_SIZE,minimumGoalkeepers:MINIMUM_GOALKEEPERS}});
  }
  // First-run sample match: two generated 4-3-3 sides, simulated in memory. Nothing is stored, scheduled or paid.
@@ -352,7 +352,7 @@ async function handle(req,res){
    const body=await readJson(req),playerId=uuid(body.playerId,'Player ID');
    const result=await inTransaction(async client=>{
     const c=await ownedClub(client,clubId,user.id,true);
-    const p=(await client.query('SELECT * FROM players WHERE id=$1 AND club_id IS NULL FOR UPDATE',[playerId])).rows[0];
+    const p=(await client.query('SELECT * FROM players WHERE id=$1 AND club_id IS NULL AND NOT retired FOR UPDATE',[playerId])).rows[0];
     if(!p)throw new HttpError(404,'Free agent not found');
     const size=Number((await client.query('SELECT COUNT(*)::int AS count FROM players WHERE club_id=$1',[clubId])).rows[0].count);
     if(size>=MAX_SQUAD_SIZE)throw new HttpError(400,'A club can register at most '+MAX_SQUAD_SIZE+' players');
@@ -379,7 +379,7 @@ async function handle(req,res){
     if(Number(count.rows[0].count)<=MIN_SQUAD_SIZE)throw new HttpError(400,'A club must keep at least '+MIN_SQUAD_SIZE+' players');
     if(p.position==='GK'){const keepers=await client.query("SELECT COUNT(*)::int AS count FROM players WHERE club_id=$1 AND position='GK'",[clubId]);if(Number(keepers.rows[0].count)<=1)throw new HttpError(400,'A club must keep at least one goalkeeper');}
     const rate=resaleRatePercent(p),fee=saleValueUzs(p.market_value_uzs,rate),bal=(BigInt(c.budget_uzs)+fee).toString();
-    await client.query('UPDATE players SET club_id=NULL,first_sale_done=TRUE WHERE id=$1',[playerId]);
+    await client.query('UPDATE players SET club_id=NULL,retired=TRUE,first_sale_done=TRUE WHERE id=$1',[playerId]);
     await client.query('UPDATE clubs SET budget_uzs=budget_uzs+$2 WHERE id=$1',[clubId,fee.toString()]);
     // The sold player leaves the lineup; a sold starter is replaced automatically from the remaining squad.
     const lineup=await repairClubLineup(client,clubId);

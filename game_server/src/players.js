@@ -14,7 +14,7 @@ export async function insertPlayer(client,p,clubId=null){
 // buying one youth player creates at most one replacement, and a player sold back counts towards the stock again.
 export async function ensureYouthSupply(client){
  await client.query('SELECT pg_advisory_xact_lock($1)',[YOUTH_LOCK]);
- const stock=await client.query("SELECT position,COUNT(*)::int AS n FROM players WHERE club_id IS NULL AND origin='generated' AND overall BETWEEN $1 AND $2 GROUP BY position",[YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL]);
+ const stock=await client.query("SELECT position,COUNT(*)::int AS n FROM players WHERE club_id IS NULL AND NOT retired AND origin='generated' AND overall BETWEEN $1 AND $2 GROUP BY position",[YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL]);
  const have=Object.fromEntries(stock.rows.map(r=>[r.position,Number(r.n)])),want={};
  for(const position of youthSlots)want[position]=(want[position]||0)+1;
  let created=0;
