@@ -15,7 +15,7 @@ test('/start replies with a Telegram Mini App button in a private chat', async (
   assert.equal(handled, true);
   assert.equal(request.url, 'https://api.telegram.org/bottest-token/sendMessage');
   assert.equal(request.body.chat_id, 123);
-  assert.match(request.body.text, /Welcome to ZAMIN FK Management Game/);
+  assert.match(request.body.text, /ZAMIN FK Menejment o'yiniga xush kelibsiz/);
   assert.equal(request.body.reply_markup.inline_keyboard[0][0].web_app.url, 'https://game.example.com/');
 });
 
