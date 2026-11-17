@@ -6,7 +6,7 @@ import {UZBEK_LEAGUE} from '../src/ratings.js';
 
 test('approved economy constants',()=>{
  assert.equal(STARTING_BUDGET_UZS,30000000n);assert.equal(LEAGUE_MATCH_INCOME_UZS,750000n);assert.equal(WAITING_STIPEND_UZS,750000n);
- assert.equal(MIN_SQUAD_SIZE,13);assert.equal(MAX_SQUAD_SIZE,26);assert.equal(STARTING_SQUAD_SIZE,18);
+ assert.equal(MIN_SQUAD_SIZE,13);assert.equal(MAX_SQUAD_SIZE,26);assert.equal(STARTING_SQUAD_SIZE,14);
 });
 test('price curve: 11,000,000 x 1.112^(overall-80), rounded to 10,000 UZS',()=>{
  const expected={45:270000,47:330000,50:460000,54:700000,58:1060000,60:1320000,65:2240000,70:3800000,75:6470000,76:7190000,80:11000000,85:18700000,90:31800000};

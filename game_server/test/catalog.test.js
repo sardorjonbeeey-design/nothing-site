@@ -38,7 +38,7 @@ test('real-player catalogue: 236 Super League players across 16 clubs with sourc
  }
 });
 test('academy squad: the approved 18-player distribution, identical for every club',()=>{
- assert.equal(academySquadTemplate.length,STARTING_SQUAD_SIZE);
+ assert.equal(academySquadTemplate.length,18);
  const count=list=>list.reduce((m,x)=>(m[x]=(m[x]||0)+1,m),{});
  assert.deepEqual(count(academySquadTemplate.map(x=>x[0])),{GK:2,CB:3,LB:1,RB:1,DM:2,CM:3,AM:1,LW:1,RW:1,ST:3});
  assert.deepEqual(academySquadTemplate.slice(0,11).map(x=>x[1]).sort((a,b)=>b-a),[58,56,56,54,54,54,54,52,52,52,52]);
