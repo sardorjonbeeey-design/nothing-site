@@ -119,7 +119,7 @@ async function handle(req,res){
    await client.query('INSERT INTO admin_audit_log(actor_user_id,actor_telegram_user_id,target_type,target_id,action,before_after,reason) VALUES($1,$2,$3,$4,$5,$6::jsonb,$7)',[user.id,String(user.telegramUserId),targetType,String(targetId),action,JSON.stringify({before:before??null,after:after??null}),cleanReason]);
   };
   if(req.method==='GET'&&path==='/api/admin/overview'){
-   const clubs=(await db().query('SELECT c.id,c.name,c.short_name,c.budget_uzs,c.development_points,c.created_at,u.id AS owner_user_id,u.telegram_user_id,u.username,u.first_name,u.last_name,(SELECT COUNT(*)::int FROM players p WHERE p.club_id=c.id) AS squad_size FROM clubs c JOIN game_users u ON u.id=c.owner_user_id ORDER BY c.created_at DESC LIMIT 250')).rows;
+   const clubs=(await db().query('SELECT c.id,c.name,c.short_name,c.budget_uzs,c.development_points,c.created_at,u.id AS owner_user_id,u.telegram_user_id,u.username,u.first_name,u.last_name,(SELECT COUNT(*)::int FROM players p WHERE p.club_id=c.id) AS squad_size,EXISTS(SELECT 1 FROM lineups l WHERE l.club_id=c.id) AS has_lineup FROM clubs c JOIN game_users u ON u.id=c.owner_user_id ORDER BY c.created_at DESC LIMIT 250')).rows;
    const users=(await db().query('SELECT u.id,u.telegram_user_id,u.username,u.first_name,u.last_name,u.created_at,u.last_seen_at,(SELECT COUNT(*)::int FROM clubs c WHERE c.owner_user_id=u.id) AS club_count FROM game_users u ORDER BY u.created_at DESC LIMIT 250')).rows;
    return json(res,200,{clubs,users});
   }
@@ -224,6 +224,29 @@ async function handle(req,res){
     const row=(await client.query('INSERT INTO competition_settings(setting_key,setting_value,updated_by,reason) VALUES($1,$2::jsonb,$3,$4) ON CONFLICT(setting_key) DO UPDATE SET setting_value=EXCLUDED.setting_value,updated_by=EXCLUDED.updated_by,updated_at=NOW(),reason=EXCLUDED.reason RETURNING setting_key,setting_value,updated_at',[key,JSON.stringify(body.value),user.id,reason])).rows[0];
     await audit(client,{targetType:'competition_setting',targetId:key,action:'setting_updated',before,after:row.setting_value,reason});return row;
    });return json(res,200,result);
+  }
+  if(req.method==='POST'&&path==='/api/admin/auto-lineup'){
+   // Set the best possible lineup for every club that has ≥14 players but no saved lineup yet.
+   const clubs=(await db().query(
+    'SELECT c.id FROM clubs c WHERE NOT EXISTS(SELECT 1 FROM lineups l WHERE l.club_id=c.id) AND (SELECT COUNT(*)::int FROM players p WHERE p.club_id=c.id)>=$1',
+    [STARTING_SQUAD_SIZE]
+   )).rows;
+   let applied=0;
+   for(const c of clubs){
+    await inTransaction(async client=>{
+     const players=(await client.query('SELECT id,position,overall FROM players WHERE club_id=$1',[c.id])).rows;
+     if(players.length<STARTING_SQUAD_SIZE)return;
+     const result=bestLineup(players,'4-3-3');
+     if(!result.starters.length)return;
+     await client.query(
+      'INSERT INTO lineups(club_id,formation,starters,substitutes,updated_at) VALUES($1,$2,$3,$4,NOW()) ON CONFLICT(club_id) DO NOTHING',
+      [c.id,'4-3-3',result.starters,result.substitutes]
+     );
+     await audit(client,{targetType:'club',targetId:c.id,action:'auto_lineup_applied',before:null,after:{formation:'4-3-3',starters:result.starters.length,substitutes:result.substitutes.length},reason:'Admin auto-lineup'});
+    });
+    applied++;
+   }
+   return json(res,200,{applied,eligible:clubs.length});
   }
   throw new HttpError(404,'Admin route not found');
  }
