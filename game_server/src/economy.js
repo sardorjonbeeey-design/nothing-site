@@ -6,7 +6,7 @@ export const MATCH_WIN_BONUS_UZS=250_000n;
 export const MATCH_DRAW_BONUS_UZS=100_000n;
 export const MIN_SQUAD_SIZE=13;
 export const MAX_SQUAD_SIZE=26;
-export const STARTING_SQUAD_SIZE=18;
+export const STARTING_SQUAD_SIZE=14;
 export const MINIMUM_GOALKEEPERS=2;
 // 11,000,000 UZS at overall 80, 11.2% more per rating point, rounded to 10,000 UZS.
 export function marketValueUzs(overall){

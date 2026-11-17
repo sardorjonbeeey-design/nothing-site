@@ -352,7 +352,7 @@ test('complete game loop against isolated local PostgreSQL',{skip:DB_URL?false:'
 
  await t.test('transfer market: rebalanced price curve, classification, 80-rated signing affordability, youth supply',async()=>{
   const market=await ok(users[0],'GET','/api/market');
-  assert.deepEqual(market.squadLimits,{min:13,max:26,required:18,minimumGoalkeepers:2});
+  assert.deepEqual(market.squadLimits,{min:13,max:26,required:14,minimumGoalkeepers:2});
   assert.ok(market.players.length>0&&market.players.length<=500);
   assert.equal(market.players.length,229,'seven real players have already been recruited by the first club');
   assert.equal(new Set(market.players.map(p=>p.real_club_key)).size,16,'all 16 Super League clubs are represented');
