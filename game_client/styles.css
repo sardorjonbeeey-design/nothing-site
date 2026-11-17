@@ -262,9 +262,9 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 /* OVR rating color-matched to position — keep it inside the card */
 .player .rating{color:var(--pos-col,var(--gold))!important;text-shadow:0 2px 14px color-mix(in srgb,var(--pos-col,#e5c46b) 40%,transparent)!important;flex-shrink:0;min-width:0}
 
-/* player-top: constrain so rating never overflows */
-.player .player-top{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow:hidden}
-.player .player-top .rating{margin-left:auto}
+/* player-top: pills + OVR row — OVR is pinned absolutely so long tier names can't push it out */
+.player .player-top{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;padding-right:46px;min-height:28px}
+.player .rating{position:absolute!important;top:10px;right:11px;font-size:22px!important}
 
 /* Tighten squad card padding */
 .player{padding:11px 11px 10px!important}
@@ -274,8 +274,8 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 .market-rating strong{color:var(--pos-col,var(--gold))!important}
 .market-player{border-left:3px solid var(--pos-col,var(--line))}
 
-/* Tighten market card */
-.market-player{padding:9px 11px!important;gap:9px!important}
+/* Tighten market card — keep padding-left:72px for the absolute avatar */
+.market-player{padding:9px 11px 9px 72px!important;gap:9px!important}
 
 /* Nav icons: add column layout and svg stroke style */
 .nav button{display:flex!important;flex-direction:column!important;align-items:center!important;gap:4px!important;font-size:9px!important;min-height:58px!important;padding:10px 4px 8px!important;letter-spacing:.05em}
