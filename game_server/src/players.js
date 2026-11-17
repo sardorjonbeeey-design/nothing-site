@@ -1,5 +1,5 @@
 // Player rows created by the server itself: academy squads and the standing supply of generated youth players.
-import {youthSlots,generateYouthPlayer,YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL} from './catalog.js';
+import {youthSlots,generateYouthPlayer,YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL,academySquadTemplate,generateAcademySquad} from './catalog.js';
 import {ratingProfileFor,assertValidRating,DEFAULT_CATEGORY} from './ratings.js';
 const YOUTH_LOCK=8111002;
 export async function insertPlayer(client,p,clubId=null){
@@ -19,5 +19,21 @@ export async function ensureYouthSupply(client){
  for(const position of youthSlots)want[position]=(want[position]||0)+1;
  let created=0;
  for(const [position,count] of Object.entries(want))for(let i=have[position]||0;i<count;i++){await insertPlayer(client,generateYouthPlayer(position));created++;}
+ return created;
+}
+
+// Shared starting template: one free-agent row per slot stays in the market. Signing a template player
+// creates a separate copy for the signing club, so every club can field the same players.
+export const TEMPLATE_PREFIX='tpl-academy-';
+const TEMPLATE_LOCK=8111003;
+function seededRandom(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296;};}
+export async function ensureTemplatePool(client){
+ await client.query('SELECT pg_advisory_xact_lock($1)',[TEMPLATE_LOCK]);
+ const have=new Set((await client.query("SELECT catalog_key FROM players WHERE catalog_key LIKE $1",[TEMPLATE_PREFIX+'%'])).rows.map(r=>r.catalog_key));
+ if(have.size>=academySquadTemplate.length)return 0;
+ // Fixed seed: every environment gets the same names, ratings and positions.
+ const squad=generateAcademySquad(seededRandom(20261117));
+ let created=0;
+ for(let i=0;i<squad.length;i++){const key=TEMPLATE_PREFIX+i;if(have.has(key))continue;await insertPlayer(client,{...squad[i],catalogKey:key},null);created++;}
  return created;
 }

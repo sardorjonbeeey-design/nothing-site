@@ -10,7 +10,7 @@ import {json,readJson,HttpError,safeString,colour,uuid} from './http.js';
 import {saveCrest,readCrest} from './uploads.js';
 import {LEAGUE_TIMEZONE,MATCH_DURATION_SECONDS} from './league.js';
 import {ensureLeague,LEAGUE_LOCK} from './seasons.js';
-import {ensureYouthSupply} from './players.js';
+import {ensureYouthSupply,ensureTemplatePool,insertPlayer,TEMPLATE_PREFIX} from './players.js';
 import {YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL,generateAcademySquad} from './catalog.js';
 import {repairClubLineup,lineupProblem} from './lineup.js';
 import {formations,FORMATION_IDS,isFormation,bestLineup,FIT_BONUS_MAX,FIT_BONUS_PER_PLAYER} from './formations.js';
@@ -231,6 +231,7 @@ async function handle(req,res){
 
  if(req.method==='POST'&&path==='/api/uploads/crest'){if(!rateLimit(clientIp(req)+':crest',10))throw new HttpError(429,'Too many crest uploads');const body=await readJson(req,3_100_000);const crestUrl=await saveCrest(body.dataUrl);return json(res,201,{crestUrl});}
  if(req.method==='GET'&&path==='/api/market'){
+  await inTransaction(client=>ensureTemplatePool(client));
   const columns='id,full_name,nationality,CASE WHEN real_player_dob IS NOT NULL THEN EXTRACT(YEAR FROM AGE(CURRENT_DATE,real_player_dob))::int ELSE age END AS age,position,quality,overall,potential,market_value_uzs,attributes,origin,real_club_name,real_club_key,real_roster_source,real_roster_checked_at';
   const maxValue=url.searchParams.get('maxValue');
   if(maxValue!==null&&!/^\d{1,15}$/.test(maxValue))throw new HttpError(400,'maxValue is invalid');
@@ -358,7 +359,9 @@ async function handle(req,res){
     const fee=BigInt(p.market_value_uzs);
     if(BigInt(c.budget_uzs)<fee)throw new HttpError(400,'Insufficient club budget');
     await client.query('UPDATE clubs SET budget_uzs=budget_uzs-$2 WHERE id=$1',[clubId,fee.toString()]);
-    await client.query('UPDATE players SET club_id=$2 WHERE id=$1',[playerId,clubId]);
+    // Template players stay in the market; the signing club gets its own copy.
+    if(p.catalog_key&&p.catalog_key.startsWith(TEMPLATE_PREFIX))await insertPlayer(client,{fullName:p.full_name,nationality:p.nationality,category:p.category,age:p.age,position:p.position,quality:p.quality,overall:p.overall,potential:p.potential,attributes:p.attributes,marketValueUzs:p.market_value_uzs,origin:p.origin},clubId);
+    else await client.query('UPDATE players SET club_id=$2 WHERE id=$1',[playerId,clubId]);
     const bal=(BigInt(c.budget_uzs)-fee).toString();
     await client.query('INSERT INTO money_ledger(club_id,amount_uzs,balance_after_uzs,reason,reference_id) VALUES($1,$2,$3,$4,$5)',[clubId,(-fee).toString(),bal,'player_signing',playerId]);
     if(p.origin==='generated')await ensureYouthSupply(client);
