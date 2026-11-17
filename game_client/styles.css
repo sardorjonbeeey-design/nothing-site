@@ -254,17 +254,28 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 .pos-att{--pos-col:#f87171;--pos-bg:rgba(248,113,113,.18);--pos-border:rgba(248,113,113,.5)}
 
 /* Position pill badge */
-.pos-pill{display:inline-flex;align-items:center;justify-content:center;background:var(--pos-bg,rgba(255,255,255,.1));color:var(--pos-col,#fff);border-radius:7px;font:800 9px 'DM Mono',monospace;padding:3px 7px;letter-spacing:.06em;border:1px solid var(--pos-border,transparent)}
+.pos-pill{display:inline-flex;align-items:center;justify-content:center;background:var(--pos-bg,rgba(255,255,255,.1));color:var(--pos-col,#fff);border-radius:6px;font:800 8px 'DM Mono',monospace;padding:2px 5px;letter-spacing:.05em;border:1px solid var(--pos-border,transparent);flex-shrink:0}
 
 /* Top accent stripe on player card by position */
 .player::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:18px 18px 0 0;background:var(--pos-col,transparent);opacity:.7}
 
-/* OVR rating color-matched to position */
-.player .rating{color:var(--pos-col,var(--gold))!important;text-shadow:0 2px 14px color-mix(in srgb,var(--pos-col,#e5c46b) 40%,transparent)!important}
+/* OVR rating color-matched to position — keep it inside the card */
+.player .rating{color:var(--pos-col,var(--gold))!important;text-shadow:0 2px 14px color-mix(in srgb,var(--pos-col,#e5c46b) 40%,transparent)!important;flex-shrink:0;min-width:0}
+
+/* player-top: constrain so rating never overflows */
+.player .player-top{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;overflow:hidden}
+.player .player-top .rating{margin-left:auto}
+
+/* Tighten squad card padding */
+.player{padding:11px 11px 10px!important}
+.player .card-main{padding:10px!important;font-size:12px!important;margin:8px 0 4px!important}
 
 /* Market card rating badge — position-colored box */
 .market-rating strong{color:var(--pos-col,var(--gold))!important}
 .market-player{border-left:3px solid var(--pos-col,var(--line))}
+
+/* Tighten market card */
+.market-player{padding:9px 11px!important;gap:9px!important}
 
 /* Nav icons: add column layout and svg stroke style */
 .nav button{display:flex!important;flex-direction:column!important;align-items:center!important;gap:4px!important;font-size:9px!important;min-height:58px!important;padding:10px 4px 8px!important;letter-spacing:.05em}
