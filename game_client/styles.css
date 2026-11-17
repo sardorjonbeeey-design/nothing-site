@@ -242,3 +242,5 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 @media(max-width:700px){.players{grid-template-columns:1fr 1fr}.player h3{font-size:13px}.player .rating{font-size:22px}.brand{font-size:13px}.budget-chip{font-size:11px;padding:5px 8px}.top-right .lang-toggle{padding:6px 8px}}
 .player h3{clear:both}
 .player .pill{white-space:nowrap}
+
+.zone-legend{display:flex;gap:14px;font:9px 'DM Mono',monospace;text-transform:uppercase;margin:0 0 10px}.zone-promotion{color:#8fe3bf}.zone-relegation{color:#f2a09b}tr.zone-promotion td:first-child{box-shadow:inset 3px 0 #3fbf8a}tr.zone-relegation td:first-child{box-shadow:inset 3px 0 #e57c75}

@@ -50,3 +50,32 @@ test('matchdays 1-9 and 11-19 with a rest day on day 10',()=>{
 test('league timing constants: 20:00 Asia/Tashkent, 60-second matches',()=>{
  assert.equal(LEAGUE_TIMEZONE,'Asia/Tashkent');assert.equal(LEAGUE_KICKOFF_TIME,'20:00');assert.equal(MATCH_DURATION_SECONDS,60);
 });
+
+test('odd groups play with a bye: 5 clubs give 20 fixtures over 11 days',async()=>{
+ const {seasonDays}=await import('../src/league.js');
+ const ids=Array.from({length:5},(_,i)=>'c'+i),schedule=leagueSchedule(ids);
+ assert.equal(schedule.length,20);
+ assert.equal(seasonDays(5),11);assert.equal(seasonDays(10),19);assert.equal(seasonDays(18),35);
+ const days=[...new Set(schedule.map(f=>f.dayNumber))];
+ assert.equal(Math.max(...days),11);
+ for(const day of days){const today=schedule.filter(f=>f.dayNumber===day);assert.equal(new Set(today.flatMap(f=>[f.homeClubId,f.awayClubId])).size,today.length*2,'no club plays twice a day');}
+});
+test('18 clubs: 306 fixtures over 35 matchdays',()=>{
+ const schedule=leagueSchedule(Array.from({length:18},(_,i)=>'c'+i));
+ assert.equal(schedule.length,306);
+ assert.equal(Math.max(...schedule.map(f=>f.dayNumber)),35);
+});
+test('placement: main league takes up to 18, the rest form a second league of 5 or more, otherwise they wait',async()=>{
+ const {placeClubs}=await import('../src/league.js');
+ const w=n=>Array.from({length:n},(_,i)=>'w'+i);
+ assert.equal(placeClubs({waiting:w(12)}).main.length,12);
+ assert.equal(placeClubs({waiting:w(12)}).second.length,0);
+ const p20=placeClubs({waiting:w(20)});
+ assert.equal(p20.main.length,18);assert.equal(p20.second.length,0);assert.equal(p20.waiting.length,2);
+ const p25=placeClubs({waiting:w(25)});
+ assert.equal(p25.main.length,18);assert.equal(p25.second.length,7);assert.equal(p25.waiting.length,0);
+ const p40=placeClubs({waiting:w(40)});
+ assert.equal(p40.second.length,18);assert.equal(p40.waiting.length,4);
+ const carried=placeClubs({main:w(18).slice(0,15),second:['s1','s2','s3','s4','s5'],waiting:['x1','x2','x3','x4']});
+ assert.equal(carried.main.length,18);assert.equal(carried.second.length,6);
+});

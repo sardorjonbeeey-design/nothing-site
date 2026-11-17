@@ -28,7 +28,27 @@ export function dayForRound(roundNumber,roundsPerHalf){
  if(!Number.isInteger(roundNumber)||!Number.isInteger(roundsPerHalf)||roundNumber<1||roundNumber>roundsPerHalf*2)throw new Error('Round is outside the season');
  return roundNumber<=roundsPerHalf?roundNumber:roundNumber+1;
 }
+// Division sizes and movement between them. Clubs beyond the main league's 18 places wait for the next season
+// or form the second league once five or more are waiting.
+export const MAIN_LEAGUE_MIN=10, MAIN_LEAGUE_MAX=18, SECOND_LEAGUE_MIN=5, SECOND_LEAGUE_MAX=18;
+export const PROMOTION_PLACES=3, RELEGATION_PLACES=3;
+// Days from the first matchday to the last one: every round once per half plus one rest day between the halves.
+export function seasonDays(clubCount){
+ const slots=clubCount+(clubCount%2);
+ return 2*(slots-1)+1;
+}
+// An odd group plays with a bye: a null slot is added and the fixtures against it are dropped.
 export function leagueSchedule(clubIds){
- const rounds=generateDoubleRoundRobin(clubIds),half=rounds.length/2;
- return rounds.flatMap(round=>round.map(f=>({...f,dayNumber:dayForRound(f.roundNumber,half)})));
+ const slots=clubIds.length%2?[...clubIds,null]:clubIds;
+ const rounds=generateDoubleRoundRobin(slots),half=rounds.length/2;
+ return rounds.flatMap(round=>round.filter(f=>f.homeClubId&&f.awayClubId).map(f=>({...f,dayNumber:dayForRound(f.roundNumber,half)})));
+}
+// Decides who is in each division for the next season. main and second are clubs already placed (in standing order);
+// waiting is every eligible club not placed yet, oldest first. Returns the club ids for both divisions and the rest.
+export function placeClubs({main=[],second=[],waiting=[]}){
+ const toMain=waiting.slice(0,Math.max(0,MAIN_LEAGUE_MAX-main.length));
+ const afterMain=waiting.slice(toMain.length);
+ const secondRoom=SECOND_LEAGUE_MAX-second.length;
+ const toSecond=second.length||afterMain.length>=SECOND_LEAGUE_MIN?afterMain.slice(0,Math.max(0,secondRoom)):[];
+ return {main:[...main,...toMain],second:[...second,...toSecond],waiting:afterMain.slice(toSecond.length)};
 }

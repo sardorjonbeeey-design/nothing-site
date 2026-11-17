@@ -55,7 +55,7 @@ function tieKey(row){return [row.points,row.goal_difference,row.goals_for,row.h2
 
 // Call inside the caller's transaction. Unique (league,club) payment records prevent duplicate awards after restarts/races.
 export async function payCompletedSeasonPrizes(client){
- const leagues=(await client.query("SELECT id FROM leagues WHERE status='completed' AND starts_on IS NOT NULL ORDER BY season_number")).rows;
+ const leagues=(await client.query("SELECT id FROM leagues WHERE status='completed' AND starts_on IS NOT NULL AND division=1 ORDER BY season_number")).rows;
  let paid=0;
  for(const league of leagues){
   const standings=await leagueStandings(client,league.id);

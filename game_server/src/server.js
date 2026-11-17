@@ -8,7 +8,7 @@ import {requireDb,inTransaction,assertIsolatedDatabase,assertGameSchema,pool} fr
 import {authenticate,telegramLogin,telegramWidgetLogin} from './auth.js';
 import {json,readJson,HttpError,safeString,colour,uuid} from './http.js';
 import {saveCrest,readCrest} from './uploads.js';
-import {LEAGUE_TIMEZONE,MATCH_DURATION_SECONDS} from './league.js';
+import {LEAGUE_TIMEZONE,MATCH_DURATION_SECONDS,PROMOTION_PLACES,RELEGATION_PLACES} from './league.js';
 import {ensureLeague,LEAGUE_LOCK} from './seasons.js';
 import {ensureYouthSupply,ensureTemplatePool,copyFreeAgentToClub} from './players.js';
 import {YOUTH_MIN_OVERALL,YOUTH_MAX_OVERALL,generateAcademySquad} from './catalog.js';
@@ -74,7 +74,7 @@ async function makeClub(userId,input){
   throw error;
  }
 }
-const fixtureColumns="f.id,f.kind,f.league_id,f.round_number,f.day_number,f.kickoff_at,f.status,f.home_club_id,f.away_club_id,f.home_goals,f.away_goals,f.played_at,(SELECT season_number FROM leagues WHERE id=f.league_id) AS season_number,CASE WHEN f.status='scheduled' AND f.kickoff_at<=NOW() THEN 'live' WHEN f.status='scheduled' THEN 'upcoming' ELSE f.status END AS phase,h.name AS home_name,h.short_name AS home_short_name,h.crest_url AS home_crest_url,h.primary_colour AS home_colour,a.name AS away_name,a.short_name AS away_short_name,a.crest_url AS away_crest_url,a.primary_colour AS away_colour";
+const fixtureColumns="f.id,f.kind,f.league_id,f.round_number,f.day_number,f.kickoff_at,f.status,f.home_club_id,f.away_club_id,f.home_goals,f.away_goals,f.played_at,(SELECT season_number FROM leagues WHERE id=f.league_id) AS season_number,(SELECT division FROM leagues WHERE id=f.league_id) AS division,CASE WHEN f.status='scheduled' AND f.kickoff_at<=NOW() THEN 'live' WHEN f.status='scheduled' THEN 'upcoming' ELSE f.status END AS phase,h.name AS home_name,h.short_name AS home_short_name,h.crest_url AS home_crest_url,h.primary_colour AS home_colour,a.name AS away_name,a.short_name AS away_short_name,a.crest_url AS away_crest_url,a.primary_colour AS away_colour";
 const fixtureJoins=' FROM fixtures f JOIN clubs h ON h.id=f.home_club_id JOIN clubs a ON a.id=f.away_club_id';
 // Completed matches of one club, newest first, with the result from that club's side and its server-side viewed flag.
 function resultsSql(withEvents,filter){
@@ -300,13 +300,18 @@ async function handle(req,res){
   if(req.method==='GET'&&parts[3]==='lineup'){const r=await db().query('SELECT * FROM lineups WHERE club_id=$1',[clubId]);return json(res,200,{lineup:r.rows[0]||null});}
   if(req.method==='GET'&&parts[3]==='league'){
    // The club's latest season, plus the final table of the season before it (shown until the new season gets going).
-   const seasons=await db().query('SELECT l.id,l.season_number,l.status,l.starts_on::text AS starts_on FROM leagues l JOIN league_members lm ON lm.league_id=l.id WHERE lm.club_id=$1 AND l.starts_on IS NOT NULL ORDER BY l.season_number DESC LIMIT 2',[clubId]);
-   const table=async league=>leagueStandings(db(),league.id);
+   const seasons=await db().query('SELECT l.id,l.season_number,l.division,l.status,l.starts_on::text AS starts_on FROM leagues l JOIN league_members lm ON lm.league_id=l.id WHERE lm.club_id=$1 AND l.starts_on IS NOT NULL ORDER BY l.season_number DESC LIMIT 2',[clubId]);
+   // Each row carries its zone: promotion (second league top places) or relegation (main league bottom places).
+   const table=async league=>{
+    const rows=await leagueStandings(db(),league.id);
+    const hasSecond=league.division===1&&(await db().query('SELECT 1 FROM leagues WHERE starts_on IS NOT NULL AND division=2 AND season_number=$1',[league.season_number])).rowCount>0;
+    return rows.map((r,i)=>({...r,zone:league.division===2&&i<PROMOTION_PLACES?'promotion':hasSecond&&i>=rows.length-RELEGATION_PLACES?'relegation':null}));
+   };
    const [current,previous]=seasons.rows;
    const leagueExists=(await db().query('SELECT 1 FROM leagues WHERE starts_on IS NOT NULL LIMIT 1')).rowCount>0;
    const leaders=current?await leagueLeaders(db(),current.id):{scorers:[],assists:[]};
-   return json(res,200,{leagueExists,leaders,table:current?await table(current):[],season:current?{number:current.season_number,status:current.status,startsOn:current.starts_on}:null,
-    previous:previous?{season:{number:previous.season_number,status:previous.status,startsOn:previous.starts_on},table:await table(previous)}:null});
+   return json(res,200,{leagueExists,leaders,table:current?await table(current):[],season:current?{number:current.season_number,division:current.division,status:current.status,startsOn:current.starts_on}:null,
+    previous:previous?{season:{number:previous.season_number,division:previous.division,status:previous.status,startsOn:previous.starts_on},table:await table(previous)}:null});
   }
   if(req.method==='GET'&&parts[3]==='development-ledger'){const r=await db().query('SELECT amount_dp,balance_after_dp,reason,created_at FROM development_ledger WHERE club_id=$1 ORDER BY created_at DESC LIMIT 30',[clubId]);return json(res,200,{transactions:r.rows});}
   if(req.method==='GET'&&parts[3]==='ledger'){const r=await db().query('SELECT amount_uzs,balance_after_uzs,reason,created_at FROM money_ledger WHERE club_id=$1 ORDER BY created_at DESC LIMIT 30',[clubId]);return json(res,200,{transactions:r.rows});}
