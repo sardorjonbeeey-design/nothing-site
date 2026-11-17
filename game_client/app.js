@@ -39,6 +39,7 @@ function shell(body){
  [['overview',t('Match')],['squad',t('Squad')],['market',t('Transfers')],['league',t('Season')]].map(x=>'<button data-tab="'+x[0]+'" class="'+(state.tab===x[0]||(x[0]==='league'&&SEASON_TABS.includes(state.tab))?'active':'')+'">'+x[1]+'</button>').join('')+
  '<div class="nav-foot">ISOLATED GAME CLIENT<br>NOT CONNECTED TO LIVE SYSTEMS</div></nav><main class="content">'+body+'</main></div><footer class="footer"><span>ZAMIN FK · MANAGEMENT GAME</span><span>ISOLATED BUILD 0.1</span></footer></div>';
 }
+function tashkentLocal(addMin){return new Date(Date.now()+addMin*60000+5*3600000).toISOString().slice(0,16);}
 function pageHead(kicker,title,sub,action){return '<div class="hero"><div><div class="eyebrow">'+kicker+'</div><h1>'+title+'</h1><p class="sub">'+sub+'</p></div>'+(action||'')+'</div>';}
 function crest(club,large){const style='style="--accent:'+esc(club.primary_colour||'#167a55')+'"';return '<div class="crest" '+style+'>'+(club.crest_url?'<img src="'+esc((cfg.apiBase||'')+club.crest_url)+'" alt="Club crest">':esc(club.short_name||'ZFK'))+'</div>';}
 function miniCrest(club){return '<span class="mini-crest" style="--accent:'+esc(club.primary_colour||'#167a55')+'">'+(club.crest_url?'<img src="'+esc((cfg.apiBase||'')+club.crest_url)+'" alt="">':esc(club.short_name||'ZFK'))+'</span>';}
@@ -199,7 +200,7 @@ function friendliesPage(){
  const line=(r,buttons)=>{const other=r.direction==='incoming'?'from':'to';return '<div class="fixture"><div><div class="fixture-teams">'+miniCrest({short_name:r[other+'_short_name'],crest_url:r[other+'_crest_url'],primary_colour:r[other+'_colour']})+'<strong>'+esc(r[other+'_name'])+'</strong></div><div class="meta">'+(r.direction==='incoming'?t('RECEIVED'):'SENT')+' · '+when(r.proposed_kickoff_at)+'</div></div><div class="row">'+buttons+'</div></div>';};
  const open=pending.map(r=>line(r,r.direction==='incoming'?'<button class="btn" data-action="friendly-accept" data-request="'+r.id+'">Accept</button><button class="btn danger" data-action="friendly-decline" data-request="'+r.id+'">Decline</button>':'<button class="btn ghost" data-action="friendly-cancel" data-request="'+r.id+'">Cancel</button>')).join('');
  const closed=rest.map(r=>line(r,'<span class="pill">'+esc(r.status.toUpperCase())+'</span>')).join('');
- const form=state.opponents.length?'<form id="friendly-form"><div class="grid2"><div class="field"><label>OPPONENT</label><select name="opponent" required>'+state.opponents.map(c=>'<option value="'+c.id+'">'+esc(c.short_name)+' · '+esc(c.name)+'</option>').join('')+'</select></div><div class="field"><label>KICK-OFF · TASHKENT TIME</label><input name="kickoff" type="datetime-local" required></div></div><button class="btn" type="submit">Send challenge →</button></form>':'<div class="empty">No other clubs exist yet.</div>';
+ const form=state.opponents.length?'<form id="friendly-form"><div class="grid2"><div class="field"><label>OPPONENT</label><select name="opponent" required>'+state.opponents.map(c=>'<option value="'+c.id+'">'+esc(c.short_name)+' · '+esc(c.name)+'</option>').join('')+'</select></div><div class="field"><label>KICK-OFF · TASHKENT TIME</label><input name="kickoff" type="datetime-local" required min="'+tashkentLocal(2)+'" value="'+tashkentLocal(5)+'"></div></div><button class="btn" type="submit">Send challenge →</button></form>':'<div class="empty">No other clubs exist yet.</div>';
  return pageHead('FRIENDLY MATCHES','Challenge a club','Propose a date and time. The match is scheduled only if the other club accepts. Friendlies never affect the league.')+
  '<section class="panel"><h2>New challenge</h2><p class="sub">A friendly lasts one minute and cannot overlap a league match or another friendly of either club.</p>'+form+'</section>'+
  '<section class="panel"><h2>Pending requests</h2>'+(open||'<div class="empty">No pending requests.</div>')+'</section>'+
@@ -521,7 +522,7 @@ root.addEventListener('submit',async e=>{
   // The entered wall-clock time is Tashkent time (UTC+5, no daylight saving), whatever the device timezone is.
   await api('/api/clubs/'+state.club.id+'/friendlies',{method:'POST',body:{opponentClubId:data.get('opponent'),kickoffAt:local.slice(0,16)+':00+05:00'}});
   toast('Challenge sent');await loadAll();
- }catch(err){toast(err.message||t('Could not send the challenge'));button.disabled=false;}
+ }catch(err){toast(t(err.message)||t('Could not send the challenge'));button.disabled=false;}
 });
 root.addEventListener('submit',async e=>{
  if(e.target.id!=='club-form'&&e.target.id!=='identity-form')return;e.preventDefault();
