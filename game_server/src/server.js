@@ -147,6 +147,16 @@ async function handle(req,res){
     return {clubId,budgetUzs:String(updated.budget_uzs)};
    });return json(res,200,result);
   }
+  if(req.method==='POST'&&path==='/api/admin/player-release'){
+   const body=await readJson(req),playerId=uuid(body.playerId,'Player ID'),reason=safeString(body.reason,500,'Reason');
+   const result=await inTransaction(async client=>{
+    const p=(await client.query('SELECT id,full_name,club_id FROM players WHERE id=$1 FOR UPDATE',[playerId])).rows[0];if(!p)throw new HttpError(404,'Player not found');
+    if(!p.club_id)throw new HttpError(409,'Player is already a free agent');
+    await client.query('UPDATE players SET club_id=NULL WHERE id=$1',[playerId]);await repairClubLineup(client,p.club_id);
+    await audit(client,{targetType:'player',targetId:playerId,action:'player_released',before:{clubId:p.club_id},after:{clubId:null,fullName:p.full_name},reason});
+    return {playerId,fullName:p.full_name,fromClubId:p.club_id};
+   });return json(res,200,result);
+  }
   if(req.method==='POST'&&path==='/api/admin/player-gift'){
    const body=await readJson(req),playerId=uuid(body.playerId,'Player ID'),targetClubId=uuid(body.targetClubId,'Target club ID'),reason=safeString(body.reason,500,'Reason');
    const result=await inTransaction(async client=>{
