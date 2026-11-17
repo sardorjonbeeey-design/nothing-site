@@ -70,7 +70,7 @@
 .market-player{display:flex;align-items:center;gap:10px;background:#1b2a24;border:1px solid var(--line);border-radius:13px;padding:12px}
 .market-club{display:flex;align-items:center;gap:6px;color:#a6c5b1;font-size:9px;margin-bottom:4px}
 .market-club img{width:18px;height:18px;object-fit:contain}
-.market-main h3{font-size:12px;margin:0 0 4px}
+.market-main{flex:1;min-width:0}.market-main h3{font-size:12px;margin:0 0 4px}
 .market-rating{text-align:center}
 .market-rating strong{display:block;font:21px 'DM Mono',monospace;color:var(--gold)}
 .market-rating span{font:8px 'DM Mono',monospace;color:var(--muted)}
@@ -230,8 +230,8 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 .player .rating{font:800 26px 'DM Mono',monospace;color:var(--gold);text-shadow:0 2px 12px #e5c46b44}
 .player h3{font-size:15px;font-weight:800;margin:10px 0 4px}
 .player .meta{font-size:11px}
-.card-main{display:flex;width:100%;margin:12px 0 6px;padding:13px;border-radius:14px;font-size:14px;font-weight:800;background:linear-gradient(180deg,#22a06f,#167a55);border:0;color:#fff;box-shadow:0 8px 20px rgba(22,122,85,.35)}
-.card-main.gold{background:linear-gradient(180deg,#e5c46b,#c9a24e);color:#1a1405;box-shadow:0 8px 20px rgba(229,196,107,.25)}
+.card-main{display:inline-flex;width:100%;margin:8px 0 4px;padding:9px 12px;border-radius:10px;font-size:11px;font-weight:800;background:rgba(34,160,111,.12);border:1px solid #22a06f;color:#8fe3bf}
+.card-main.gold{background:rgba(229,196,107,.12);border-color:#e5c46b;color:#e5c46b}
 .card-more{margin-top:4px}
 .card-more summary{cursor:pointer;list-style:none;text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:8px;border-radius:10px;background:#12201b;border:1px solid var(--line)}
 .card-more summary::-webkit-details-marker{display:none}
@@ -266,7 +266,7 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 
 /* Tighten squad card padding */
 .player{padding:12px!important}
-.player .card-main{padding:10px!important;font-size:12px!important;margin:8px 0 4px!important}
+.player .card-main{padding:9px 12px!important;font-size:11px!important;margin:8px 0 4px!important}
 .player h3{margin:0 0 4px!important;clear:none}
 
 /* Market card: flex row — avatar | main (flex:1) | mp-side (OVR+buttons) */
