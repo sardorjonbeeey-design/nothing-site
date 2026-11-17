@@ -67,7 +67,7 @@
 .market-filters{display:grid;grid-template-columns:2fr 1fr 1.4fr;gap:8px;margin:14px 0}
 .market-filters input,.market-filters select{min-width:0;background:#101a16;border:1px solid #3a4e43;border-radius:10px;padding:11px;color:#fff;font-size:11px}
 .market-list{display:flex;flex-direction:column;gap:7px}
-.market-player{display:grid;grid-template-columns:minmax(0,1fr) 55px 130px auto;align-items:center;gap:13px;background:#1b2a24;border:1px solid var(--line);border-radius:13px;padding:11px 13px}
+.market-player{display:flex;align-items:center;gap:10px;background:#1b2a24;border:1px solid var(--line);border-radius:13px;padding:12px}
 .market-club{display:flex;align-items:center;gap:6px;color:#a6c5b1;font-size:9px;margin-bottom:4px}
 .market-club img{width:18px;height:18px;object-fit:contain}
 .market-main h3{font-size:12px;margin:0 0 4px}
@@ -99,9 +99,9 @@
  .build-budget strong{font-size:20px}
  .market-filters{grid-template-columns:1fr 1fr}
  .market-filters input{grid-column:1/3}
- .market-player{grid-template-columns:minmax(0,1fr) 45px;gap:7px}
- .market-price{grid-column:1;text-align:left}
- .market-actions{grid-column:2;grid-row:2;justify-content:flex-end}
+ .market-player{gap:8px;padding:10px}
+ .market-actions{flex-direction:column;gap:4px}
+ .market-actions .btn{padding:7px 8px;font-size:9px}
  .build-reminder{align-items:flex-start;flex-direction:column}
 }
 
@@ -210,11 +210,10 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 .xi-picker .assist-row{display:flex;align-items:center;gap:8px}
 .xi-picker .assist-row>div{flex:1;min-width:0}
 .xi-picker>.btn{margin-top:10px;width:100%}
-/* Anonymous avatar: neutral dark grey silhouette. Market cards reserve a left column and place it absolutely so the card layout stays intact. */
+/* Anonymous avatar: neutral dark grey silhouette */
 .avatar{background:#2d3331;border:1px solid rgba(255,255,255,.12)}
 .avatar svg{fill:#a7b0ab}
-.market-player{position:relative;padding-left:72px}
-.market-player>.avatar{position:absolute;left:14px;top:50%;transform:translateY(-50%);float:none;margin:0;width:38px;height:38px;flex:0 0 38px}
+.market-player>.avatar{position:static;transform:none;float:none;margin:0;width:40px;height:40px;flex:0 0 40px}
 /* League leaders: rank number */
 .rank{width:22px;flex:0 0 22px;color:var(--muted);font-weight:700}
 /* Transfers: squad status strip */
@@ -259,23 +258,23 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 /* Top accent stripe on player card by position */
 .player::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:18px 18px 0 0;background:var(--pos-col,transparent);opacity:.7}
 
-/* OVR rating color-matched to position — keep it inside the card */
-.player .rating{color:var(--pos-col,var(--gold))!important;text-shadow:0 2px 14px color-mix(in srgb,var(--pos-col,#e5c46b) 40%,transparent)!important;flex-shrink:0;min-width:0}
-
-/* player-top: pills + OVR row — OVR is pinned absolutely so long tier names can't push it out */
-.player .player-top{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;padding-right:46px;min-height:28px}
-.player .rating{position:absolute!important;top:10px;right:11px;font-size:22px!important}
+/* Squad card header: avatar | badges column | OVR — proper flex, no absolute */
+.pcard-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pcard-head>.avatar{flex-shrink:0;float:none;margin:0}
+.pcard-badges{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.pcard-ovr{font:800 26px 'DM Mono',monospace;color:var(--pos-col,var(--gold));flex-shrink:0;line-height:1;text-shadow:0 2px 14px color-mix(in srgb,var(--pos-col,#e5c46b) 35%,transparent)}
 
 /* Tighten squad card padding */
-.player{padding:11px 11px 10px!important}
+.player{padding:12px!important}
 .player .card-main{padding:10px!important;font-size:12px!important;margin:8px 0 4px!important}
+.player h3{margin:0 0 4px!important;clear:none}
 
-/* Market card rating badge — position-colored box */
-.market-rating strong{color:var(--pos-col,var(--gold))!important}
+/* Market card: flex row — avatar | main (flex:1) | mp-side (OVR+buttons) */
+.mp-side{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.market-rating strong{display:block;font:800 24px 'DM Mono',monospace;color:var(--pos-col,var(--gold))!important;text-shadow:0 2px 10px color-mix(in srgb,var(--pos-col,#e5c46b) 35%,transparent);line-height:1}
+.market-rating span{font:700 8px 'DM Mono',monospace;color:var(--muted);letter-spacing:.1em}
 .market-player{border-left:3px solid var(--pos-col,var(--line))}
-
-/* Tighten market card — keep padding-left:72px for the absolute avatar */
-.market-player{padding:9px 11px 9px 72px!important;gap:9px!important}
+.market-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
 
 /* Nav icons: add column layout and svg stroke style */
 .nav button{display:flex!important;flex-direction:column!important;align-items:center!important;gap:4px!important;font-size:9px!important;min-height:58px!important;padding:10px 4px 8px!important;letter-spacing:.05em}
