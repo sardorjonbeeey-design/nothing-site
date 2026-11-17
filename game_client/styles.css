@@ -221,3 +221,24 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 .squad-strip{display:grid;grid-template-columns:.8fr 1.5fr 1.1fr;gap:10px;margin:0 0 16px}
 .squad-strip>div{background:#1a1f1d;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px}
 .squad-strip strong{display:block;font-size:16px;font-weight:800;margin-top:4px;white-space:nowrap}
+
+/* ---- Game pass: header, squad cards and stronger hierarchy ---- */
+.brand{white-space:nowrap;font-size:15px;letter-spacing:.1em}
+.brand>span:last-child{white-space:nowrap}
+.top-right{flex-wrap:nowrap;min-width:0}
+.budget-chip{font-size:12px;background:rgba(229,196,107,.08)}
+.player{position:relative;border-radius:18px;padding:14px;background:linear-gradient(160deg,#21372f,#15221d);border-color:#3a5a4b}
+.player .rating{font:800 26px 'DM Mono',monospace;color:var(--gold);text-shadow:0 2px 12px #e5c46b44}
+.player h3{font-size:15px;font-weight:800;margin:10px 0 4px}
+.player .meta{font-size:11px}
+.card-main{display:flex;width:100%;margin:12px 0 6px;padding:13px;border-radius:14px;font-size:14px;font-weight:800;background:linear-gradient(180deg,#22a06f,#167a55);border:0;color:#fff;box-shadow:0 8px 20px rgba(22,122,85,.35)}
+.card-main.gold{background:linear-gradient(180deg,#e5c46b,#c9a24e);color:#1a1405;box-shadow:0 8px 20px rgba(229,196,107,.25)}
+.card-more{margin-top:4px}
+.card-more summary{cursor:pointer;list-style:none;text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:8px;border-radius:10px;background:#12201b;border:1px solid var(--line)}
+.card-more summary::-webkit-details-marker{display:none}
+.card-more[open] summary{margin-bottom:10px}
+.card-more .actions .btn{font-size:11px;padding:9px 10px}
+.players{gap:12px}
+@media(max-width:700px){.players{grid-template-columns:1fr 1fr}.player h3{font-size:13px}.player .rating{font-size:22px}.brand{font-size:13px}.budget-chip{font-size:11px;padding:5px 8px}.top-right .lang-toggle{padding:6px 8px}}
+.player h3{clear:both}
+.player .pill{white-space:nowrap}
