@@ -244,3 +244,61 @@ button.club-context{border:0;background:transparent;color:inherit;font:inherit;c
 .player .pill{white-space:nowrap}
 
 .zone-legend{display:flex;gap:14px;font:9px 'DM Mono',monospace;text-transform:uppercase;margin:0 0 10px}.zone-promotion{color:#8fe3bf}.zone-relegation{color:#f2a09b}tr.zone-promotion td:first-child{box-shadow:inset 3px 0 #3fbf8a}tr.zone-relegation td:first-child{box-shadow:inset 3px 0 #e57c75}
+
+/* ===== VISUAL UPGRADE: position colors, icons, colorful cards ===== */
+
+/* Position color tokens — applied via posClass() on article/wrapper */
+.pos-gk{--pos-col:#f59e0b;--pos-bg:rgba(245,158,11,.18);--pos-border:rgba(245,158,11,.5)}
+.pos-def{--pos-col:#60a5fa;--pos-bg:rgba(96,165,250,.18);--pos-border:rgba(96,165,250,.5)}
+.pos-mid{--pos-col:#a78bfa;--pos-bg:rgba(167,139,250,.18);--pos-border:rgba(167,139,250,.5)}
+.pos-att{--pos-col:#f87171;--pos-bg:rgba(248,113,113,.18);--pos-border:rgba(248,113,113,.5)}
+
+/* Position pill badge */
+.pos-pill{display:inline-flex;align-items:center;justify-content:center;background:var(--pos-bg,rgba(255,255,255,.1));color:var(--pos-col,#fff);border-radius:7px;font:800 9px 'DM Mono',monospace;padding:3px 7px;letter-spacing:.06em;border:1px solid var(--pos-border,transparent)}
+
+/* Top accent stripe on player card by position */
+.player::after{content:'';position:absolute;top:0;left:0;right:0;height:2.5px;border-radius:18px 18px 0 0;background:var(--pos-col,transparent);opacity:.7}
+
+/* OVR rating color-matched to position */
+.player .rating{color:var(--pos-col,var(--gold))!important;text-shadow:0 2px 14px color-mix(in srgb,var(--pos-col,#e5c46b) 40%,transparent)!important}
+
+/* Market card rating badge — position-colored box */
+.market-rating strong{color:var(--pos-col,var(--gold))!important}
+.market-player{border-left:3px solid var(--pos-col,var(--line))}
+
+/* Nav icons: add column layout and svg stroke style */
+.nav button{display:flex!important;flex-direction:column!important;align-items:center!important;gap:4px!important;font-size:9px!important;min-height:58px!important;padding:10px 4px 8px!important;letter-spacing:.05em}
+.nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:fill .15s}
+.nav button.active svg{fill:color-mix(in srgb,currentColor 15%,transparent)}
+.nav button:not(.active) svg{opacity:.7}
+
+/* Budget chip: more vivid */
+.budget-chip{background:linear-gradient(135deg,rgba(34,160,111,.22),rgba(22,122,85,.12))!important;border:1px solid rgba(34,160,111,.55)!important;color:#7fe3a0!important;font-weight:800!important;padding:7px 12px!important;letter-spacing:.04em}
+
+/* Stat strips: position-aware accents on squad strip */
+.squad-strip>div{border-left:3px solid var(--accent);transition:border-color .2s}
+.squad-strip>div:nth-child(2){border-color:#60a5fa}
+.squad-strip>div:nth-child(3){border-color:#a78bfa}
+
+/* Win / draw / loss outcomes: vivid colored badges */
+.pill.outcome.win{color:#6ee7b7!important;background:#0a3324!important;border-color:#065f46!important;font-weight:800!important}
+.pill.outcome.draw{color:#fde68a!important;background:#2d1f04!important;border-color:#78350f!important;font-weight:800!important}
+.pill.outcome.loss{color:#fca5a5!important;background:#2d0404!important;border-color:#7f1d1d!important;font-weight:800!important}
+
+/* Segments: rounded pill tabs with glow on active */
+.segments button{font-size:12px!important;padding:9px 18px!important;border-radius:20px!important;transition:all .15s}
+.segments button.active{background:linear-gradient(135deg,#1d6a4b,#15523a)!important;box-shadow:0 4px 16px rgba(29,106,75,.45)!important;border-color:#3fa870!important}
+
+/* Match scoreboard: glow */
+.scoreboard:hover{box-shadow:0 0 0 1px var(--accent),0 18px 50px #0008}
+
+/* Colorful table: points column highlight */
+td strong,th+th+th+th+th+th+th+th{color:var(--gold)}
+
+/* Colorful player tier pill */
+.pill{border-radius:8px!important;padding:3px 8px!important;font-size:8px!important}
+
+/* Top-3 ranks get medals */
+tr:nth-child(1) td.rank::after{content:' 🥇'}
+tr:nth-child(2) td.rank::after{content:' 🥈'}
+tr:nth-child(3) td.rank::after{content:' 🥉'}
