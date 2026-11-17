@@ -2,6 +2,12 @@
 (() => {
 const DICT = {
  uz: {
+'Create club →':'Klub yaratish →','CLUB NAME':'KLUB NOMI','SHORT NAME':'QISQA NOM','PRIMARY COLOUR':'ASOSIY RANG','SECONDARY COLOUR':'QO‘SHIMCHA RANG',
+'CLUB CREST · OPTIONAL':'KLUB EMBLEMASI · IXTIYORIY','CLUB PHOTO · OPTIONAL':'KLUB EMBLEMASI · IXTIYORIY','PNG, JPG or WEBP · Maximum 2 MB':'PNG, JPG yoki WEBP · 2 MB gacha',
+'Crest prompt · optional':'Emblema so‘rovi · ixtiyoriy','Copy prompt':'So‘rovni nusxalash','e.g. Tashkent United':'masalan, Toshkent United',
+'You start with 30,000,000 UZS. Recruit at least 14 players to enter the league. Each user manages one club.':'Boshlang‘ich balans: 30 000 000 UZS. Ligaga kirish uchun kamida 14 ta futbolchi yollang. Har bir foydalanuvchi bitta klubni boshqaradi.',
+'Recruit at least {n} players to enter the league.':'Ligaga kirish uchun kamida {n} ta futbolchi yollang.','Build your first team':'Birinchi jamoangizni tuzing',
+'Save identity':'Ma’lumotlarni saqlash','Cancel':'Bekor qilish','Leave empty to keep the current crest.':'Joriy emblemani saqlab qolish uchun bo‘sh qoldiring.',
 'No connection. Trades need internet.':'Internet aloqasi yo‘q. Savdo uchun internet kerak.','Offline. You can view your club, but trades and lineup changes need internet.':'Oflayn. Klubni ko‘rishingiz mumkin, lekin savdo va tarkib o‘zgarishi uchun internet kerak.',
 'Sign in':'Kirish','Sign in with Telegram to open your club.':'Klubingizni ochish uchun Telegram orqali kiring.',
 'CHANGE':'ALMASHTIRISH','Put in':'Tarkibga kiritish','Tap a player to change him.':'Almashtirish uchun o‘yinchini bosing.','Player changed':'O‘yinchi almashtirildi','No available player for this position.':'Bu pozitsiya uchun bo‘sh o‘yinchi yo‘q.','Close':'Yopish',
@@ -187,5 +193,18 @@ const DICT = {
 let lang=localStorage.getItem('zamin-lang')||'uz';
 window.ZAMIN_LANG=lang;
 window.t=function(s){const d=DICT[window.ZAMIN_LANG]||{};return Object.prototype.hasOwnProperty.call(d,s)?d[s]:s;};
+// Translates the literal English text and placeholders that screen templates print, so every screen follows the language.
+const SKIP_TAGS=new Set(['SCRIPT','STYLE','TEXTAREA','CODE']);
+function translateNode(node){
+ if(node.nodeType===3){const raw=node.nodeValue,key=raw.trim();if(!key)return;const out=window.t(key);if(out!==key)node.nodeValue=raw.replace(key,out);return;}
+ if(node.nodeType!==1||SKIP_TAGS.has(node.nodeName))return;
+ if(node.placeholder){const out=window.t(node.placeholder);if(out!==node.placeholder)node.placeholder=out;}
+ for(const child of node.childNodes)translateNode(child);
+}
+function startTranslation(){
+ translateNode(document.body);
+ new MutationObserver(records=>{for(const r of records)for(const n of r.addedNodes)translateNode(n);}).observe(document.body,{childList:true,subtree:true});
+}
+if(document.body)startTranslation();else document.addEventListener('DOMContentLoaded',startTranslation);
 window.setZaminLang=function(l){localStorage.setItem('zamin-lang',l);location.reload();};
 })();
